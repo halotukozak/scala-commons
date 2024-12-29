@@ -407,7 +407,7 @@ package serialization.json
 //    * @return startIndex
 //    */
 //  def parseValue(): Int = {
-//    @inline def update(newValue: Any, newTpe: JsonType): Unit = {
+//   inline def update(newValue: Any, newTpe: JsonType): Unit = {
 //      value = newValue
 //      tpe = newTpe
 //    }
@@ -434,7 +434,7 @@ package serialization.json
 //  private def readFailure(msg: String, cause: Throwable = null): Nothing =
 //    throw new ParseException(s"$msg ${posInfo(i)}", cause)
 //
-//  @inline private def read(): Char =
+// inline private def read(): Char =
 //    if (i < json.length) {
 //      val res = json.charAt(i)
 //      advance()

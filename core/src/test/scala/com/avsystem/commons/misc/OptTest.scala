@@ -78,4 +78,3 @@ final class OptTest extends AnyFunSuite:
     assert(opt.unless(true) == Opt.Empty)
     assert(Opt(fail("Parameter should not be evaluated")).unless(true) == Opt.Empty)
   }
-}

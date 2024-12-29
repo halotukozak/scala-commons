@@ -207,4 +207,4 @@ final class SharedExtensionsTest extends AnyFunSuite with Matchers:
         |  abc
         | abc""".stripMargin)
   }
-}
+

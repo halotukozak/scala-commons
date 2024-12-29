@@ -42,6 +42,8 @@ trait JCollectionUtils extends JFactories {
     inline def empty[T]: C[T] = instantiate[T]
   }
 
+  given asJCollectionFactory[C[X] <: JCollection[X], T]: Conversion[JCollectionCreator[C], Factory[T, C[T]]] = creator => new JCollectionFactory(creator.empty[T])
+
   abstract class JSortedSetCreator[C[T] <: JSortedSet[T]] {
     protected def instantiate[T](ord: Ordering[T]): C[T]
 
@@ -54,20 +56,19 @@ trait JCollectionUtils extends JFactories {
     }
 
     def unapplySeq[T](set: C[T]): Option[Seq[T]] = Some(set.iterator.asScala.toSeq)
-
   }
+  
+  given asJSortedSetFactory[C[X] <: JSortedSet[X], T: Ordering]: Conversion[JSortedSetCreator[C], Factory[T, C[T]]] = creator => new JCollectionFactory(creator.empty[T])
 
   abstract class JListCreator[C[T] <: JList[T]] extends JCollectionCreator[C] {
     def unapplySeq[T](list: C[T]): Option[Seq[T]] =
       Some(list.asScala.toSeq)
   }
 
-  object JIterable {
-    inline def apply[T](values: T*): JIterable[T] =
-      JArrayList(values *)
+  object JIterable:
+    inline def apply[T](values: T*): JIterable[T] = JArrayList(values *)
 
-    given asJIterableFactory[T]: Conversion[JIterable.type, Factory[T, JIterable[T]]] = _ => new JCollectionFactory(new JArrayList)
-  }
+  given asJIterableFactory[T]: Conversion[JIterable.type, Factory[T, JIterable[T]]] = _ => new JCollectionFactory(new JArrayList)
 
   object JCollection extends JCollectionCreator[JCollection] {
     protected def instantiate[T]: JCollection[T] = new JArrayList[T]
@@ -138,9 +139,7 @@ trait JCollectionUtils extends JFactories {
     }
   }
 
-  object JMapCreator {
-    given asJMapFactory[M[X, Y] <: JMap[X, Y], K, V]: Conversion[JMapCreator[M], Factory[(K, V), M[K, V]]] = creator => new JMapFactory(creator.empty[K, V])
-  }
+  given asJMapFactory[M[X, Y] <: JMap[X, Y], K, V]: Conversion[JMapCreator[M], Factory[(K, V), M[K, V]]] = creator => new JMapFactory(creator.empty[K, V])
 
   abstract class JSortedMapCreator[M[K, V] <: JSortedMap[K, V]] {
     protected def instantiate[K: Ordering, V]: M[K, V]
@@ -157,8 +156,7 @@ trait JCollectionUtils extends JFactories {
       Some(map.asScala.iterator.toSeq)
   }
 
-  object JSortedMapCreator:
-    given asJSortedMapFactory[M[X, Y] <: JSortedMap[X, Y], K: Ordering, V]: Conversion[JSortedMapCreator[M], Factory[(K, V), M[K, V]]] = creator => new JMapFactory(creator.empty[K, V])
+  given asJSortedMapFactory[M[X, Y] <: JSortedMap[X, Y], K: Ordering, V]: Conversion[JSortedMapCreator[M], Factory[(K, V), M[K, V]]] = creator => new JMapFactory(creator.empty[K, V])
 
   object JMap extends JMapCreator[JMap]:
     protected def instantiate[K, V]: JMap[K, V] = new JHashMap[K, V]

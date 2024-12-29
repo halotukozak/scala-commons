@@ -1,11 +1,11 @@
 package com.avsystem.commons
-package macros.misc
+package misc.macros.misc
 
 import macros.MacroUtils
 
 import scala.quoted.*
 
-object SamMacros extends MacroUtils:
+object SamMacros extends MacroUtils {
 
   def createSam[Target: Type, Fun: Type](fun: Expr[Fun])(using quotes: Quotes): Expr[Target] = {
     import quotes.reflect.*
@@ -118,4 +118,4 @@ object SamMacros extends MacroUtils:
     }
     Expr(byName)
   }
-end SamMacros
+}

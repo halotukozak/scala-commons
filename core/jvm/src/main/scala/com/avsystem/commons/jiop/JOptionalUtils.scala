@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import macros.jiop.specializedOptionAsJava
+import macros.specializedOptionAsJava
 
 import java.util as ju
 import scala.quoted.Type
@@ -13,7 +13,7 @@ trait JOptionalUtils {
   type JOptionalInt = ju.OptionalInt
   type JOptionalLong = ju.OptionalLong
 
-  type ReturnOfAsJava[T] = T match
+  type ReturnOfOptionalAsJava[T] = T match
     case Int => JOptionalInt
     case Long => JOptionalLong
     case Double => JOptionalDouble
@@ -21,7 +21,7 @@ trait JOptionalUtils {
 
   given [T]: AsScala[JOptional[T], Option[T]] = _.toOption
 
-  inline given [T]: AsJava[Option[T], ReturnOfAsJava[T]] = ${ specializedOptionAsJava[T] }
+  inline given [T]: AsJava[Option[T], ReturnOfOptionalAsJava[T]] = specializedOptionAsJava[T]
 
   given AsScala[JOptionalDouble, Option[Double]] = _.toOption
 

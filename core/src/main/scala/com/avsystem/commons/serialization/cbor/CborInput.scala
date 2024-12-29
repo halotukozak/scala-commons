@@ -146,7 +146,7 @@ package serialization.cbor
 //  def unexpected(ib: InitialByte, expected: String) =
 //    throw new ReadFailure(s"Unexpected initial byte: $ib, expected $expected")
 //
-//  @inline private def bits(off: Int): Long =
+// inline private def bits(off: Int): Long =
 //    data(idx + off).toLong & 0xFF
 //}
 //

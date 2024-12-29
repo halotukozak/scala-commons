@@ -48,7 +48,7 @@ package rpc
 //
 //  type AsRealRPC[RealRPC] = AsReal[RawRPC, RealRPC]
 //  object AsRealRPC {
-//    @inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
+//   inline def apply[T](implicit asRealRPC: AsRealRPC[T]): AsRealRPC[T] = asRealRPC
 //  }
 //
 //  /**
@@ -60,7 +60,7 @@ package rpc
 //
 //  type AsRawRealRPC[RealRPC] = AsRawReal[RawRPC, RealRPC]
 //  object AsRawRealRPC {
-//    @inline def apply[RealRPC](implicit AsRawRealRPC: AsRawRealRPC[RealRPC]): AsRawRealRPC[RealRPC] = AsRawRealRPC
+//   inline def apply[RealRPC](implicit AsRawRealRPC: AsRawRealRPC[RealRPC]): AsRawRealRPC[RealRPC] = AsRawRealRPC
 //  }
 //
 //  def materializeAsRawReal[T]: AsRawRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import misc.macros.{javaClassName, typeString}
+import misc.macros.misc.{javaClassName, typeString}
 
 import scala.quoted.Type
 

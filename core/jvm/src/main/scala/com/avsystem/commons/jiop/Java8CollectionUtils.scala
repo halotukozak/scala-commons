@@ -1,7 +1,9 @@
 package com.avsystem.commons
 package jiop
 
-import jiop.ScalaJStreamUtils.*
+import jiop.JStreamUtils.given_AsScala_JStream_SpecializedScalaJStream
+
+import scala.collection.Factory
 
 trait Java8CollectionUtils {
 
@@ -13,23 +15,23 @@ trait Java8CollectionUtils {
     inline def forEach(code: A => Any): Unit =
       it.forEach(jConsumer(code))
 
-  extension [A](coll: JCollection[A])
-    inline def removeIf(pred: A => Boolean): Unit =
-      coll.removeIf(jPredicate(pred))
-    inline def scalaStream: ScalaJStream[A] =
-      coll.stream.asScala
+  extension [A](coll: JCollection[A]) {
+    inline def removeIf(pred: A => Boolean): Unit = coll.removeIf(jPredicate(pred))
 
+    inline def scalaStream: SpecializedScalaJStream[A] =
+      coll.stream.asScala
+  }
   extension (coll: JCollection[Int])
     inline def scalaIntStream: ScalaJIntStream =
-      coll.stream.asScalaIntStream
+      coll.stream.asScala
 
   extension (coll: JCollection[Long])
-    inline def scalaLongStream: ScalaJLongStream =
-      coll.stream.asScalaLongStream
+    inline def scalaLongStream: ScalaJLongStream = ???
+//      coll.stream.asScala
 
   extension (coll: JCollection[Double])
-    inline def scalaDoubleStream: ScalaJDoubleStream =
-      coll.stream.asScalaDoubleStream
+    inline def scalaDoubleStream: ScalaJDoubleStream = ???
+//      coll.stream.asScala
 
   extension [K, V](map: JMap[K, V])
     inline def compute(key: K, remappingFunction: (K, V) => V): V =

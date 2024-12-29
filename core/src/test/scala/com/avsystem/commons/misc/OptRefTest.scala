@@ -36,4 +36,4 @@ final class OptRefTest extends AnyFunSuite:
     assert(OptRef.Empty.zip(OptRef[JInteger](2)) == OptRef.Empty)
     assert(OptRef[JInteger](3).zip(OptRef.Empty) == OptRef.Empty)
   }
-}
+

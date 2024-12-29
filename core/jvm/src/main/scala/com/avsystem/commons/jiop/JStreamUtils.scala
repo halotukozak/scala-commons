@@ -4,11 +4,6 @@ package jiop
 import java.util as ju
 
 trait JStreamUtils {
-  opaque type ScalaJStream[A] = JStream[A]
-  opaque type ScalaJDoubleStream = JDoubleStream
-  opaque type ScalaJIntStream = JIntStream
-  opaque type ScalaJLongStream = JLongStream
-
   type JBaseStream[T, S <: ju.stream.BaseStream[T, S]] = ju.stream.BaseStream[T, S]
   type JStream[T] = ju.stream.Stream[T]
   type JDoubleStream = ju.stream.DoubleStream
@@ -16,21 +11,34 @@ trait JStreamUtils {
   type JLongStream = ju.stream.LongStream
   type JCollector[T, A, R] = ju.stream.Collector[T, A, R]
 
-  given [A]: AsScala[JStream[A], ScalaJStream[A]] = identity
+  import JStreamUtils.*
 
-  given [A]: AsJava[ScalaJStream[A], JStream[A]] = identity
+  type SpecializedJStream[T] = T match
+    case Int => JIntStream
+    case Long => JLongStream
+    case Double => JDoubleStream
+    case _ => JStream[T]
 
-  given AsScala[JDoubleStream, ScalaJDoubleStream] = identity
+  type SpecializedScalaJStream[T] = T match
+    case Int => ScalaJIntStream
+    case Long => ScalaJLongStream
+    case Double => ScalaJDoubleStream
+    case _ => ScalaJStream[T]
 
-  given AsJava[ScalaJDoubleStream, JDoubleStream] = identity
+  inline given [T]: AsScala[JStream[T], SpecializedScalaJStream[T]] = 
+    ???
+//    specializedJStreamAsScala[T]
+  inline given [T]: AsScala[SpecializedJStream[T], SpecializedScalaJStream[T]] = 
+    ???
+//    specializedJStreamAsScala[T]
 
-  given AsScala[JIntStream, ScalaJIntStream] = identity
+  inline given [T]: AsJava[ScalaJStream[T] | SpecializedScalaJStream[T], SpecializedJStream[T]] = ???
+//  specializedScalaStreamAsJava[T]
 
-  given AsJava[ScalaJIntStream, JIntStream] = identity
+  extension [T](stream: JStream[T]) {
+    def scalaStream: SpecializedScalaJStream[T] = stream.asScala
+  }
 
-  given AsScala[JLongStream, ScalaJLongStream] = identity
-
-  given AsJava[ScalaJLongStream, JLongStream] = identity
 }
 
 object JStreamUtils extends JStreamUtils

@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package jiop
 
-@java.lang.FunctionalInterface
-abstract class AsScala[-JavaType, +ScalaType] extends (JavaType => ScalaType) {
-  override def apply(e: JavaType): ScalaType
-}
+import scala.compiletime.summonInline
 
-extension [J, S](e: J)(using AsScala[J, S]) {
+@java.lang.FunctionalInterface
+abstract class AsScala[-JavaType, +ScalaType] extends (JavaType => ScalaType):
+  override def apply(e: JavaType): ScalaType
+
+extension [J, S](e: J)(using AsScala[J, S])
   inline def asScala: S = summon[AsScala[J, S]].apply(e)
-}

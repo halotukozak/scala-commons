@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package jiop
 
-import SharedExtensions.*
 import misc.Sam
 
 import com.google.common.base as gbase
@@ -101,7 +100,7 @@ trait GuavaInterop {
     }
   }
 
-  private case class FutureAsListenableFuture[T](fut: Future[T]) extends ListenableFuture[T] {
+  private final case class FutureAsListenableFuture[T](fut: Future[T]) extends ListenableFuture[T] {
     def addListener(listener: Runnable, executor: Executor): Unit = {
       listener.checkNotNull("listener is null")
       val ec = executor match
@@ -135,7 +134,7 @@ trait GuavaInterop {
       fut.isCompleted
   }
 
-  private class SettableFutureAsPromise[T](fut: SettableFuture[T])
+  private final class SettableFutureAsPromise[T](fut: SettableFuture[T])
     extends ListenableFutureAsScala[T](fut) with Promise[T] {
 
     def future: Future[T] = this
@@ -145,3 +144,6 @@ trait GuavaInterop {
       case Failure(cause) => fut.setException(cause)
   }
 }
+
+object GuavaInterop extends GuavaInterop
+
