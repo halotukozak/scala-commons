@@ -1,22 +1,22 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
 import com.avsystem.commons.JInteger
 import org.scalatest.funsuite.AnyFunSuite
 
-class OptTest extends AnyFunSuite {
+final class OptTest extends AnyFunSuite:
+
   test("nonempty test") {
     val opt = Opt(23)
-    opt match {
+    opt match
       case Opt(num) => assert(num == 23)
-    }
   }
 
   test("empty test") {
     val str: String = null
     val opt = Opt(str)
-    opt match {
+    opt match
       case Opt.Empty =>
-    }
   }
 
   test("null some test") {
@@ -31,14 +31,14 @@ class OptTest extends AnyFunSuite {
   }
 
   test("nesting test") {
-    assert((Opt(Opt.empty): Any) match {
+    assert((Opt(Opt.empty): Any) match
       case Opt.Empty => false
-      case Opt(Opt.Empty) => true
-    })
-    assert((Opt.Empty: Any) match {
+      case Opt(Opt.Empty) => true,
+    )
+    assert((Opt.Empty: Any) match
       case Opt(Opt.Empty) => false
-      case Opt.Empty => true
-    })
+      case Opt.Empty => true,
+    )
   }
 
   test("empty hash code") {
@@ -63,8 +63,8 @@ class OptTest extends AnyFunSuite {
   }
 
   test("mapOr") {
-    val seq: Seq[Int] = Opt(5).mapOr(Nil, i => 0 until i)
-    assert(seq == (0 until 5))
+    val seq: Seq[Int] = Opt(5).mapOr(Nil, i => Seq(i, i))
+    assert(seq == Seq(5, 5))
   }
 
   test("Opt.{when, unless}") {

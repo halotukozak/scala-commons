@@ -1,30 +1,25 @@
 package com.avsystem.commons
 package jsiop
 
-import com.avsystem.commons.jsiop.JsInterop.{JsOptOps, UndefOrOps}
-import com.avsystem.commons.misc.TimestampConversions
+import misc.Timestamp
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
 trait JsInterop {
-  implicit def jsDateTimestampConversions(jsDate: js.Date): TimestampConversions =
-    new TimestampConversions(jsDate.getTime().toLong)
+  extension (jsDate: js.Date)
+    inline def toTimestamp: Timestamp = Timestamp(jsDate.getTime().toLong)
+    inline def toJsDate: js.Date = new js.Date(jsDate.getTime())
+    inline def toJDate: JDate = new JDate(jsDate.getTime().toLong)
+  end extension
 
-  implicit def undefOrOps[A](undefOr: UndefOr[A]): UndefOrOps[A] =
-    new UndefOrOps(undefOr)
+  extension [A](value: UndefOr[A])
+    inline def toOpt: Opt[A] = if value.isDefined then Opt(value.get) else Opt.Empty
 
-  implicit def jsOptOps[A](opt: Opt[A]): JsOptOps[A] =
-    new JsOptOps(opt.orNull[Any].asInstanceOf[A])
+  extension [A](raw: A)
+    inline def orUndefined: UndefOr[A] = Opt(raw) match
+      case Opt.Empty => js.undefined
+      case Opt(value) => js.defined(value)
 }
-object JsInterop extends JsInterop {
-  class UndefOrOps[A](private val value: UndefOr[A]) extends AnyVal {
-    def toOpt: Opt[A] = if (value.isDefined) Opt(value.get) else Opt.Empty
-  }
 
-  class JsOptOps[A](private val raw: A) extends AnyVal {
-    private def value = Opt(raw)
-
-    def orUndefined: UndefOr[A] = if (value.isDefined) js.defined(value.get) else js.undefined
-  }
-}
+object JsInterop extends JsInterop 

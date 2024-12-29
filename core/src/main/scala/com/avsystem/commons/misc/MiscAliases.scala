@@ -11,4 +11,5 @@ trait MiscAliases {
   type OptRef[+A >: Null] = com.avsystem.commons.misc.OptRef[A]
   final val OptRef = com.avsystem.commons.misc.OptRef
 }
+
 object MiscAliases extends MiscAliases

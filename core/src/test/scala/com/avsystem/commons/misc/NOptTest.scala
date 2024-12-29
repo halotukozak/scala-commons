@@ -1,9 +1,11 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
-import org.scalatest.funsuite.AnyFunSuite
 import com.avsystem.commons.JInteger
+import org.scalatest.funsuite.AnyFunSuite
 
-class NOptTest extends AnyFunSuite {
+final class NOptTest extends AnyFunSuite:
+
   test("nonempty test") {
     val opt = NOpt(23)
     opt match {
@@ -60,4 +62,4 @@ class NOptTest extends AnyFunSuite {
     assert(NOpt.Empty.zip(NOpt(2)) == NOpt.Empty)
     assert(NOpt(3).zip(NOpt.Empty) == NOpt.Empty)
   }
-}
+

@@ -1,14 +1,15 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
 import com.avsystem.commons.JInteger
 import org.scalatest.funsuite.AnyFunSuite
 
-class OptRefTest extends AnyFunSuite {
+final class OptRefTest extends AnyFunSuite:
+
   test("nonempty test") {
     val opt = OptRef("lol")
-    opt match {
+    opt match
       case OptRef(str) => assert(str == "lol")
-    }
   }
 
   test("empty test") {

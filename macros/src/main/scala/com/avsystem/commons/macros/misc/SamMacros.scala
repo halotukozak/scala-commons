@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package macros.misc
 
-import com.avsystem.commons.macros.MacroUtils
+import macros.MacroUtils
 
 import scala.quoted.*
 

@@ -3,9 +3,10 @@ package misc
 
 import org.scalatest.funsuite.AnyFunSuite
 
-case class Whatever(str: String, int: Int) extends AbstractCase
+final case class Whatever(str: String, int: Int) extends AbstractCase
 
-class CaseMethodsTest extends AnyFunSuite {
+//noinspection TypeAnnotation
+final class CaseMethodsTest extends AnyFunSuite:
   val first = Whatever("lol", 42)
   val second = Whatever("lol", 42)
   val other = Whatever("lol", 41)
@@ -13,12 +14,12 @@ class CaseMethodsTest extends AnyFunSuite {
   test("equality") {
     assert(first canEqual second)
     assert(first == second)
-    assert(first equals second)
+    assert(first.equals(second))
   }
 
   test("inequality") {
     assert(first != other)
-    assert(!(first equals other))
+    assert(!first.equals(other))
   }
 
   test("hashCode") {
@@ -29,4 +30,3 @@ class CaseMethodsTest extends AnyFunSuite {
   test("toString") {
     assert(first.toString == "Whatever(lol,42)")
   }
-}

@@ -3,7 +3,9 @@ package misc
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class GraphUtilTest extends AnyFunSuite {
+import scala.collection.mutable
+
+final class GraphUtilTest extends AnyFunSuite {
   def edges(node: Int): List[Int] = node match {
     case 1 => List(2)
     case 2 => List(3, 4)
@@ -15,7 +17,7 @@ class GraphUtilTest extends AnyFunSuite {
   }
 
   test("dfs") {
-    val log = new StringBuilder
+    val log = new mutable.StringBuilder
 
     GraphUtils.dfs(1 to 7)(
       edges,

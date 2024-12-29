@@ -5,11 +5,12 @@ import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
 class HFloatTest extends AnyFunSuite {
-  def testConv(name: String)(floatBits: Int, hfloatBits: Int, roundedBits: Int)(implicit pos: Position): Unit = {
+  def testConv(name: String)(floatBits: Int, hfloatBits: Int, roundedBits: Int)(using Position): Unit = {
     val float = java.lang.Float.intBitsToFloat(floatBits)
     test(name) {
       val hfloat = HFloat.fromFloat(float)
-      assert(hfloat.raw.toHexString == hfloatBits.toShort.toHexString)
+      //      assert(hfloat.raw.toHexString == hfloatBits.toShort.toHexString)
+      assert(hfloat.raw == hfloatBits.toShort) //todo: .toHexString
       assert(java.lang.Float.floatToIntBits(hfloat.toFloat).toHexString == roundedBits.toHexString)
     }
   }

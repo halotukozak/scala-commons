@@ -15,21 +15,21 @@ object GraphUtils {
   }
 
   /**
-    * Traverses a graph using depth first search.
-    *
-    * @param nodes     entry nodes for the traversal (note: there's no need to list ALL nodes)
-    * @param edges     a function that specifies edges for given graph node
-    * @param onEnter   callback invoked when the DFS algorithms enters a node
-    * @param onExit    callback invoked when the DFS algorithms exits a node
-    * @param onRevisit callback invoked when the DFS algorithms encounters a node that was already processed
-    * @param onCycle   callback invoked when the DFS algorithms detects a cycle
-    */
+   * Traverses a graph using depth first search.
+   *
+   * @param nodes     entry nodes for the traversal (note: there's no need to list ALL nodes)
+   * @param edges     a function that specifies edges for given graph node
+   * @param onEnter   callback invoked when the DFS algorithms enters a node
+   * @param onExit    callback invoked when the DFS algorithms exits a node
+   * @param onRevisit callback invoked when the DFS algorithms encounters a node that was already processed
+   * @param onCycle   callback invoked when the DFS algorithms detects a cycle
+   */
   def dfs[T](nodes: Iterable[T])(
     edges: T => List[T],
     onEnter: DfsAction[T] = NoAction,
     onExit: DfsAction[T] = NoAction,
     onRevisit: DfsAction[T] = NoAction,
-    onCycle: DfsAction[T] = NoAction
+    onCycle: DfsAction[T] = NoAction,
   ): Unit = {
     val visited = new MHashMap[T, Boolean]
 

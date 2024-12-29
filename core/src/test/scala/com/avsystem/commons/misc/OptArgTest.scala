@@ -1,23 +1,21 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
-import com.avsystem.commons.SharedExtensions._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-class OptArgTest extends AnyFunSuite with Matchers {
+final class OptArgTest extends AnyFunSuite with Matchers:
   test("nonempty") {
     val opt = OptArg(23)
-    opt match {
+    opt match
       case OptArg(num) => assert(num == 23)
-    }
   }
 
   test("empty") {
     val str: String = null
     val opt = OptArg(str)
-    opt match {
+    opt match
       case OptArg.Empty =>
-    }
   }
 
   test("null some") {

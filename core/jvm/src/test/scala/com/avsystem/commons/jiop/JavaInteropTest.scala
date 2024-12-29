@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.jiop.GuavaInterop._
+import jiop.GuavaInterop.*
+
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -9,7 +10,7 @@ import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-class JavaInteropTest extends AnyFunSuite {
+final class JavaInteropTest extends AnyFunSuite:
 
   def assertSame[A](s1: JStream[A], s2: JStream[A]): Unit =
     assert(s1.collect(Collectors.toList[A]) == s2.collect(Collectors.toList[A]))
@@ -46,7 +47,7 @@ class JavaInteropTest extends AnyFunSuite {
     val input = JArrayList("a", "b", "c", "d", "e", "f", "g")
     assertSame(
       input.scalaStream.map(_.toUpperCase.charAt(0).toInt).filter(_ < 70).asJava,
-      input.stream.map[Int](jFunction(_.toUpperCase.charAt(0).toInt)).filter(jPredicate(_ < 70))
+      input.stream.map[Int](jFunction(_.toUpperCase.charAt(0).toInt)).filter(jPredicate(_ < 70)),
     )
   }
 
@@ -56,7 +57,7 @@ class JavaInteropTest extends AnyFunSuite {
     assertSame(
       ints.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaIntStream).asJava.boxed,
       ints.flatMap(jIntFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToInt(jToIntFunction(identity)))).boxed
+        .stream.mapToInt(jToIntFunction(identity)))).boxed,
     )
 
     def longs = LongStream.of(1, 2, 3, 4, 5, 6)
@@ -64,7 +65,7 @@ class JavaInteropTest extends AnyFunSuite {
     assertSame(
       longs.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaLongStream).asJava.boxed,
       longs.flatMap(jLongFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToLong(jToLongFunction(identity)))).boxed
+        .stream.mapToLong(jToLongFunction(identity)))).boxed,
     )
 
     def doubles = DoubleStream.of(1, 2, 3, 4, 5, 6)
@@ -72,7 +73,7 @@ class JavaInteropTest extends AnyFunSuite {
     assertSame(
       doubles.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaDoubleStream).asJava.boxed,
       doubles.flatMap(jDoubleFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToDouble(jToDoubleFunction(identity)))).boxed
+        .stream.mapToDouble(jToDoubleFunction(identity)))).boxed,
     )
   }
 
@@ -274,14 +275,13 @@ class JavaInteropTest extends AnyFunSuite {
 
     assert(Option(string).asJava == JOptional(string))
     assert(Option(empty).asJava == JOptional.empty)
-
     assert(Option(3).asJavaInt == JOptionalInt(3))
-    assert(Option(3).asJava == JOptional(3))
+    assert(Option(3).asJava == JOptionalInt(3))
 
-    assert(Option(3L).asJava == JOptional(3L))
+    assert(Option(3L).asJava == JOptionalLong(3L))
     assert(Option(3L).asJavaLong == JOptionalLong(3L))
 
-    assert(Option(3.0).asJava == JOptional(3.0))
+    assert(Option(3.0).asJava == JOptionalDouble(3.0))
     assert(Option(3.0).asJavaDouble == JOptionalDouble(3.0))
   }
 
@@ -301,4 +301,3 @@ class JavaInteropTest extends AnyFunSuite {
     assert(Option(3.0) == JOptional(3.0).asScala)
     assert(Option(3.0) == JOptionalDouble(3.0).asScala)
   }
-}

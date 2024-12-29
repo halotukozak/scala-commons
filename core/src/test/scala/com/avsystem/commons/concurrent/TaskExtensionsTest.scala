@@ -8,10 +8,11 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures {
-  import com.avsystem.commons.concurrent.TaskExtensions._
+final class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures:
 
-  private implicit val scheduler: Scheduler = Scheduler.global
+  import com.avsystem.commons.concurrent.TaskExtensions.*
+
+  private given scheduler: Scheduler = Scheduler.global
 
   test("traverseOpt") {
     Task.traverseOpt(Opt.empty[Int])(i => Task.now(i)).runToFuture.futureValue shouldBe Opt.Empty
@@ -26,8 +27,8 @@ class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDriven
   test("traverseMap") {
     forAll { (data: List[(String, Int)]) =>
       val map = data.toMap
-      val expected = map.view.map({ case (key, value) => (key + key, value + 2) }).toMap
-      val result = Task.traverseMap(map)({ case (key, value) => Task((key + key, value + 2)) }).runToFuture.futureValue
+      val expected = map.view.map { case (key, value) => (key + key, value + 2) }.toMap
+      val result = Task.traverseMap(map) { case (key, value) => Task((key + key, value + 2)) }.runToFuture.futureValue
       result shouldBe expected
     }
   }
@@ -36,8 +37,8 @@ class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDriven
     forAll { (data: List[(String, Int)]) =>
       val map = data.toMap
       val expected = map.view.mapValues(value => value + 2).toMap
-      val result = Task.traverseMapValues(map)({ case (key, value) => Task(value + 2) }).runToFuture.futureValue
+      val result = Task.traverseMapValues(map) { case (key, value) => Task(value + 2) }.runToFuture.futureValue
       result shouldBe expected
     }
   }
-}
+

@@ -4,12 +4,13 @@ package di
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-abstract class BaseComponent(implicit info: ComponentInfo) {
+abstract class BaseComponent(using info: ComponentInfo) {
   println(s"$info init")
 }
 
-class SubDao(implicit info: ComponentInfo) extends BaseComponent
-class SubService(dao: SubDao)(implicit info: ComponentInfo) extends BaseComponent
+class SubDao(using ComponentInfo) extends BaseComponent
+
+class SubService(dao: SubDao)(using ComponentInfo) extends BaseComponent
 
 class SubSystem extends Components {
   override protected def componentNamePrefix: String = "sub."
@@ -21,7 +22,7 @@ class SubSystem extends Components {
     component(new SubService(dao.ref))
 }
 
-class Service(subService: SubService)(implicit info: ComponentInfo) extends BaseComponent
+class Service(subService: SubService)(using ComponentInfo) extends BaseComponent
 
 class System(subSystem: SubSystem) extends Components {
   val service: Component[Service] =

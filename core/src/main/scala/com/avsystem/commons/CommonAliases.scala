@@ -19,9 +19,11 @@ trait CommonAliases {
 
   type ClassTag[T] = scala.reflect.ClassTag[T]
   final val ClassTag = scala.reflect.ClassTag
+
   final def classTag[T: ClassTag]: ClassTag[T] = scala.reflect.classTag[T]
 
   type Annotation = scala.annotation.Annotation
   type StaticAnnotation = scala.annotation.StaticAnnotation
 }
+
 object CommonAliases extends CommonAliases

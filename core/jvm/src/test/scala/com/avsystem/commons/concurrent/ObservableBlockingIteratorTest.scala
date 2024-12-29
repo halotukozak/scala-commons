@@ -4,15 +4,15 @@ package concurrent
 import monix.reactive.Observable
 import org.scalatest.funsuite.AnyFunSuite
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
-class ObservableBlockingIteratorTest extends AnyFunSuite {
+final class ObservableBlockingIteratorTest extends AnyFunSuite:
   test("empty") {
     assert(DefaultBlocking.toIterator(Observable.empty).toList == Nil)
   }
 
   test("failing") {
-    class BadStuff extends Exception
+    final class BadStuff extends Exception
     val it = DefaultBlocking.toIterator(Observable.raiseError(new BadStuff))
     intercept[BadStuff](it.hasNext)
     intercept[BadStuff](it.next())
@@ -58,4 +58,3 @@ class ObservableBlockingIteratorTest extends AnyFunSuite {
     val observable = Observable.fromIterable(input).flatMap(i => Observable.evalDelayed(2.millis, i))
     assert(slowlyToList(DefaultBlocking.toIterator(observable)) == input)
   }
-}

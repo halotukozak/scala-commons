@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc.macros
 
-import com.avsystem.commons.misc.SourceInfo
+import misc.SourceInfo
 
 import scala.quoted.{Expr, Quotes}
 

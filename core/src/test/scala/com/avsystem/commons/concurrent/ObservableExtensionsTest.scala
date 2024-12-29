@@ -11,9 +11,13 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.collection.Factory
 
-class ObservableExtensionsTest extends AnyFunSuite with Matchers
-  with ScalaCheckDrivenPropertyChecks with ObservableExtensions with ScalaFutures {
-  private implicit val scheduler: Scheduler = Scheduler(RunNowEC)
+final class ObservableExtensionsTest
+  extends AnyFunSuite
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with ObservableExtensions
+    with ScalaFutures:
+  private given scheduler: Scheduler = Scheduler(RunNowEC)
 
   test("headOptL") {
     forAll { (ints: List[Int]) =>
@@ -22,7 +26,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
   }
 
   test("headOptL - null handling") {
-    Observable.fromIterable(Seq(null, "abc", "xyz")) .headOptL.runToFuture.futureValue shouldBe Opt.Empty
+    Observable.fromIterable(Seq(null, "abc", "xyz")).headOptL.runToFuture.futureValue shouldBe Opt.Empty
   }
 
   test("findOptL") {
@@ -67,7 +71,7 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
 
   test("toL") {
     forAll { (ints: List[(Int, Int)]) =>
-      def testFactory[T](factory: Factory[(Int, Int), T])(implicit position: Position) =
+      def testFactory[T](factory: Factory[(Int, Int), T])(using position: Position) =
         Observable.fromIterable(ints).toL(factory).runToFuture.futureValue shouldBe factory.fromSpecific(ints)
 
       testFactory(List)
@@ -104,4 +108,5 @@ class ObservableExtensionsTest extends AnyFunSuite with Matchers
       Observable.fromIterable(ints).mkMapL(_ % 3, _ + 2).runToFuture.futureValue shouldBe ints.mkMap(_ % 3, _ + 2)
     }
   }
-}
+
+end ObservableExtensionsTest

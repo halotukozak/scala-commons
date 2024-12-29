@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package serialization.json
 
-import com.avsystem.commons.serialization.{SimpleValueInput, SimpleValueOutput}
+import serialization.{SimpleValueInput, SimpleValueOutput}
+
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

@@ -1,7 +1,7 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
 import com.avsystem.commons.JInteger
 
-class BoxingUnboxingTest {
+final class BoxingUnboxingTest:
   val jint: JInteger = Opt(42).boxedOrNull
-}

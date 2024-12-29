@@ -1,9 +1,10 @@
 package com.avsystem.commons
 package serialization.nativejs
 
-import com.avsystem.commons.misc.{Bytes, Timestamp}
-import com.avsystem.commons.serialization.json.WrappedJson
-import com.avsystem.commons.serialization.{GenCodec, HasGenCodec}
+import misc.{Bytes, Timestamp}
+import serialization.json.WrappedJson
+import serialization.{GenCodec, HasGenCodec}
+
 import org.scalatest.funsuite.AnyFunSuite
 
 object NativeJsonInputOutputTest {
@@ -19,11 +20,13 @@ object NativeJsonInputOutputTest {
     bigInt: BigInt,
     rawJson: WrappedJson,
   )
+
   object TestModel extends HasGenCodec[TestModel]
 }
 
 class NativeJsonInputOutputTest extends AnyFunSuite {
-  import NativeJsonInputOutputTest._
+
+  import NativeJsonInputOutputTest.*
 
   case class BilateralTestCase(name: String, options: NativeFormatOptions, testStringRepr: Boolean = true)
 

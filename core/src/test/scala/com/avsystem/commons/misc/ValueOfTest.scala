@@ -11,7 +11,7 @@ object Obj {
 
     def valueOfX: x.type = valueOf[x.type]
 
-//    def valueOfThis: this.type = valueOf[this.type]
+    //    def valueOfThis: this.type = valueOf[this.type]
   }
 }
 
@@ -32,6 +32,6 @@ class ValueOfTest extends AnyFunSuite {
 
   test("this") {
     val i = new Obj.Inner
-//    assert(i.valueOfThis == i)
+    //    assert(i.valueOfThis == i)
   }
 }

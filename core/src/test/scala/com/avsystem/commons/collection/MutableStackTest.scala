@@ -3,7 +3,8 @@ package collection
 
 import org.scalatest.funsuite.AnyFunSuite
 
-class MutableStackTest extends AnyFunSuite {
+final class MutableStackTest extends AnyFunSuite:
+
   test("push") {
     val stack = new MutableStack[String]
     stack.push("lol1")
@@ -44,5 +45,3 @@ class MutableStackTest extends AnyFunSuite {
     assert(stack.topOpt.contains("lol"))
     assert(stack.topOption.contains("lol"))
   }
-
-}

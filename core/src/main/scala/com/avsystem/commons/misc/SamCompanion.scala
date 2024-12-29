@@ -1,11 +1,10 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.misc.SamCompanion.ValidSam
+import misc.SamCompanion.ValidSam
 
-abstract class SamCompanion[T, F](using ValidSam[T, F]) {
+abstract class SamCompanion[T, F](using ValidSam[T, F]):
   def apply(fun: F): T = Sam[T](fun)
-}
 
 object SamCompanion {
   sealed trait ValidSam[T, F]

@@ -1,24 +1,25 @@
 package com.avsystem.commons
 package macros
 
-import com.avsystem.commons.misc.{JavaClassName, TypeString}
+import macros.misc.{JavaClassName, TypeString}
+
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
-object JavaClassNameTest {
-  class Inner {
-    class MoreInner {
+object JavaClassNameTest:
+  class Inner:
+    class MoreInner:
       class SuperInner
-    }
-  }
+
   object Inner {
     class EvenInner
+
     object EvenInner
   }
 }
 
-class JavaClassNameTest extends AnyFunSuite {
-  def test[T: ClassTag : JavaClassName : TypeString](implicit pos: Position): Unit =
+class JavaClassNameTest extends AnyFunSuite:
+  def test[T: ClassTag : JavaClassName : TypeString](usingPosition): Unit =
     test(TypeString.of[T])(assert(JavaClassName.of[T] == classTag[T].runtimeClass.getName))
 
   test[Any]
@@ -34,7 +35,7 @@ class JavaClassNameTest extends AnyFunSuite {
   test[Float]
   test[Double]
   test[String]
-//  test[Nothing]
+  //  test[Nothing]
   test[Array[Boolean]]
   test[Array[Char]]
   test[Array[Byte]]
@@ -44,7 +45,7 @@ class JavaClassNameTest extends AnyFunSuite {
   test[Array[Float]]
   test[Array[Double]]
   test[Array[String]]
-//  test[Array[Nothing]]
+  //  test[Array[Nothing]]
   test[JavaClassNameTest]
   test[JavaClassNameTest.type]
   test[JavaClassNameTest.Inner]
@@ -53,4 +54,3 @@ class JavaClassNameTest extends AnyFunSuite {
   test[JavaClassNameTest.Inner.type]
   test[JavaClassNameTest.Inner.EvenInner]
   test[JavaClassNameTest.Inner.EvenInner.type]
-}

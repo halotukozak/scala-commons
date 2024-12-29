@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc.macros
 
-import com.avsystem.commons.misc.TypeString
+import misc.TypeString
 
 import scala.quoted.{Expr, Quotes, Type}
 

@@ -1,17 +1,13 @@
 package com.avsystem.commons
 package jiop
 
+import misc.Timestamp
+
 import java.time.Instant
 
-import com.avsystem.commons.jiop.JavaTimeInterop.InstantOps
-import com.avsystem.commons.misc.Timestamp
+trait JavaTimeInterop:
+  extension (instant: Instant)
+    inline def truncateToTimestamp: Timestamp = Timestamp(instant.toEpochMilli)
+    inline def truncateToJDate: JDate = new JDate(instant.toEpochMilli)
 
-trait JavaTimeInterop {
-  implicit def instantOps(instant: Instant): InstantOps = new InstantOps(instant)
-}
-object JavaTimeInterop {
-  class InstantOps(private val instant: Instant) extends AnyVal {
-    def truncateToTimestamp: Timestamp = Timestamp(instant.toEpochMilli)
-    def truncateToJDate: JDate = new JDate(instant.toEpochMilli)
-  }
-}
+object JavaTimeInterop

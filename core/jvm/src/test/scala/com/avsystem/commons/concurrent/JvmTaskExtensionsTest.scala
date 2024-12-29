@@ -9,13 +9,13 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.concurrent.TimeoutException
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
-class JvmTaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures {
+final class JvmTaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures:
 
-  import com.avsystem.commons.concurrent.TaskExtensions._
+  import com.avsystem.commons.concurrent.TaskExtensions.*
 
-  private implicit val scheduler: Scheduler = Scheduler.global
+  private given scheduler: Scheduler = Scheduler.global
 
   // This test does not work in SJS runtime (but the method itself does)
   test("lazyTimeout") {
@@ -23,4 +23,4 @@ class JvmTaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDri
     result shouldBe a[TimeoutException]
     result.getMessage shouldBe "Lazy timeout"
   }
-}
+

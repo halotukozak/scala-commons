@@ -1,7 +1,8 @@
 package com.avsystem.commons
 package macros
 
-import com.avsystem.commons.misc.TypeString
+import macros.misc.TypeString
+
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
@@ -14,10 +15,11 @@ object TypeStringTest {
 
   class OFuu {
     val z = "z"
-    object bar {
+
+    object bar:
       val q = "q"
-    }
   }
+
   val fuu = new OFuu
 
   def defineTests[T: TypeString](suite: TypeStringTest): Unit = {
@@ -57,20 +59,20 @@ object TypeStringTest {
     testTypeString[ {type A >: Null <: String}]("{type A >: Null <: String}")
     testTypeString[ {type A[+X] = Int}]("{type A[+X] = Int}")
     testTypeString[ {type A[X] = List[X]}]("{type A[X] = List[X]}")
-//    testTypeString[ {type A[+X <: Set[X]] = List[X]}]("{type A[+X <: Set[X]] = List[X]}")
+    //    testTypeString[ {type A[+X <: Set[X]] = List[X]}]("{type A[+X <: Set[X]] = List[X]}")
     testTypeString[ {type A[F[+X] <: List[X]] = F[Int]}]("{type A[F[+X] <: List[X]] = F[Int]}")
-//    testTypeString[ {type A[F[X <: List[X]]] = F[Nothing]}]("{type A[F[X <: List[X]]] = F[Nothing]}")
+    //    testTypeString[ {type A[F[X <: List[X]]] = F[Nothing]}]("{type A[F[X <: List[X]]] = F[Nothing]}")
     testTypeString[ {val lol: Int}]("{val lol: Int}")
     testTypeString[ {var lol: Int}]("{var lol: Int}")
     testTypeString[ {def lol: Int}]("{def lol: Int}")
     testTypeString[ {def lol(): Int}]("{def lol(): Int}")
-//    testTypeString[ {def lol[A]: A}]("{def lol[A]: A}")
-//    testTypeString[ {def lol[A](x: Int): A}]("{def lol[A](x: Int): A}")
+    //    testTypeString[ {def lol[A]: A}]("{def lol[A]: A}")
+    //    testTypeString[ {def lol[A](x: Int): A}]("{def lol[A](x: Int): A}")
     testTypeString[ {def lol(x: Int): String}]("{def lol(x: Int): String}")
     testTypeString[ {def lol(x: => Int): String}]("{def lol(x: => Int): String}")
     testTypeString[ {def lol(xs: Int*): String}]("{def lol(xs: Int*): String}")
     testTypeString[ {def lol(xs: Int => String*): String}]("{def lol(xs: Int => String*): String}")
-//    testTypeString[ {def lol[**](xs: ** *): String}]("{def lol[**](xs: ** *): String}")
+    //    testTypeString[ {def lol[**](xs: ** *): String}]("{def lol[**](xs: ** *): String}")
     testTypeString[ {def lol(using x: Int, y: String): String}](
       "{def lol(using x: Int, y: String): String}")
     testTypeString[ {def lol(x: String): x.type}]("{def lol(x: String): x.type}")
@@ -92,13 +94,14 @@ class TypeStringTest extends AnyFunSuite {
 
   class Fuu {
     val z = "z"
-    object bar {
+
+    object bar:
       val q = "q"
-    }
   }
+
   val fuu = new Fuu
 
-  import TypeStringTest.{x, A}
+  import TypeStringTest.{A, x}
 
   testTypeString[Int]("Int")
   testTypeString[Integer]("Integer")
@@ -147,4 +150,4 @@ object UnrelatedTypeString {
     testTypeString[AnyRef & Serializable]("AnyRef & Serializable")
     testTypeString[AnyRef & Serializable {type A <: String}]("AnyRef & Serializable {type A <: String}")
   }
-}
+

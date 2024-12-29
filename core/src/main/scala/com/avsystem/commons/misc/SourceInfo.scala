@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.misc.macros.sourceInfo
+import misc.macros.sourceInfo
 
 /** Macro-materialized givenue that provides information about callsite source file position. It can be used in
-  * runtime for logging and debugging purposes. Similar to Scalactic's `Position`, but contains more information.
-  */
+ * runtime for logging and debugging purposes. Similar to Scalactic's `Position`, but contains more information.
+ */
 
 final case class SourceInfo(
   filePath: String,

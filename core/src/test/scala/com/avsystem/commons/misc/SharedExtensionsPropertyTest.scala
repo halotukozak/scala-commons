@@ -1,14 +1,15 @@
-package com.avsystem.commons.misc
+package com.avsystem.commons
+package misc
 
-import com.avsystem.commons.SharedExtensions._
+import SharedExtensions.*
 
 import org.scalacheck.{Gen, Shrink}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class SharedExtensionsPropertyTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks {
-  implicit def shrinkNonEmpty[C[_] <: Iterable[_], T](implicit base: Shrink[C[T]]): Shrink[C[T]] =
+final class SharedExtensionsPropertyTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks:
+  given shrinkNonEmpty[C[_] <: Iterable[?], T](using base: Shrink[C[T]]): Shrink[C[T]] =
     Shrink(base.shrink(_).filter(_.nonEmpty))
 
   private val elementGen = Gen.alphaChar
