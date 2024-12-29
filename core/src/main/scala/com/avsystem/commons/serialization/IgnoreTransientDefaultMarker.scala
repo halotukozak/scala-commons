@@ -12,4 +12,4 @@ package serialization
   *
   * @see [[CustomMarkersOutputWrapper]] for an easy way to add markers to existing [[Output]] implementations
   */
-object IgnoreTransientDefaultMarker extends CustomEventMarker[Unit]
+//object IgnoreTransientDefaultMarker extends CustomEventMarker[Unit]

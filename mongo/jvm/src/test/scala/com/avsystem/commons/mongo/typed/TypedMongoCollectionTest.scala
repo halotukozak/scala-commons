@@ -17,9 +17,9 @@ import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with BeforeAndAfterEach {
-  implicit val scheduler: Scheduler = Scheduler.fixedPool("test", 2)
+  given scheduler: Scheduler = Scheduler.fixedPool("test", 2)
 
-  override implicit def patienceConfig: PatienceConfig =
+  override given patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(10, Seconds), interval = Span(100, Milliseconds))
 
   implicit class taskOps[T](task: Task[T]) {

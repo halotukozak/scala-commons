@@ -7,12 +7,12 @@ import com.avsystem.commons.redis.protocol.RedisReply
 
 
 trait TupleSequencers { this: Sequencer.type =>
-  implicit def tuple1Sequencer[O1, R1](implicit
+  given tuple1Sequencer[O1, R1](implicit
     s1: Sequencer[O1, R1]): Sequencer[Tuple1[O1], Tuple1[R1]] =
 
     ops => s1.sequence(ops._1).map(Tuple1(_))
 
-  implicit def tuple2Sequencer[O1, O2, R1, R2](implicit
+  given tuple2Sequencer[O1, O2, R1, R2](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2]): Sequencer[(O1, O2), (R1, R2)] =
 
@@ -24,7 +24,7 @@ trait TupleSequencers { this: Sequencer.type =>
         arr(1).asInstanceOf[R2])
     )
 
-  implicit def tuple3Sequencer[O1, O2, O3, R1, R2, R3](implicit
+  given tuple3Sequencer[O1, O2, O3, R1, R2, R3](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3]): Sequencer[(O1, O2, O3), (R1, R2, R3)] =
@@ -40,7 +40,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple4Sequencer[O1, O2, O3, O4, R1, R2, R3, R4](implicit
+  given tuple4Sequencer[O1, O2, O3, O4, R1, R2, R3, R4](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -59,7 +59,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple5Sequencer[O1, O2, O3, O4, O5, R1, R2, R3, R4, R5](implicit
+  given tuple5Sequencer[O1, O2, O3, O4, O5, R1, R2, R3, R4, R5](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -81,7 +81,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple6Sequencer[O1, O2, O3, O4, O5, O6, R1, R2, R3, R4, R5, R6](implicit
+  given tuple6Sequencer[O1, O2, O3, O4, O5, O6, R1, R2, R3, R4, R5, R6](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -106,7 +106,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple7Sequencer[O1, O2, O3, O4, O5, O6, O7, R1, R2, R3, R4, R5, R6, R7](implicit
+  given tuple7Sequencer[O1, O2, O3, O4, O5, O6, O7, R1, R2, R3, R4, R5, R6, R7](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -134,7 +134,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple8Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, R1, R2, R3, R4, R5, R6, R7, R8](implicit
+  given tuple8Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, R1, R2, R3, R4, R5, R6, R7, R8](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -165,7 +165,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple9Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, R1, R2, R3, R4, R5, R6, R7, R8, R9](implicit
+  given tuple9Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, R1, R2, R3, R4, R5, R6, R7, R8, R9](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -199,7 +199,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple10Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10](implicit
+  given tuple10Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -236,7 +236,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple11Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11](implicit
+  given tuple11Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -276,7 +276,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple12Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12](implicit
+  given tuple12Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -319,7 +319,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple13Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13](implicit
+  given tuple13Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -365,7 +365,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple14Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14](implicit
+  given tuple14Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -414,7 +414,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple15Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15](implicit
+  given tuple15Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -466,7 +466,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple16Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16](implicit
+  given tuple16Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -521,7 +521,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple17Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17](implicit
+  given tuple17Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -579,7 +579,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple18Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18](implicit
+  given tuple18Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -640,7 +640,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple19Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19](implicit
+  given tuple19Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -704,7 +704,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple20Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, O20, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20](implicit
+  given tuple20Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, O20, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -771,7 +771,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple21Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, O20, O21, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21](implicit
+  given tuple21Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, O20, O21, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -841,7 +841,7 @@ trait TupleSequencers { this: Sequencer.type =>
     )
 
 
-  implicit def tuple22Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, O20, O21, O22, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22](implicit
+  given tuple22Sequencer[O1, O2, O3, O4, O5, O6, O7, O8, O9, O10, O11, O12, O13, O14, O15, O16, O17, O18, O19, O20, O21, O22, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15, R16, R17, R18, R19, R20, R21, R22](implicit
     s1: Sequencer[O1, R1],
     s2: Sequencer[O2, R2],
     s3: Sequencer[O3, R3],
@@ -963,7 +963,7 @@ object Gen {
 
       val code =
         s"""
-           |implicit def tuple${n}Sequencer[$os, $rs](implicit
+           |given tuple${n}Sequencer[$os, $rs](implicit
            |  $sequencers): Sequencer[($os), ($rs)] =
            |
            |  new Sequencer[($os), ($rs)] {

@@ -1,7 +1,10 @@
 package com.avsystem.commons
 package serialization
 
-object JavaCodecs {
-  implicit val buildablePojoCodec: GenCodec[BuildablePojo] =
-    GenCodec.fromJavaBuilder(BuildablePojo.builder())(_.build())
-}
+//package com.avsystem.commons
+//package serialization
+//
+//object JavaCodecs {
+//  given buildablePojoCodec: GenCodec[BuildablePojo] =
+//    GenCodec.fromJavaBuilder(BuildablePojo.builder())(_.build())
+//}

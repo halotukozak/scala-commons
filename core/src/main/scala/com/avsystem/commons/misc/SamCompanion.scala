@@ -3,13 +3,18 @@ package misc
 
 import com.avsystem.commons.misc.SamCompanion.ValidSam
 
-abstract class SamCompanion[T, F](implicit vs: ValidSam[T, F]) {
-  def apply(fun: F): T = macro com.avsystem.commons.macros.misc.SamMacros.toSam[T, F]
+abstract class SamCompanion[T, F](using ValidSam[T, F]) {
+  def apply(fun: F): T = Sam[T](fun)
 }
 
 object SamCompanion {
   sealed trait ValidSam[T, F]
-  object ValidSam {
-    implicit def isValidSam[T, F]: ValidSam[T, F] = macro com.avsystem.commons.macros.misc.SamMacros.validateSam[T, F]
-  }
+
+  object ValidSam:
+
+    private final val instance = new ValidSam[Any, Any] {}
+
+    inline given isValidSam[T, F]: ValidSam[T, F] =
+      if Sam.validateSam[T, F] then instance.asInstanceOf[ValidSam[T, F]]
+      else compiletime.error("Function type does not match the SAM type")
 }
