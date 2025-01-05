@@ -1,17 +1,21 @@
-package com.avsystem.commons
-package macros
-
 //package com.avsystem.commons
 //package macros
 //
-//class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
-//  def testKnownSubtypes[T, R]: Nothing = TestMacros.testKnownSubtypes[T, R]
+//import scala.deriving.Mirror
+//
+//final class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
+//  
 //
 //  sealed trait Base
+//
 //  case class Stuff(lol: Int) extends Base
+//
 //  case object OtherStuff extends Base
+//
 //  sealed trait SubHierarchy extends Base
+//
 //  case class MoreStuff(str: String) extends SubHierarchy
+//
 //  case object SubStuff extends SubHierarchy
 //
 //  testKnownSubtypes[Int, Nothing]
@@ -20,9 +24,13 @@ package macros
 //  testKnownSubtypes[Option[A], (None.type, Some[A])]
 //
 //  sealed trait Gadt[T]
+//
 //  case class Something[T](t: T) extends Gadt[T]
+//
 //  case class ListSomething[T](t: T) extends Gadt[List[T]]
+//
 //  case class RandomGenericSomething[T](t: T) extends Gadt[Int]
+//
 //  case object StringSomething extends Gadt[String]
 //
 //  testKnownSubtypes[Gadt[Int], (Something[Int], RandomGenericSomething[?], StringSomething.type)]
@@ -31,10 +39,15 @@ package macros
 //  testKnownSubtypes[Gadt[A], (Something[A], ListSomething[?], RandomGenericSomething[?], StringSomething.type)]
 //
 //  sealed trait InvGadt[T]
+//
 //  case class InvInt(lol: Int) extends InvGadt[Int]
+//
 //  case class InvString(str: String) extends InvGadt[String]
+//
 //  case class InvGen[T](t: T) extends InvGadt[T]
+//
 //  case class InvBounded[T <: AnyRef](t: T) extends InvGadt[T]
+//
 //  case class InvRecBounded[T <: Ordered[T]](t: T) extends InvGadt[T]
 //
 //  testKnownSubtypes[InvGadt[?],
@@ -44,11 +57,11 @@ package macros
 //  testKnownSubtypes[InvGadt[Set[?]],
 //    (InvInt, InvString, InvGen[Set[?]], InvBounded[Set[?]], InvRecBounded[Set[?]])]
 //  type X
-//  testKnownSubtypes[InvGadt[Set[X]], (InvInt, InvString, InvGen[Set[X]] , InvBounded[Set[X]] , InvRecBounded[Set[X]] )]
+//  testKnownSubtypes[InvGadt[Set[X]], (InvInt, InvString, InvGen[Set[X]], InvBounded[Set[X]], InvRecBounded[Set[X]])]
 //  testKnownSubtypes[InvGadt[Any],
 //    (InvInt, InvString, InvGen[Any], InvBounded[Any], InvRecBounded[Any])]
 //  type T <: Ordered[T]
-//  testKnownSubtypes[InvGadt[T], (InvInt, InvString, InvGen[T] , InvBounded[T] , InvRecBounded[T] )]
+//  testKnownSubtypes[InvGadt[T], (InvInt, InvString, InvGen[T], InvBounded[T], InvRecBounded[T])]
 //  testKnownSubtypes[InvGadt[Nothing],
 //    (InvInt, InvString, InvGen[Nothing], InvBounded[Nothing], InvRecBounded[Nothing])]
 //  testKnownSubtypes[InvGadt[A],
@@ -61,9 +74,13 @@ package macros
 //    (InvInt, InvString, InvGen[String], InvBounded[String], InvRecBounded[String])]
 //
 //  sealed trait CovGadt[+T]
+//
 //  case class CovInt(lol: Int) extends CovGadt[Int]
+//
 //  case class CovString(str: String) extends CovGadt[String]
+//
 //  case class CovGen[+T](t: T) extends CovGadt[T]
+//
 //  case class CovInvGen[T](t: T) extends CovGadt[T]
 //
 //  testKnownSubtypes[CovGadt[?], (CovInt, CovString, CovGen[Any], CovInvGen[?])]
@@ -72,9 +89,13 @@ package macros
 //  testKnownSubtypes[CovGadt[A], (CovInt, CovString, CovGen[A], CovInvGen[? <: A])]
 //
 //  sealed trait ContraGadt[-T]
+//
 //  case class ContraInt(lol: Int) extends ContraGadt[Int]
+//
 //  case class ContraString(str: String) extends ContraGadt[String]
+//
 //  case class ContraGen[-T]() extends ContraGadt[T]
+//
 //  case class ContraInvGen[T](t: T) extends ContraGadt[T]
 //
 //  // ContraInvGen case unnecessarily bloated but that shouldn't be a problem
@@ -85,6 +106,7 @@ package macros
 //  testKnownSubtypes[ContraGadt[A], (ContraInt, ContraString, ContraGen[A], ContraInvGen[? >: A])]
 //
 //  sealed trait CovGeneric[+T]
+//
 //  case class ListCovGeneric[+T](lt: List[T]) extends CovGeneric[List[T]]
 //
 //  testKnownSubtypes[CovGeneric[List[Int]], ListCovGeneric[Int]]
@@ -96,6 +118,7 @@ package macros
 //  object Outer {
 //    case object Inner extends Outer
 //  }
+//
 //  sealed trait Outer
 //
 //  testKnownSubtypes[Outer, Outer.Inner.type]
@@ -103,9 +126,11 @@ package macros
 //  sealed trait MemberedBase {
 //    type Elem
 //  }
+//
 //  class MemberedCase extends MemberedBase {
 //    type Elem = String
 //  }
+//
 //  class GenericMemberedCase[T] extends MemberedBase {
 //    type Elem = T
 //  }

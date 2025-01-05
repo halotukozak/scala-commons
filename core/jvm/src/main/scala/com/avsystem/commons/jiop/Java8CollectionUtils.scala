@@ -1,9 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import jiop.JStreamUtils.given_AsScala_JStream_SpecializedScalaJStream
-
-import scala.collection.Factory
+import jiop.JStreamUtils.given
 
 trait Java8CollectionUtils {
 
@@ -26,12 +24,12 @@ trait Java8CollectionUtils {
       coll.stream.asScala
 
   extension (coll: JCollection[Long])
-    inline def scalaLongStream: ScalaJLongStream = ???
-//      coll.stream.asScala
+    inline def scalaLongStream: ScalaJLongStream =
+      coll.stream.asScala
 
   extension (coll: JCollection[Double])
-    inline def scalaDoubleStream: ScalaJDoubleStream = ???
-//      coll.stream.asScala
+    inline def scalaDoubleStream: ScalaJDoubleStream =
+      coll.stream.asScala
 
   extension [K, V](map: JMap[K, V])
     inline def compute(key: K, remappingFunction: (K, V) => V): V =

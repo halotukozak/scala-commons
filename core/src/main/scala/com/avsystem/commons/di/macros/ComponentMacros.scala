@@ -2,7 +2,8 @@ package com.avsystem.commons
 package di.macros
 
 import di.{Component, ComponentInfo, Components}
-import macros.MacroUtils
+
+import com.avsystem.commons.MacroUtils
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -57,7 +58,7 @@ object ComponentMacros extends MacroUtils {
 
     object ComponentRef {
       lazy val ComponentRefSym: Symbol = TypeRepr.of[Component].classSymbol.get.singleMethodMember("ref")
-      lazy val InjectSym: Symbol = TypeRepr.of[Components].classSymbol.get.singleMethodMember("inject")
+      lazy val InjectSym: Symbol = TypeRepr.of[Components].classSymbol.get.fieldMember("inject")
 
       def unapply(tree: Term): Option[(Term, TypeRepr)] = tree match
         case Select(component, "ref") if tree.symbol == ComponentRefSym =>
@@ -85,18 +86,16 @@ object ComponentMacros extends MacroUtils {
     LocalSymbolsCollector.traverseTree(definition.asTerm)(Symbol.noSymbol)
     val componentDefLocals = LocalSymbolsCollector.symbolsFound
 
-    object DependencyValidator extends TreeTraverser {
+    object DependencyValidator extends TreeTraverser:
       override def traverseTree(tree: Tree)(owner: Symbol): Unit = tree match
         case t@ComponentRef(_) =>
           report.errorAndAbort(s"illegal nested component reference inside expression representing component dependency", t.pos)
         case t if t.symbol != Symbol.noSymbol && componentDefLocals.contains(t.symbol) =>
           report.errorAndAbort(s"illegal local value or method reference inside expression representing component dependency", t.pos)
         case _ =>
-          super.traverseTree(tree)(owner)
-    }
 
     DependencyValidator.traverseTree(definition.asTerm)(Symbol.noSymbol)
-    final class DependencyExtractor(depArray: Expr[IndexedSeq[Any]])(depsBuf: Expr[ListBuffer[Component[?]]])(using Quotes) extends TreeMap {
+    final class DependencyExtractor(depArray: Expr[IndexedSeq[Any]])(depsBuf: Expr[ListBuffer[Component[?]]]) extends TreeMap {
       lazy val ComponentInfoSym: Symbol = TypeRepr.of[ComponentInfo.type].classSymbol.get.fieldMember("info")
 
       override def transformTerm(term: Term)(owner: Symbol): Term = term match

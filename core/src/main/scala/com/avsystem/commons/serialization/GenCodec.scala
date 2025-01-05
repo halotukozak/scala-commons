@@ -1,45 +1,46 @@
 package com.avsystem.commons
 package serialization
 
-//
-//import com.avsystem.commons.annotation.explicitGenerics
-//import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-//import com.avsystem.commons.jiop.JFactory
-//import com.avsystem.commons.meta.Fallback
-//import com.avsystem.commons.misc.{Bytes, Timestamp}
-//
-//import java.util.UUID
-//import scala.annotation.{implicitNotFound, tailrec}
-//import scala.collection.Factory
-//
-///**
-//  * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
-//  * from [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
-//  * objects, without being bound to particular format like JSON. The actual format is determined by implementation
-//  * of [[Input]] and [[Output]].
-//  *
-//  * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and `materializeRecursively`).
-//  * However, [[GenCodec]] instances still need to be explicitly declared and won't be derived "automagically".
-//  */
-//@implicitNotFound("No GenCodec found for ${T}")
-//trait GenCodec[T] {
-//  /**
-//    * Deserializes a value of type `T` from an [[Input]].
-//    */
-//  def read(input: Input): T
-//
-//  /**
-//    * Serializes a value of type `T` into an [[Output]].
-//    */
-//  def write(output: Output, value: T): Unit
-//
-//  /**
-//    * Transforms this codec into a codec of other type using a bidirectional conversion
-//    * between the original and new type.
-//    */
-//  final def transform[U](onWrite: U => T, onRead: T => U): GenCodec[U] =
-//    new GenCodec.Transformed[U, T](this, onWrite, onRead)
-//}
+
+import annotation.explicitGenerics
+import derivation.{AllowImplicitMacro, DeferredInstance}
+import jiop.JFactory
+import meta.Fallback
+import misc.{Bytes, Timestamp}
+
+import java.util.UUID
+import scala.annotation.{implicitNotFound, tailrec}
+import scala.collection.Factory
+
+/**
+ * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
+ * from [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
+ * objects, without being bound to particular format like JSON. The actual format is determined by implementation
+ * of [[Input]] and [[Output]].
+ *
+ * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and `materializeRecursively`).
+ * However, [[GenCodec]] instances still need to be explicitly declared and won't be derived "automagically".
+ */
+@implicitNotFound("No GenCodec found for ${T}")
+trait GenCodec[T] {
+  /**
+   * Deserializes a value of type `T` from an [[Input]].
+   */
+  def read(input: Input): T
+
+  /**
+   * Serializes a value of type `T` into an [[Output]].
+   */
+  def write(output: Output, value: T): Unit
+
+  /**
+   * Transforms this codec into a codec of other type using a bidirectional conversion
+   * between the original and new type.
+   */
+  final def transform[U](onWrite: U => T, onRead: T => U): GenCodec[U] =
+    new GenCodec.Transformed[U, T](this, onWrite, onRead)
+}
+
 //
 object GenCodec {
   //  extends RecursiveAutoCodecs with TupleGenCodecs {
@@ -364,22 +365,22 @@ object GenCodec {
   //      new Transformed(wrapped, tw.unwrap, tw.wrap)
   //  }
   //
-  //  final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
-  //    def read(input: Input): A = {
-  //      val wrappedValue = wrapped.read(input)
-  //      try onRead(wrappedValue) catch {
-  //        case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
-  //      }
-  //    }
-  //
-  //    def write(output: Output, value: A): Unit = {
-  //      val wrappedValue = try onWrite(value) catch {
-  //        case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
-  //      }
-  //      wrapped.write(output, wrappedValue)
-  //    }
-  //  }
-  //
+  final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
+    def read(input: Input): A = {
+      val wrappedValue = wrapped.read(input)
+      try onRead(wrappedValue) catch {
+        case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
+      }
+    }
+
+    def write(output: Output, value: A): Unit = {
+      val wrappedValue = try onWrite(value) catch {
+        case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
+      }
+      wrapped.write(output, wrappedValue)
+    }
+  }
+
   //  def underlyingCodec(codec: GenCodec[_]): GenCodec[_] = codec match {
   //    case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
   //    case _ => codec

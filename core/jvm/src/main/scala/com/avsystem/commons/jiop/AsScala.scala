@@ -7,5 +7,5 @@ import scala.compiletime.summonInline
 abstract class AsScala[-JavaType, +ScalaType] extends (JavaType => ScalaType):
   override def apply(e: JavaType): ScalaType
 
-extension [J, S](e: J)(using AsScala[J, S])
-  inline def asScala: S = summon[AsScala[J, S]].apply(e)
+extension [J, S](e: J)(using AsScala[J, S]) //in order to not provide `asScala` extension for `Any` type
+  def asScala(using inst: AsScala[J, S]): S = inst.apply(e)

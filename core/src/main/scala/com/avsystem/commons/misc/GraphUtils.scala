@@ -4,15 +4,13 @@ package misc
 import scala.annotation.tailrec
 
 object GraphUtils {
-  case class DfsPtr[+T](node: T, edgesLeft: List[T])
+  final case class DfsPtr[+T](node: T, edgesLeft: List[T])
 
-  trait DfsAction[-T] {
+  trait DfsAction[-T]:
     def apply(node: T, dfsStack: List[DfsPtr[T]]): Unit
-  }
 
-  object NoAction extends DfsAction[Any] {
+  object NoAction extends DfsAction[Any]:
     def apply(node: Any, dfsStack: List[DfsPtr[Any]]): Unit = ()
-  }
 
   /**
    * Traverses a graph using depth first search.
@@ -34,31 +32,28 @@ object GraphUtils {
     val visited = new MHashMap[T, Boolean]
 
     @tailrec
-    def loop(stack: List[DfsPtr[T]]): Unit = stack match {
-      case DfsPtr(node, deps) :: stackTail => deps match {
+    def loop(stack: List[DfsPtr[T]]): Unit = stack match
+      case DfsPtr(node, deps) :: stackTail => deps match
         case Nil =>
           onExit(node, stack)
           visited(node) = false
           loop(stackTail)
-        case nextDep :: depsTail => visited.get(nextDep) match {
+        case nextDep :: depsTail => visited.get(nextDep) match
           case None =>
             onEnter(nextDep, stack)
             visited(nextDep) = true
             loop(DfsPtr(nextDep, edges(nextDep)) :: DfsPtr(node, depsTail) :: stackTail)
           case Some(beingVisited) =>
-            if (beingVisited) {
+            if beingVisited then
               onCycle(nextDep, stack)
-            } else {
+            else
               onRevisit(nextDep, stack)
-            }
             loop(DfsPtr(node, depsTail) :: stackTail)
-        }
-      }
       case Nil =>
-    }
+
 
     nodes.foreach { node =>
-      if (!visited.contains(node)) {
+      if !visited.contains(node) then {
         val initStack = List(DfsPtr(node, edges(node)))
         onEnter(node, initStack)
         visited(node) = true

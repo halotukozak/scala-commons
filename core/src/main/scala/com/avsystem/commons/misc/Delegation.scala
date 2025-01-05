@@ -1,6 +1,3 @@
-package com.avsystem.commons
-package misc
-
 //package com.avsystem.commons
 //package misc
 //
@@ -12,8 +9,7 @@ package misc
 //}
 //
 //object Delegation {
-//  given materializeDelegation[A, B]: Delegation[A, B] =
-//  macro com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
+//  inline given materializeDelegation[A, B]: Delegation[A, B] = ${ materializeDelegationImpl[A, B] }
 //
 //  /**
 //    * Provides following syntax:
@@ -23,7 +19,7 @@ package misc
 //    */
 //  def apply[B] = new CurriedDelegation[B]
 //
-//  class CurriedDelegation[B] {
-//    def apply[A](source: A): B = macro com.avsystem.commons.macros.misc.DelegationMacros.delegate[A, B]
+//  final class CurriedDelegation[B] {
+//    inline def apply[A](source: A): B = ${ delegateImpl[A, B] }
 //  }
 //}

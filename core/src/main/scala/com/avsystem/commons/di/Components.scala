@@ -7,7 +7,7 @@ import misc.SourceInfo
 
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
-import scala.annotation.compileTimeOnly
+import scala.quoted.Type
 
 /**
  * Base trait for classes that define collections of interdependent [[Component]]s.
@@ -52,7 +52,6 @@ trait Components extends ComponentsLowPrio {
    * `singleton` will create separate [[Component]] with different cache key.
    */
   protected inline def singleton[T](inline definition: => T)(using si: SourceInfo): Component[T] =
-    //    ${ ComponentMacros.component[T]('{ definition }, '{ componentInfo(si) }, '{ singletonsCache }) }
     ${ ComponentMacros.mkComponent[T]('{ definition }, '{ componentInfo(si) }, '{ Some(singletonsCache) }, async = false) }
 
   /**
@@ -77,6 +76,7 @@ trait Components extends ComponentsLowPrio {
 }
 
 trait ComponentsLowPrio {
-  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside code passed to component/singleton macro")
-  given inject[T]: Conversion[Component[T], T] = sys.error("stub")
+  //  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside code passed to component/singleton macro")
+  //  given inject[T]: Conversion[Component[T], T] = sys.error("stub")
+  implicit def inject[T](using Component[T]): T = sys.error("stub")
 }

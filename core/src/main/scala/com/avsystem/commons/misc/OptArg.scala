@@ -53,9 +53,9 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
 
   private def value: A = rawValue.asInstanceOf[A]
 
-  inline def get: A = if isEmpty then throw new NoSuchElementException("empty OptArg") else value
+  def get: A = if isEmpty then throw new NoSuchElementException("empty OptArg") else value
 
-  inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
+  def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
 
   inline def isDefined: Boolean = !isEmpty
 

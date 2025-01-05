@@ -1,8 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import misc.macros.misc.SamMacros
-
+import misc.macros.*
 
 object Sam {
 
@@ -11,7 +10,7 @@ object Sam {
    * method or - in case the method does not take any arguments - an expression which will be returned in the
    * implementation of abstract method (as if the expression was passed as by-name parameter).
    */
-  inline def apply[T](fun: Any): T = ${ SamMacros.createSam[T, fun.type]('{ fun }) }
+  inline def apply[T](fun: Any): T = ${ createSamImpl[T, fun.type]('{ fun }) }
 
-  inline def validateSam[T, F]: Boolean = ${ SamMacros.validateSam[T, F] }
+  inline def validateSam[T, F]: Boolean = ${ validateSamImpl[T, F] }
 }

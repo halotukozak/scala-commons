@@ -1,26 +1,13 @@
 package com.avsystem.commons
 package jiop
 
-import com.avsystem.commons.misc.{Sam, Timestamp}
+import misc.{Sam, Timestamp}
 
 import java.util.Comparator
 import java.util.concurrent.Callable
 import java.{lang as jl, math as jm, util as ju}
 
 trait JBasicUtils {
-  def jRunnable(code: => Any) = Sam[Runnable](code)
-
-  def jCallable[T](expr: => T) = Sam[Callable[T]](expr)
-
-  def jComparator[T](cmp: (T, T) => Int) = Sam[Comparator[T]](cmp)
-
-  extension (jDate: JDate)
-    def toTimestamp: Timestamp = Timestamp(jDate.getTime)
-    def toJsDate: JDate = new JDate(jDate.getTime)
-    def toJDate: JDate = new JDate(jDate.getTime)
-
-  end extension
-
   type JByte = jl.Byte
   type JShort = jl.Short
   type JInteger = jl.Integer
@@ -36,4 +23,17 @@ trait JBasicUtils {
   type JVoid = jl.Void
   type JEnum[E <: jl.Enum[E]] = jl.Enum[E]
   type JStringBuilder = jl.StringBuilder
+
+  def jRunnable(code: => Any): Runnable = Sam[Runnable](code)
+
+  def jCallable[T](expr: => T): Callable[T] = Sam[Callable[T]](expr)
+
+  def jComparator[T](cmp: (T, T) => Int): Comparator[T] = Sam[Comparator[T]](cmp)
+
+  extension (jDate: JDate) {
+    def toTimestamp: Timestamp = Timestamp(jDate.getTime)
+    def toJsDate: JDate = new JDate(jDate.getTime)
+    def toJDate: JDate = new JDate(jDate.getTime)
+
+  }
 }

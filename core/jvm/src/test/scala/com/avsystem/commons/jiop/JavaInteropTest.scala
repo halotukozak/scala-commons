@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import jiop.GuavaInterop.*
+import jiop.GuavaInterop.{*, given}
 
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
@@ -9,6 +9,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import JStreamUtils.given 
 
 final class JavaInteropTest extends AnyFunSuite:
 

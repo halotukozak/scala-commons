@@ -97,7 +97,7 @@ package macros
 //    val sym = typecheck(q"val ${c.freshName(TermName(""))} = null").symbol
 //    Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).drop(1).toList
 //  }
-//
+////
 //  final lazy val enclosingClasses = {
 //    val enclosingSym = typecheck(q"this", silent = true) match {
 //      case EmptyTree => Iterator.iterate(c.internal.enclosingOwner)(_.owner).find(_.isModuleClass).get
@@ -162,21 +162,12 @@ package macros
 //    withMacrosDisabled: Boolean = false
 //  ): Tree = measure("typecheck")(c.typecheck(tree, mode, pt, silent, withImplicitViewsDisabled, withMacrosDisabled))
 //
-//  def containsInaccessibleThises(tree: Tree): Boolean = tree.exists {
-//    case t@This(_) if !t.symbol.isPackageClass && !enclosingClasses.contains(t.symbol) => true
-//    case _ => false
-//  }
+
 //
 //  def indent(str: String, indent: String): String =
 //    str.replace("\n", s"\n$indent")
 //
-//  def rawAnnotations(s: Symbol): List[Annotation] = {
-//    s.info // srsly scalac, load these goddamned annotations
-//    // for vals or vars, fetch annotations from underlying field
-//    if (s.isMethod && s.asMethod.isGetter)
-//      s.annotations ++ s.asMethod.accessed.annotations
-//    else s.annotations
-//  }
+
 //
 //  def correctAnnotTree(tree: Tree, seenFrom: Type): Tree =
 //    treeAsSeenFrom(fixMethodTparamRefs(tree.duplicate), seenFrom)
@@ -1216,42 +1207,9 @@ package macros
 //    }
 //  }
 //
-//  def singleValueFor(tpe: Type): Option[Tree] = measure("singleValueFor")(tpe match {
-//    case ThisType(sym) if enclosingClasses.contains(sym) =>
-//      Some(This(sym))
-//    case ThisType(sym) if sym.isModuleClass =>
-//      singleValueFor(internal.thisType(sym.owner)).map(pre => Select(pre, tpe.termSymbol))
-//    case ThisType(sym) =>
-//      Some(This(sym))
-//    case SingleType(NoPrefix, sym) =>
-//      Some(Ident(sym))
-//    case SingleType(pre, sym) =>
-//      singleValueFor(pre).map(prefix => Select(prefix, sym))
-//    case ConstantType(value) =>
-//      Some(Literal(value))
-//    case TypeRef(pre, sym, Nil) if sym.isModuleClass =>
-//      singleValueFor(pre).map(prefix => Select(prefix, sym.asClass.module))
-//    case _ =>
-//      None
-//  })
+
 //
-//  def typedCompanionOf(tpe: Type): Option[Tree] = {
-//    val result = tpe match {
-//      case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
-//        singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
-//      case TypeRef(NoPrefix, sym, _) =>
-//        // apparently, sym.companion returns NoSymbol for local classes, so we have to find the companion manually
-//        val companionRef = Ident(sym.name.toTermName)
-//        typecheck(companionRef, silent = true) match {
-//          case EmptyTree => None
-//          case tree if tree.symbol.isModule => Some(tree)
-//          case _ => None
-//        }
-//      case _ =>
-//        singleValueFor(tpe.companion)
-//    }
-//    result.map(typecheck(_))
-//  }
+
 //
 //  def typeOfTypeSymbol(sym: TypeSymbol): Type = sym.toType match {
 //    case t@TypeRef(pre, s, Nil) if t.takesTypeArgs =>
@@ -1259,15 +1217,9 @@ package macros
 //    case t => t
 //  }
 //
-//  def isSealedHierarchyRoot(sym: Symbol): Boolean = {
-//    sym.info // force loading of type information, sometimes it may be missing when loading from classfile
-//    sym.isClass && sym.isAbstract && sym.asClass.isSealed
-//  }
+
 //
-//  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
-//    sym.asClass.knownDirectSubclasses.flatMap { s =>
-//      if (isSealedHierarchyRoot(s)) knownNonAbstractSubclasses(s) else Set(s)
-//    }
+
 //
 //  def allCurrentlyKnownSubclasses(sym: Symbol): Set[Symbol] =
 //    if (sym.isClass) {
@@ -1279,17 +1231,7 @@ package macros
 //  def ownersOf(sym: Symbol): List[Symbol] =
 //    ownersCache.getOrElseUpdate(sym, Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList.reverse)
 //
-//  private val positionCache = new mutable.HashMap[Symbol, Int]
-//  def positionPoint(sym: Symbol): Int =
-//    if (c.enclosingPosition.source == sym.pos.source) sym.pos.point
-//    else positionCache.getOrElseUpdate(sym,
-//      rawAnnotations(sym).find(_.tree.tpe <:< PositionedAT).map(_.tree).map {
-//        case Apply(_, List(MaybeTyped(Lit(point: Int), _))) => point
-//        case t => abort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
-//      } getOrElse {
-//        abort(s"Could not determine source position of $sym - " +
-//          s"it resides in separate file than macro invocation and has no @positioned annotation")
-//      })
+
 //
 //  def innerTypeSymbols(tpe: Type): Set[Symbol] = {
 //    val result = Set.newBuilder[Symbol]
@@ -1316,24 +1258,7 @@ package macros
 //    }
 //    result.result()
 //  }
-//
-//  def knownSubtypes(tpe: Type, ordered: Boolean = false): Option[List[Type]] = measure("knownSubtypes") {
-//    val dtpe = tpe.map(_.dealias)
-//    val tpeSym = dtpe match {
-//      case RefinedType(List(single), _) => single.typeSymbol
-//      case _ => dtpe.typeSymbol
-//    }
-//
-//    def sort(subclasses: List[Symbol]): List[Symbol] =
-//      if (ordered || c.enclosingPosition.source == tpeSym.pos.source)
-//        subclasses.sortBy(positionPoint)
-//      else subclasses
-//
-//    Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
-//      sort(knownNonAbstractSubclasses(sym).toList)
-//        .flatMap(subSym => determineSubtype(dtpe, subSym.asType))
-//    }
-//  }
+///
 //
 //  // determine subtype assuming that we're dealing with simple TypeRefs (no structural types etc.)
 //  // and subtype simply passes its type parameters to base type without wrapping them into anything

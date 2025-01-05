@@ -44,25 +44,7 @@ import scala.quoted.*
 //  def crossImpl(forJvm: Tree, forJs: Tree): Tree =
 //    if (isScalaJs) forJs else forJvm
 //
-//  def enumValName: Tree = {
-//    def omitAnonClass(owner: Symbol): Symbol =
-//      if (owner.isConstructor && owner.owner.name.toString.contains("$anon"))
-//        owner.owner.owner
-//      else owner
-//
-//    val owner = omitAnonClass(c.internal.enclosingOwner)
-//    val valid = owner.isTerm && owner.owner == c.prefix.tree.symbol && {
-//      val term = owner.asTerm
-//      term.isVal && term.isFinal && !term.isLazy && term.getter.isPublic &&
-//        term.typeSignature <:< getType(tq"${c.prefix}.Value")
-//    }
-//    if (!valid) {
-//      abort("ValueEnum must be assigned to a public, final, non-lazy val in its companion object " +
-//        "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass")
-//    }
-//
-//    q"new ${c.prefix}.ValName(${owner.asTerm.getter.name.decodedName.toString})"
-//  }
+
 //
 //  def optionalizeFirstArg(expr: Tree): Tree = expr match {
 //    case Apply(MaybeTypeApply(Select(prefix, name: TermName), targs), head :: tail) =>
@@ -314,147 +296,9 @@ import scala.quoted.*
 //    }
 //  }
 //
-//  def macroInstances: Tree = {
-//    val resultTpe = c.macroApplication.tpe
-//    val applySig = resultTpe.member(TermName("apply")).typeSignatureIn(resultTpe)
-//    val implicitsTpe = applySig.paramLists.head.head.typeSignature
-//    val instancesTpe = applySig.finalResultType
+
 //
-//    val instTs = instancesTpe.typeSymbol
-//    if (!(instTs.isClass && instTs.isAbstract)) {
-//      abort(s"Expected trait or abstract class type, got $instancesTpe")
-//    }
-//
-//    val instancesMethods = instancesTpe.members.iterator
-//      .filter(m => m.isAbstract && m.isMethod && !m.asTerm.isSetter).map(_.asMethod).toList.reverse
-//
-//    val CompanionParamName = c.freshName(TermName("companion"))
-//
-//    def impl(singleMethod: Option[Symbol]): Tree = {
-//      val impls = instancesMethods.map { m =>
-//        val sig = m.typeSignatureIn(instancesTpe)
-//        val resultTpe = sig.finalResultType.dealias
-//
-//        val materializer =
-//          if (singleMethod.exists(_ != m))
-//            q"$PredefObj.???"
-//          else findAnnotation(m, MaterializeWithAT) match {
-//            case Some(annot) =>
-//              val errorPos = annot.errorPos.getOrElse(c.enclosingPosition)
-//              annot.tree match {
-//                case Apply(_, List(prefix, macroNameTree)) =>
-//                  val macroName = macroNameTree match {
-//                    case StringLiteral(name) => name
-//                    case t if t.symbol.isSynthetic && t.symbol.name.decodedName == TermName("<init>$default$2") =>
-//                      "materialize"
-//                    case _ => abortAt("expected string literal as second argument of @materializeWith", errorPos)
-//                  }
-//                  q"$prefix.${TermName(macroName)}"
-//                case _ =>
-//                  abortAt("bad @materializeWith annotation", errorPos)
-//              }
-//            case None =>
-//              val resultCompanion = typedCompanionOf(resultTpe)
-//                .getOrElse(abort(s"$resultTpe has no companion object with `materialize` macro"))
-//              q"$resultCompanion.materialize"
-//          }
-//
-//        val instTpeTree = treeForType(sig.finalResultType)
-//        if (!m.isGetter) {
-//          val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
-//          val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
-//          val argss = sig.paramLists match {
-//            case List(Nil) => Nil
-//            case paramss => paramss.filterNot(_.exists(_.isImplicit)).map(_.map(s => q"${s.name.toTermName}"))
-//          }
-//          q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $materializer(...$argss)"
-//        }
-//        else if (m.isVar || m.setter != NoSymbol)
-//          q"var ${m.name}: $instTpeTree = $materializer"
-//        else
-//          q"val ${m.name}: $instTpeTree = $materializer"
-//      }
-//
-//      val implicitsName = c.freshName(TermName("implicits"))
-//      def implicitImports(tpe: Type, expr: Tree): List[Tree] = {
-//        val dtpe = tpe.dealias
-//        if (dtpe =:= typeOf[Unit]) Nil
-//        else if (definitions.TupleClass.seq.contains(dtpe.typeSymbol))
-//          dtpe.typeArgs.zipWithIndex.flatMap {
-//            case (ctpe, idx) => implicitImports(ctpe, q"$expr.${TermName(s"_${idx + 1}")}")
-//          }
-//        else List(q"import $expr._")
-//      }
-//
-//      q"""
-//        new $resultTpe {
-//          def apply($implicitsName: $implicitsTpe, $CompanionParamName: Any): $instancesTpe = {
-//            ..${implicitImports(implicitsTpe, Ident(implicitsName))}
-//            new $instancesTpe { ..$impls; () }
-//          }
-//        }
-//       """
-//    }
-//
-//    //If full implementation doesn't typecheck, find the first problematic typeclass and limit
-//    //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
-//    val fullImpl = impl(None)
-//    debug(show(fullImpl))
-//    val result = c.typecheck(fullImpl, silent = true) match {
-//      case EmptyTree =>
-//        instancesMethods.iterator.map(m => impl(Some(m)))
-//          .find(t => c.typecheck(t, silent = true) == EmptyTree)
-//          .getOrElse(fullImpl)
-//      case t => t
-//    }
-//
-//    enclosingConstructorCompanion match {
-//      case NoSymbol => result
-//      case companionSym =>
-//        // Replace references to companion object being constructed with casted reference to
-//        // `companion` parameter. All this horrible wiring is to workaround stupid overzealous Scala validation of
-//        // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
-//        // We're going to replace some parts of already typechecked tree. This means we must insert already
-//        // typechecked replacements.
-//
-//        val replacementDecl = result.find {
-//          case ValDef(mods, CompanionParamName, _, EmptyTree) => mods.hasFlag(Flag.PARAM)
-//          case _ => false
-//        }
-//        val replacementSym = replacementDecl.fold(NoSymbol)(_.symbol)
-//
-//        // must construct tree which is already fully typechecked
-//        def replacementTree(orig: Tree): Tree = {
-//          val replacementIdent = internal.setType(
-//            internal.setSymbol(Ident(CompanionParamName), replacementSym),
-//            internal.singleType(NoPrefix, replacementSym)
-//          )
-//          val asInstanceOfMethod = definitions.AnyTpe.member(TermName("asInstanceOf"))
-//          val asInstanceOfSelect = internal.setType(
-//            internal.setSymbol(Select(replacementIdent, asInstanceOfMethod), asInstanceOfMethod),
-//            asInstanceOfMethod.info
-//          )
-//          val typeAppliedCast = internal.setType(
-//            internal.setSymbol(TypeApply(asInstanceOfSelect, List(TypeTree(orig.tpe))), asInstanceOfMethod),
-//            orig.tpe
-//          )
-//          typeAppliedCast
-//        }
-//
-//        object replacer extends Transformer {
-//          override def transform(tree: Tree): Tree = tree match {
-//            case This(_) if tree.symbol == companionSym.asModule.moduleClass => replacementTree(tree)
-//            case _ if tree.symbol == companionSym => replacementTree(tree)
-//            case _ => super.transform(tree)
-//          }
-//        }
-//
-//        replacer.transform(result)
-//    }
-//  }
-//
-//  def posPoint: Tree =
-//    q"${c.enclosingPosition.point}"
+
 //
 //  def applyUnapplyOrFail(tpe: Type): ApplyUnapply =
 //    applyUnapplyFor(tpe).getOrElse(abort(
@@ -555,14 +399,7 @@ import scala.quoted.*
 //    else abort(s"$sym is not a class")
 //  }
 //
-//  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-//    val atpe = weakTypeOf[A]
-//    val tpe = weakTypeOf[T]
-//    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
-//    val annot = findAnnotation(sym, atpe)
-//      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
-//    q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
-//  }
+//
 //
 //  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
 //    val atpe = weakTypeOf[A]
@@ -615,12 +452,7 @@ import scala.quoted.*
 //    q"$MiscPkg.SelfOptAnnotation($annotTree)"
 //  }
 //
-//  def selfAnnotations[A: WeakTypeTag]: Tree = instrument {
-//    val atpe = weakTypeOf[A]
-//    val sym = classBeingConstructed
-//    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
-//    q"$MiscPkg.SelfAnnotations($ListObj(..$annots))"
-//  }
+
 //
 //  def selfInstance[C: WeakTypeTag]: Tree = instrument {
 //    val TypeRef(pre, constrSym, _) = weakTypeOf[C].typeConstructor
@@ -628,21 +460,7 @@ import scala.quoted.*
 //    q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
 //  }
 //
-//  def aggregatedAnnots: Tree = {
-//    val aggregatedMethod = c.internal.enclosingOwner
-//    if (!aggregatedMethod.overrides.contains(AggregatedMethodSym)) {
-//      abort("reifyAggregated macro must only be used to implement AnnotationAggregate.aggregated method")
-//    }
-//    if (aggregatedMethod.asMethod.isGetter || !aggregatedMethod.isFinal) {
-//      abort("AnnotationAggregate.aggregated method implemented with reifyAggregated macro must be a final def")
-//    }
-//    val annotTrees = rawAnnotations(aggregatedMethod)
-//      .filter(_.tree.tpe <:< StaticAnnotationTpe).map(a => c.untypecheck(a.tree))
-//    if (annotTrees.isEmpty) {
-//      warning("no aggregated annotations found on enclosing method")
-//    }
-//    q"$ListObj(..$annotTrees)"
-//  }
+
 //
 //  def simpleClassName[T: WeakTypeTag]: Tree = instrument {
 //    val sym = classSymbol(weakTypeOf[T].dealias.typeSymbol)

@@ -28,7 +28,7 @@ trait LowPrioBoxing { this: Boxing.type =>
 final case class Unboxing[+A, -B](fun: B => A) extends AnyVal
 
 object Unboxing extends LowPrioUnboxing {
-  def fromImplicitConv[A, B](implicit conv: B => A): Unboxing[A, B] = Unboxing(conv)
+  def fromImplicitConv[A, B](using conv: B => A): Unboxing[A, B] = Unboxing(conv)
 
   given BooleanUnboxing: Unboxing[Boolean, JBoolean] = fromImplicitConv
 

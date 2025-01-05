@@ -1,13 +1,17 @@
 package com.avsystem.commons
 package testutil
 
-////package com.avsystem.commons
-//package testutil
-//
-//import com.avsystem.commons.macros.TestMacros
-//import org.scalatest.Assertions
-//
-//trait CompilationErrorAssertions extends Assertions {
-//  def typeErrorFor(code: String): String = macro TestMacros.typeErrorImpl
-//}
-//
+import macros.TestMacros
+
+import org.scalactic.source.Position
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Assertion, Assertions, Inspectors}
+
+import scala.compiletime.testing
+import scala.quoted.{Expr, Quotes}
+
+trait CompilationErrorAssertions extends Assertions {
+  inline def typeErrorFor(inline code: String)(using Position): String =
+    scala.compiletime.testing.typeCheckErrors(code).head.message
+}
+

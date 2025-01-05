@@ -1,40 +1,38 @@
 package com.avsystem.commons
 package misc
 
-//package com.avsystem.commons
-//package misc
-//
-//import org.scalatest.funsuite.AnyFunSuite
-//
-//import scala.annotation.nowarn
-//
-//class SamTest extends AnyFunSuite {
+
+import org.scalatest.funsuite.AnyFunSuite
+
+import scala.annotation.nowarn
+
+//final class SamTest extends AnyFunSuite with com.avsystem.commons.MacroUtils:
 //
 //  test("no arg lists by name") {
 //    trait NoArgListsSam {
 //      def handle: String
 //    }
-////    object NoArgListsSam extends SamCompanion[NoArgListsSam, String]
-////
-////    val sam = NoArgListsSam("42")
-////    assert(sam.handle == "42")
-////
-////    val adhoc = Sam[NoArgListsSam]("42")
-////    assert(adhoc.handle == "42")
+//    object NoArgListsSam extends SamCompanion[NoArgListsSam, String]
+//
+//    val sam = NoArgListsSam("42")
+//    assert(sam.handle == "42")
+//
+//    val adhoc = Sam[NoArgListsSam]("42")
+//    assert(adhoc.handle == "42")
 //  }
 //
-////  test("no args") {
-////    trait NoArgSam {
-////      def handle(): String
-////    }
-////    object NoArgSam extends SamCompanion[NoArgSam, () => String]
-////
-////    val sam = NoArgSam(() => "42")
-////    assert(sam.handle() == "42")
-////
-////    val adhoc = Sam[NoArgSam](() => "42")
-////    assert(adhoc.handle() == "42")
-////  }
+//  test("no args") {
+//    trait NoArgSam {
+//      def handle(): String
+//    }
+//    object NoArgSam extends SamCompanion[NoArgSam, () => String]
+//
+//    val sam = NoArgSam(() => "42")
+//    assert(sam.handle() == "42")
+//
+//    val adhoc = Sam[NoArgSam](() => "42")
+//    assert(adhoc.handle() == "42")
+//  }
 //
 //  test("no args by name") {
 //    trait NoArgSam {
@@ -87,6 +85,7 @@ package misc
 //    assert(fullSam.handle(123)("lol") == "123lol")
 //
 //    def ptApplied(i: Int) = (s: String) => i.toString + s
+//
 //    val partialSam = MultipleArgListsSam(i => ptApplied(i))
 //    assert(partialSam.handle(123)("lol") == "123lol")
 //
@@ -106,5 +105,4 @@ package misc
 //    val adhoc = Sam[ImplicitParamsSam]((i: Int) => (s: String) => i.toString + s)
 //    assert(adhoc.handle(123)("lol") == "123lol")
 //  }
-//
-//}
+

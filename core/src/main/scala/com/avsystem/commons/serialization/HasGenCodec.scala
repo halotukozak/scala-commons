@@ -1,22 +1,17 @@
 package com.avsystem.commons
 package serialization
 
-//package com.avsystem.commons
-//package serialization
-//
-//import com.avsystem.commons.meta.MacroInstances
-//import com.avsystem.commons.meta.MacroInstances.materializeWith
-//import com.avsystem.commons.misc.ValueOf
-//
-///**
-//  * Convenience abstract class for companion objects of types that have a [[GenCodec]].
-//  * There are many other flavors of this base companion class. For example, if you want to inject additional implicits
-//  * into [[GenCodec]] materialization, you can use [[HasGenCodecWithDeps]], for parameterized data types you can
-//  * use [[HasPolyGenCodec]], etc.
-//  */
-//abstract class HasGenCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenCodec[T]]) {
-//  given codec: GenCodec[T] = macroCodec((), this).apply()
-//}
+import meta.MacroInstances
+
+/**
+  * Convenience abstract class for companion objects of types that have a [[GenCodec]].
+  * There are many other flavors of this base companion class. For example, if you want to inject additional implicits
+  * into [[GenCodec]] materialization, you can use [[HasGenCodecWithDeps]], for parameterized data types you can
+  * use [[HasPolyGenCodec]], etc.
+  */
+abstract class HasGenCodec[T](implicit macroCodec: MacroInstances[Unit, () => GenCodec[T]]) {
+  given codec: GenCodec[T] = macroCodec((), this).apply()
+}
 //
 ///**
 //  * Like [[HasGenCodec]] but materializes an [[ApplyUnapplyCodec]] instead of just [[GenCodec]].

@@ -1,5 +1,6 @@
 package com.avsystem.commons
-package misc.macros.misc
+package misc
+package macros
 
 import misc.JavaClassName
 

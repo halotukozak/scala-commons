@@ -50,13 +50,13 @@ object OptRef {
  * can't add [[OptRef]] values into hash sets or use them as hash map keys).
  */
 final class OptRef[+A >: Null] private(private val value: A) extends AnyVal with OptBase[A] with Serializable {
-  inline def isEmpty: Boolean = value == null
+  def isEmpty: Boolean = value == null
 
   inline def isDefined: Boolean = !isEmpty
 
   inline def nonEmpty: Boolean = isDefined
 
-  inline def get: A =
+  def get: A =
     if isEmpty then throw new NoSuchElementException("empty OptRef") else value
 
   inline def toOpt: Opt[A] =

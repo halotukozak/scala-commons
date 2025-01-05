@@ -1,12 +1,9 @@
-package com.avsystem.commons
-package misc
-
 //package com.avsystem.commons
 //package misc
 //
 //import org.scalatest.funsuite.AnyFunSuite
 //
-//class DelegationTest extends AnyFunSuite {
+//final class DelegationTest extends AnyFunSuite:
 //  trait Destination[T] {
 //    val te: T
 //    def simple(omg: Int): String
@@ -33,4 +30,3 @@ package misc
 //    assert(source.multi("4")("2") == destination.multi("4")("2"))
 //    assert(source.vararg("4", "2") == destination.vararg("4", "2"))
 //  }
-//}

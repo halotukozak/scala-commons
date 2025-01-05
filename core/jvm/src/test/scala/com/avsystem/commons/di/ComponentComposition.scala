@@ -8,11 +8,11 @@ abstract class BaseComponent(using info: ComponentInfo) {
   println(s"$info init")
 }
 
-class SubDao(using ComponentInfo) extends BaseComponent
+final class SubDao(using ComponentInfo) extends BaseComponent
 
-class SubService(dao: SubDao)(using ComponentInfo) extends BaseComponent
+final class SubService(dao: SubDao)(using ComponentInfo) extends BaseComponent
 
-class SubSystem extends Components {
+final class SubSystem extends Components {
   override protected def componentNamePrefix: String = "sub."
 
   private val dao: Component[SubDao] =
@@ -22,9 +22,9 @@ class SubSystem extends Components {
     component(new SubService(dao.ref))
 }
 
-class Service(subService: SubService)(using ComponentInfo) extends BaseComponent
+final class Service(subService: SubService)(using ComponentInfo) extends BaseComponent
 
-class System(subSystem: SubSystem) extends Components {
+final class System(subSystem: SubSystem) extends Components {
   val service: Component[Service] =
     component(new Service(subSystem.service.ref))
 }

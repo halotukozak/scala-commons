@@ -7,11 +7,11 @@ import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
 trait JsInterop {
-  extension (jsDate: js.Date)
+  extension (jsDate: js.Date) {
     inline def toTimestamp: Timestamp = Timestamp(jsDate.getTime().toLong)
     inline def toJsDate: js.Date = new js.Date(jsDate.getTime())
     inline def toJDate: JDate = new JDate(jsDate.getTime().toLong)
-  end extension
+  }
 
   extension [A](value: UndefOr[A])
     inline def toOpt: Opt[A] = if value.isDefined then Opt(value.get) else Opt.Empty

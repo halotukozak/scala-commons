@@ -2,8 +2,7 @@ package com.avsystem.commons
 package di
 
 import di.Component.DestroyFunction
-
-import com.avsystem.commons.misc.{GraphUtils, SourceInfo}
+import misc.{GraphUtils, SourceInfo}
 
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.compileTimeOnly

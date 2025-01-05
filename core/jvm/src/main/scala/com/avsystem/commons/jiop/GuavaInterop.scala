@@ -18,9 +18,9 @@ trait GuavaInterop {
 
   def gFunction[F, T](fun: F => T): GFunction[F, T] = Sam[GFunction[F, T]](fun)
 
-  def gSupplier[T](expr: => T) = Sam[GSupplier[T]](expr)
+  def gSupplier[T](expr: => T): GSupplier[T] = Sam[GSupplier[T]](expr)
 
-  def gPredicate[T](pred: T => Boolean) = Sam[GPredicate[T]](pred)
+  def gPredicate[T](pred: T => Boolean): GPredicate[T] = Sam[GPredicate[T]](pred)
 
   given [T]: AsScala[ListenableFuture[T], Future[T]] = {
     case FutureAsListenableFuture(fut) => fut
@@ -32,12 +32,11 @@ trait GuavaInterop {
     inline def asScalaUnit: Future[Unit] = gfut.asScala.toUnit
   }
 
-  extension [T](gfut: SettableFuture[T]) {
-    inline def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
-  }
+  extension [T](gfut: SettableFuture[T])
+    def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
 
   extension [T](fut: Future[T]) {
-    inline def asGuava: ListenableFuture[T] = fut match
+    def asGuava: ListenableFuture[T] = fut match
       case ListenableFutureAsScala(gfut) => gfut
       case _ => FutureAsListenableFuture(fut)
 
