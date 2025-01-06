@@ -3,7 +3,10 @@ package misc
 
 
 import annotation.explicitGenerics
-//import serialization.{GenCodec, GenKeyCodec}
+import misc.macros.caseObjectsForImpl
+
+import scala.compiletime.{constValue, erasedValue, summonInline}
+import scala.deriving.Mirror
 
 object SealedUtils {
   /**
@@ -11,14 +14,23 @@ object SealedUtils {
    * WARNING: the order of case objects in the resulting list is guaranteed to be consistent with
    * declaration order ONLY for enums extending [[OrderedEnum]]. Otherwise, the order may be arbitrary.
    */
-  //  @explicitGenerics
-  //  inline def caseObjectsFor[T]: List[T] = ${ caseObjectsForImpl[T] }
+  @explicitGenerics
+  inline def caseObjectsFor[T]: List[T] = ???
 
-  //  /**
-  //    * Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
-  //    */
-  //  @explicitGenerics
-  //  def instancesFor[TC[_], T]: List[TC[_ <: T]] = macro macros.misc.SealedMacros.instancesFor[TC[_], T]
+  @explicitGenerics
+  inline def caseObjectsFor[T](using m: Mirror.Of[T]): List[T] =
+    summonAll[m.MirroredElemTypes].asInstanceOf[List[T]]
+
+  /**
+   * Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
+   */
+  @explicitGenerics
+  inline def instancesFor[TC[_], T](using m: Mirror.Of[T]): List[TC[T]] =
+    summonAll[Tuple.Map[m.MirroredElemTypes, TC]].asInstanceOf[List[TC[T]]]
+
+  inline private def summonAll[T <: Tuple]: List[Any] = inline erasedValue[T] match
+    case _: EmptyTuple => Nil
+    case _: (t *: ts) => summonInline[t].asInstanceOf[Any] :: summonAll[ts]
 }
 
 /**
@@ -63,8 +75,7 @@ trait SealedEnumCompanion[T] {
    * In such case, the order is consistent with declaration order in source file. However, if the enum is not an
    * [[OrderedEnum]], the order may be arbitrary.
    */
-  protected def caseObjects: List[T] = ???
-  //  macro macros.misc.SealedMacros.caseObjectsFor[T]
+  protected inline def caseObjects: List[T] = SealedUtils.caseObjectsFor[T]
 }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
@@ -135,7 +146,7 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
 
   private var _byName: Map[String, T] = compiletime.uninitialized
 
-  def byName: Map[String, T] = {
+  def byName: Map[String, T] = synchronized {
     if _byName == null then {
       _byName = values.toMapBy(_.name)
     }
@@ -170,17 +181,15 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
  *
  * In the example above, `values` is guaranteed to return `First`, `Second` and `Third` objects in exactly that order.
  */
-trait OrderedEnum {
+trait OrderedEnum:
   def sourceInfo: SourceInfo
-}
+
 
 object OrderedEnum {
-  private object reusableOrdering extends Ordering[OrderedEnum] {
+  private object reusableOrdering extends Ordering[OrderedEnum]:
     def compare(x: OrderedEnum, y: OrderedEnum): Int = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
-  }
 
-  implicit def ordering[T <: OrderedEnum]: Ordering[T] =
-    reusableOrdering.asInstanceOf[Ordering[T]]
+  given ordering[T <: OrderedEnum]: Ordering[T] = reusableOrdering.asInstanceOf[Ordering[T]]
 }
 
 abstract class AbstractNamedEnumCompanion[T <: NamedEnum]

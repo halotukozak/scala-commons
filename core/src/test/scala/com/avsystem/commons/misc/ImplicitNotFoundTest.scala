@@ -18,10 +18,10 @@ sealed trait OtherStuff
 
 object OtherStuff {
   @implicitNotFound("no other stuff available because: #{forStuff}")
-  implicit def inf(implicit forStuff: ImplicitNotFound[Stuff]): ImplicitNotFound[OtherStuff] = ImplicitNotFound()
+  implicit def inf(using ImplicitNotFound[Stuff]): ImplicitNotFound[OtherStuff] = ImplicitNotFound()
 }
 
-class ImplicitNotFoundTest extends AnyFunSuite with CompilationErrorAssertions {
+class ImplicitNotFoundTest extends AnyFunSuite with CompilationErrorAssertions:
   test("simple") {
     assert(typeErrorFor("Implicits.infer[Stuff]") == "no stuff available")
   }
@@ -29,4 +29,3 @@ class ImplicitNotFoundTest extends AnyFunSuite with CompilationErrorAssertions {
   test("with dependencies") {
     assert(typeErrorFor("Implicits.infer[OtherStuff]") == "no other stuff available because: no stuff available")
   }
-}

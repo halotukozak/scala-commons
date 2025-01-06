@@ -4,6 +4,7 @@ package misc
 import misc.macros.{enumValName, enumValNameImpl}
 
 import scala.annotation.implicitNotFound
+import scala.deriving.Mirror
 
 /**
  * Base trait for `val`-based enums, i.e. enums implemented as a single class with companion object keeping
@@ -102,8 +103,8 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
    */
   private var _values: IndexedSeq[T] = compiletime.uninitialized
 
-  final def values: IndexedSeq[T] = {
-    if _values == null then synchronized {
+  final def values: IndexedSeq[T] = synchronized {
+    if _values == null then {
       if awaitingRegister then
         throw new IllegalStateException(s"Cannot collect enum values - one of the created contexts didn't register a value yet")
       finished = true

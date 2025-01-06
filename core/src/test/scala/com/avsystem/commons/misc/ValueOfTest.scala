@@ -11,7 +11,7 @@ object Obj {
 
     def valueOfX: x.type = valueOf[x.type]
 
-    //    def valueOfThis: this.type = valueOf[this.type]
+//    def valueOfThis: this.type = valueOf[this.type]
   }
 }
 

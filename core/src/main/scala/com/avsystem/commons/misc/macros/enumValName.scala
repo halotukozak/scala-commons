@@ -1,6 +1,10 @@
 package com.avsystem.commons
 package misc.macros
 
+import misc.ValueEnum
+
+import scala.deriving.Mirror
+
 inline def enumValName[Value, ValName](valNameConstructor: String => ValName) =
   ${ enumValNameImpl[Value, ValName]('{ valNameConstructor }) }
 def enumValNameImpl[Value: Type, ValName: Type](valNameConstructor: Expr[String => ValName])(using quotes: Quotes) = {
@@ -16,7 +20,7 @@ def enumValNameImpl[Value: Type, ValName: Type](valNameConstructor: Expr[String 
     owner.isValDef &&
     owner.flags.is(Flags.Final) &&
     !owner.flags.is(Flags.Lazy) &&
-    owner.owner == Symbol.spliceOwner.owner.owner &&
+    //    owner.owner == Symbol.spliceOwner.owner.owner && //todo: nested objects should not be allowed
     owner.isPublic /*getter */ &&
     owner.typeRef <:< TypeRepr.of[Value]
 
@@ -28,3 +32,4 @@ def enumValNameImpl[Value: Type, ValName: Type](valNameConstructor: Expr[String 
 
   '{ $valNameConstructor($name) }
 }
+

@@ -21,9 +21,9 @@ trait Components extends ComponentsLowPrio {
   // avoids divergent implicit expansion involving `inject`
   // this is not strictly necessary but makes compiler error messages nicer
   // i.e. the compiler will emit "could not find givenue" instead of "divergent implicit expansion"
-  given ambiguousArbitraryComponent1[T]: Component[T] = null
-
-  given ambiguousArbitraryComponent2[T]: Component[T] = null
+//  given ambiguousArbitraryComponent1[T]: Component[T] = null
+//
+//  given ambiguousArbitraryComponent2[T]: Component[T] = null
 
   protected def componentNamePrefix: String = ""
 

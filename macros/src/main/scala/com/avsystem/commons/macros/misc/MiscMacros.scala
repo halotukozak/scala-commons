@@ -454,11 +454,7 @@ import scala.quoted.*
 //
 
 //
-//  def selfInstance[C: WeakTypeTag]: Tree = instrument {
-//    val TypeRef(pre, constrSym, _) = weakTypeOf[C].typeConstructor
-//    val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
-//    q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
-//  }
+
 //
 
 //

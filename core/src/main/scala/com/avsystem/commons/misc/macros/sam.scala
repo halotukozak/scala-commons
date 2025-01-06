@@ -8,6 +8,7 @@ import scala.quoted.*
 
 def createSamImpl[Target: Type, Fun: Type](fun: Expr[Fun])(using quotes: Quotes): Expr[Target] = {
   import quotes.reflect.*
+  return '{ ??? }
 
   val byName = validateSamImpl[Target, Fun].valueOrAbort
   val targetTpe = TypeRepr.of[Target].dealias
@@ -141,7 +142,7 @@ def validateSamImpl[Target, Fun](using targetTpe: Type[Target], funTpe: Type[Fun
   val byName = emptyList && funTpe <:< finalResultType
   if !byName && !(funTpe <:< requiredFunTpe) then {
     val requiredMsg = s"${if emptyList then "" else s"${finalResultType.show} or "}${requiredFunTpe.show}"
-    //    report.errorAndAbort(s"${funTpe.show} does not match signature of $m in ${targetTpe.show}: expected $requiredMsg") //todo
+    report.errorAndAbort(s"${funTpe.show} does not match signature of $m in ${targetTpe.show}: expected $requiredMsg") //todo
   }
   Expr(byName)
 }

@@ -122,7 +122,7 @@ object Commons extends ProjectGroup("commons") {
       "UTF-8",
       "-deprecation",
       "-feature",
-      "-Xcheck-macros",
+      //      "-Xcheck-macros",
       //      "-Ycheck:all", // also for checking macros
       "-Ycheck-mods",
       "-Ydebug-type-error",
@@ -134,6 +134,9 @@ object Commons extends ProjectGroup("commons") {
       "-language:namedTypeArguments",
       "-language:dynamics",
       "-unchecked",
+      "-experimental",
+      "-Xno-enrich-error-messages",
+      "-explain-cyclic",
     ),
 
     Compile / scalacOptions ++= {
