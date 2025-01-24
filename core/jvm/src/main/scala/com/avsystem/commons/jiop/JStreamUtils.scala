@@ -27,7 +27,7 @@ trait JStreamUtils {
     case Double => ScalaJDoubleStream
     case _ => ScalaJStream[T]
 
-  implicit inline def dupa[T]: AsScala[JStream[T], SpecializedScalaJStream[T]] = specializedJStreamAsScala[T, JStream[T]]
+  implicit inline def asScalaJStreamToSpecializedScalaJStream[T]: AsScala[JStream[T], SpecializedScalaJStream[T]] = specializedJStreamAsScala[T, JStream[T]]
 
   given AsScala[JIntStream, SpecializedScalaJStream[Int]] = specializedJStreamAsScala[Int, JIntStream]
 
