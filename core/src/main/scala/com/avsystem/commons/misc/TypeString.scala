@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import misc.macros.{javaClassName, typeString}
+import misc.macros.{javaClassName, typeStringImpl}
 
 import scala.quoted.Type
 
@@ -39,7 +39,7 @@ object TypeString {
 
   inline def of[T: TypeString]: String = TypeString[T].value
 
-  inline given materialize[T]: TypeString[T] = ${ typeString[T] }
+  inline given materialize[T]: TypeString[T] = ${ typeStringImpl[T] }
 }
 
 /**
