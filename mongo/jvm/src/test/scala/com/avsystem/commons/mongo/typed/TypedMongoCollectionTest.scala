@@ -62,13 +62,14 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
         case 0 => CaseOne(s"uid$i", "ustr", i % 2 == 0)
         case 1 => CaseTwo(s"uid$i", "ustr", i, Rte.Example)
         case 2 => CaseThree(s"uid$i", "ustr", "udata", Rte.Example)
-      }
+      },
     )
   }
 
   private val entities = (0 until 100).map(recordTestEntity)
 
-  private[this] var seq = 100
+  private var seq = 100
+
   private def nextSeq(): Int = {
     val res = seq
     seq += 1
@@ -196,7 +197,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     assert(rteColl
       .multiResultNativeOp(_.aggregate(pipeline, classOf[Document]))
       .map(_.getInteger("intSum", 0)).toListL
-      .value == entities.map(_.intList.sum)
+      .value == entities.map(_.intList.sum),
     )
   }
 

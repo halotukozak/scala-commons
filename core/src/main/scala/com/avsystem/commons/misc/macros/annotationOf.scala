@@ -3,8 +3,6 @@ package misc.macros
 
 import misc.{AnnotationOf, SelfAnnotations}
 
-import com.avsystem.commons.MacroUtils.containsInaccessibleThises
-
 import scala.quoted.*
 
 def annotationOf[A: Type, T: Type](using quotes: Quotes): Expr[AnnotationOf[A, T]] = {
@@ -27,7 +25,7 @@ def selfAnnotations[A: Type](using quotes: Quotes): Expr[SelfAnnotations[A]] = {
       ownerConstr
   }
   val annots = sym.annotations.map { (annot: Term) =>
-    if containsInaccessibleThises(annot.tpe.classSymbol.get) then {
+    if annot.tpe.classSymbol.get.containsInaccessibleThises then {
       report.errorAndAbort(s"Reified annotation ${annot.show} contains inaccessible this-references", annot.pos)
     }
     annot.asExprOf[A]

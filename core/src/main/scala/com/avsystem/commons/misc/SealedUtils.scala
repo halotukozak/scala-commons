@@ -5,6 +5,8 @@ package misc
 import annotation.explicitGenerics
 import misc.macros.caseObjectsForImpl
 
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
+
 import scala.compiletime.{constValue, erasedValue, summonInline}
 import scala.deriving.Mirror
 
@@ -154,14 +156,14 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   }
 
   private def decode(str: String): T =
-    byName.getOrElse(str, throw new NoSuchElementException(
-      s"Invalid value: $str, expected one of: ${values.iterator.map(_.name).mkString(",")}"))
+    byName.getOrElse(str, throw new NoSuchElementException(s"Invalid value: $str, expected one of: ${values.iterator.map(_.name).mkString(",")}"))
 
-  //  implicit lazy val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
-  //  implicit lazy val codec: GenCodec[T] = GenCodec.nullableSimple[T](
-  //    input => decode(input.readString()),
-  //    (output, value) => output.writeString(value.name)
-  //  )
+  implicit /*lazy*/ val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
+
+  implicit /*lazy*/ val codec: GenCodec[T] = GenCodec.nullableSimple[T](
+    input => decode(input.readString()),
+    (output, value) => output.writeString(value.name),
+  )
 }
 
 /**

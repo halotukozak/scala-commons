@@ -104,34 +104,34 @@ trait Output extends Any with AcceptsCustomEvents {
  */
 trait SimpleOutput extends Any with AcceptsCustomEvents {
   /** Value written MUST NOT be `null` */
-  def writeString(str: String): Unit
+  infix def writeString(str: String): Unit
 
-  def writeChar(char: Char): Unit = writeString(char.toString)
+  infix def writeChar(char: Char): Unit = writeString(char.toString)
 
-  def writeBoolean(boolean: Boolean): Unit
+  infix def writeBoolean(boolean: Boolean): Unit
 
-  def writeByte(byte: Byte): Unit = writeShort(byte)
+  infix def writeByte(byte: Byte): Unit = writeShort(byte)
 
-  def writeShort(short: Short): Unit = writeInt(short)
+  infix def writeShort(short: Short): Unit = writeInt(short)
 
-  def writeInt(int: Int): Unit
+  infix def writeInt(int: Int): Unit
 
-  def writeLong(long: Long): Unit
+  infix def writeLong(long: Long): Unit
 
-  def writeTimestamp(millis: Long): Unit = writeLong(millis)
+  infix def writeTimestamp(millis: Long): Unit = writeLong(millis)
 
-  def writeFloat(float: Float): Unit = writeDouble(float)
+  infix def writeFloat(float: Float): Unit = writeDouble(float)
 
-  def writeDouble(double: Double): Unit
-
-  /** Value written MUST NOT be `null` */
-  def writeBigInt(bigInt: BigInt): Unit
+  infix def writeDouble(double: Double): Unit
 
   /** Value written MUST NOT be `null` */
-  def writeBigDecimal(bigDecimal: BigDecimal): Unit
+  infix def writeBigInt(bigInt: BigInt): Unit
 
   /** Value written MUST NOT be `null` */
-  def writeBinary(binary: Array[Byte]): Unit
+  infix def writeBigDecimal(bigDecimal: BigDecimal): Unit
+
+  /** Value written MUST NOT be `null` */
+  infix def writeBinary(binary: Array[Byte]): Unit
 }
 
 trait OutputAndSimpleOutput extends Any with Output with SimpleOutput {

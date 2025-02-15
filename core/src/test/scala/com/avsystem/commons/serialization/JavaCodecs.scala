@@ -1,10 +1,7 @@
 package com.avsystem.commons
 package serialization
 
-//package com.avsystem.commons
-//package serialization
-//
-//object JavaCodecs {
-//  given buildablePojoCodec: GenCodec[BuildablePojo] =
-//    GenCodec.fromJavaBuilder(BuildablePojo.builder())(_.build())
-//}
+object JavaCodecs:
+  given buildablePojoCodec: GenCodec[BuildablePojo] =
+    GenCodec.fromJavaBuilder(BuildablePojo.builder())(_.build())
+

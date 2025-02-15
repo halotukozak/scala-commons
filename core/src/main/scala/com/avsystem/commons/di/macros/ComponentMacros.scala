@@ -3,8 +3,6 @@ package di.macros
 
 import di.{Component, ComponentInfo, Components}
 
-import com.avsystem.commons.MacroUtils
-
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
@@ -55,7 +53,6 @@ object ComponentMacros extends MacroUtils {
 
   def mkComponent[T: Type](definition: Expr[T], componentInfo: Expr[ComponentInfo], singletonsCache: Expr[Option[SingletonCache]], async: Boolean)(using quotes: Quotes): Expr[Component[T]] = {
     import quotes.reflect.*
-
     object ComponentRef {
       lazy val ComponentRefSym: Symbol = TypeRepr.of[Component].classSymbol.get.singleMethodMember("ref")
       lazy val InjectSym: Symbol = TypeRepr.of[Components].classSymbol.get.fieldMember("inject")

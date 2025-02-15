@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package misc.macros
 
-import MacroUtils.*
 
 import scala.languageFeature.experimental.macros
 import scala.quoted.*

@@ -2,6 +2,7 @@ package com.avsystem.commons
 package jiop
 
 import jiop.GuavaInterop.{*, given}
+import jiop.JStreamUtils.given
 
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
@@ -9,7 +10,6 @@ import org.scalatest.funsuite.AnyFunSuite
 import java.util.stream.{Collectors, DoubleStream, IntStream, LongStream}
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import JStreamUtils.given 
 
 final class JavaInteropTest extends AnyFunSuite:
 
@@ -135,42 +135,30 @@ final class JavaInteropTest extends AnyFunSuite:
   }
 
   test("java collection extractors should work") {
-    arrayList match {
+    arrayList match
       case JList(1, 2, 3) =>
-    }
-    arrayList match {
+    arrayList match
       case JArrayList(1, 2, 3) =>
-    }
-    linkedList match {
+    linkedList match
       case JList(1, 2, 3) =>
-    }
-    linkedList match {
+    linkedList match
       case JLinkedList(1, 2, 3) =>
-    }
-    linkedHashSet match {
+    linkedHashSet match
       case JLinkedHashSet(1, 2, 3) =>
-    }
-    treeSet match {
+    treeSet match
       case JSortedSet(1, 2, 3) =>
-    }
-    treeSet match {
+    treeSet match
       case JNavigableSet(1, 2, 3) =>
-    }
-    treeSet match {
+    treeSet match
       case JTreeSet(1, 2, 3) =>
-    }
-    linkedHashMap match {
+    linkedHashMap match
       case JLinkedHashMap((1, "1"), (2, "2"), (3, "3")) =>
-    }
-    treeMap match {
+    treeMap match
       case JSortedMap((1, "1"), (2, "2"), (3, "3")) =>
-    }
-    treeMap match {
+    treeMap match
       case JNavigableMap((1, "1"), (2, "2"), (3, "3")) =>
-    }
-    treeMap match {
+    treeMap match
       case JTreeMap((1, "1"), (2, "2"), (3, "3")) =>
-    }
   }
 
   test("scala to guava Future conversion should work") {
