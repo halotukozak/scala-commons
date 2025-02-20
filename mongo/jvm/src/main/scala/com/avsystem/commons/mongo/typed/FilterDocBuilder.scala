@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package mongo.typed
 
-import com.avsystem.commons.mongo.typed.MongoFilter._
+import com.avsystem.commons.mongo.typed.MongoFilter.*
 import org.bson.{BsonArray, BsonDocument}
 
 import scala.annotation.tailrec
@@ -12,7 +12,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
     new FilterDocBuilder(newPrefix.opt, filterDocs)
   }
 
-  @tailrec def addImpliedFilters(ref: MongoRef[_, _]): Unit = ref match {
+  @tailrec def addImpliedFilters(ref: MongoRef[?, ?]): Unit = ref match {
     case MongoRef.RootRef(_) =>
 
     case MongoRef.RootSubtypeRef(fullRef, caseFieldName, caseNames, _) =>
@@ -36,12 +36,15 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
       addImpliedFilters(prefix)
   }
 
-  private def addOperator(op: MongoQueryOperator[_]): Unit = {
-    val path = prefixPath.getOrElse(throw new IllegalArgumentException(
-      "cannot add MongoOperatorsFilter to toplevel filter document without prefix path"))
+  private def addOperator(op: MongoQueryOperator[?]): Unit = {
+    val path = prefixPath.getOrElse(
+      throw new IllegalArgumentException(
+        "cannot add MongoOperatorsFilter to toplevel filter document without prefix path",
+      ),
+    )
 
     @tailrec def loop(idx: Int): Unit =
-      if (idx < filterDocs.size) {
+      if idx < filterDocs.size then {
         val filterDoc = filterDocs.get(idx).asDocument
         val opsDoc = filterDoc.get(path) match {
           case null => new BsonDocument().setup(filterDoc.put(path, _))
@@ -59,7 +62,7 @@ private final class FilterDocBuilder(prefixPath: Opt[String], filterDocs: BsonAr
     loop(0)
   }
 
-  def addFilter(filter: MongoFilter[_]): Unit = filter match {
+  def addFilter(filter: MongoFilter[?]): Unit = filter match {
     case Empty() =>
 
     case And(filters) =>

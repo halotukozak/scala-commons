@@ -8,8 +8,8 @@ import com.avsystem.commons.macros
 import scala.annotation.implicitNotFound
 
 /**
- * A typeclass which captures an annotation of type `A` applied on a class/trait/object associated with
- * type `T`. If this annotation is absent, compilation will fail.
+ * A typeclass which captures an annotation of type `A` applied on a class/trait/object associated with type `T`. If
+ * this annotation is absent, compilation will fail.
  * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
  */
 @implicitNotFound("${T} is not annotated with ${A}")
@@ -122,7 +122,7 @@ object AnnotationOf {
  * [[https://github.com/AVSystem/scala-commons/blob/master/docs/Annotations.md Annotation processing rules]] apply.
  *
  * @example
- * {{{
+ *   {{{
  *   final class tag(value: String) extends scala.annotation.Annotation
  *
  *   abstract class Base(implicit tagAnnots: SelfAnnotations[tag]) {
@@ -131,7 +131,7 @@ object AnnotationOf {
  *
  *   @tag("t1") @tag("t2") @tag("t3")
  *   class TaggedSubclass extends Base
- * }}}
+ *   }}}
  */
 final case class SelfAnnotations[A](annots: List[A]) extends AnyVal
 

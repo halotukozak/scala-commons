@@ -2,10 +2,9 @@ package com.avsystem.commons
 package serialization
 
 /**
- * To be used in conjunction with [[flatten]].
- * It can be applied on one or more of case class fields in a sealed hierarchy to instruct the
- * auto-materialized `GenCodec` that this particular field may appear before `_case` field in the serialized format
- * during reading.
+ * To be used in conjunction with [[flatten]]. It can be applied on one or more of case class fields in a sealed
+ * hierarchy to instruct the auto-materialized `GenCodec` that this particular field may appear before `_case` field in
+ * the serialized format during reading.
  *
  * {{{
  *   @flatten sealed trait Base
@@ -16,8 +15,8 @@ package serialization
  *   }
  * }}}
  *
- * The following JSON (assuming this is the representation used) would correctly deserialize as
- * `FirstCase("someTag", 42)`:
+ * The following JSON (assuming this is the representation used) would correctly deserialize as `FirstCase("someTag",
+ * 42)`:
  *
  * {{{
  *   {"tag": "someTag", "_case": "FirstCase", "int": 42}
@@ -37,6 +36,5 @@ package serialization
  * The direct motivation for this annotation was the ability to use [[flatten]] on MongoDB entities with an `_id` field.
  * When reading entities from MongoDB, the `_id` field is always at the beginning of a BSON document and therefore
  * `GenCodec` must be able to read it before it knows which case class of sealed hierarchy is being deserialized.
- *
  */
 class outOfOrder extends StaticAnnotation

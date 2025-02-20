@@ -4,8 +4,9 @@ package mongo
 import org.bson.BsonDocument
 
 /**
-  * @author MKej
-  */
+ * @author
+ *   MKej
+ */
 trait DocumentCodec[T] {
   def toDocument(t: T): Doc
   def fromDocument(doc: Doc): T

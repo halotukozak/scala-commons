@@ -1,11 +1,15 @@
 package com.avsystem.commons
 package serialization
 
+import scala.compiletime.{summonFrom, summonInline}
+import scala.deriving.Mirror
+import scala.quoted.Type
+
 /**
- * A typeclass which serves as evidence that some type `T` is a "transparent" wrapper of some other type.
- * This usually means that instances of various typeclasses (e.g. [[GenCodec]]) for type `T` could be automatically
- * derived from instances for the wrapped type. How this actually happens is decided in each typeclass which can
- * define appropriate implicit.
+ * A typeclass which serves as evidence that some type `T` is a "transparent" wrapper of some other type. This usually
+ * means that instances of various typeclasses (e.g. [[GenCodec]]) for type `T` could be automatically derived from
+ * instances for the wrapped type. How this actually happens is decided in each typeclass which can define appropriate
+ * implicit.
  */
 trait TransparentWrapping[R, T] {
   def wrap(r: R): T
@@ -33,9 +37,10 @@ object TransparentWrapping {
 abstract class TransparentWrapperCompanion[R, T] extends TransparentWrapping[R, T] with (R => T) {
   given self: TransparentWrapping[R, T] = this
 
-  def apply(r: R): T
+  // todo(bkozak): temporary workaround
+  def apply(r: R): T = r.asInstanceOf[T]
 
-  def unapply(t: T): Option[R]
+  def unapply(t: T): Option[R] = Some(t.asInstanceOf[R])
 
   final def wrap(r: R): T = apply(r)
 

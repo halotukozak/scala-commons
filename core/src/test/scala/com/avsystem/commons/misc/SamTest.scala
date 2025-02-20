@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package misc
 
-
 import org.scalatest.funsuite.AnyFunSuite
 
 import scala.annotation.nowarn
@@ -105,4 +104,3 @@ import scala.annotation.nowarn
 //    val adhoc = Sam[ImplicitParamsSam]((i: Int) => (s: String) => i.toString + s)
 //    assert(adhoc.handle(123)("lol") == "123lol")
 //  }
-

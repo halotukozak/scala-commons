@@ -17,7 +17,7 @@
 //  val targetTpe = TypeRepr.of[Target].dealias
 //
 //  val targetSymbol: Symbol = targetTpe.classSymbol getOrElse
-//    //  if (targetSymbol.isEmpty && !targetSymbol.get.flags.is(Flags.Trait)) { 
+//    //  if (targetSymbol.isEmpty && !targetSymbol.get.flags.is(Flags.Trait)) {
 //    report.errorAndAbort(s"$targetTpe is not a trait or abstract class")
 //  //    val wrappedName = c.freshName(TermName("w"))
 //

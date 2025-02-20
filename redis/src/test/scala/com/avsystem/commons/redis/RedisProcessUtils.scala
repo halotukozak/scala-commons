@@ -4,18 +4,17 @@ package redis
 import com.avsystem.commons.redis.commands.NodeId
 import org.scalatest.Suite
 
-import scala.sys.process._
+import scala.sys.process.*
 
 /**
-  * Author: ghik
-  * Created: 27/06/16.
-  */
+ * Author: ghik Created: 27/06/16.
+ */
 trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
   def redisHome: Opt[String] = sys.env.getOpt("REDIS_HOME")
   def inRedisHome(cmd: String): String = redisHome.fold(cmd)(_ + "/" + cmd)
   def password: Opt[String] = Opt.empty[String]
   def runCommand: List[String] =
-    if (System.getProperty("os.name") == "Windows 10") List("ubuntu", "run") else Nil
+    if System.getProperty("os.name") == "Windows 10" then List("ubuntu", "run") else Nil
 
   private val ReadyRegex = ".*Ready to accept connections.*".r
   private val NodeLogRegex = ".*Node configuration loaded, I'm ([0-9a-f]+)$".r
@@ -35,24 +34,23 @@ trait RedisProcessUtils extends UsesActorSystem { this: Suite =>
     var pid = -1
     var nodeId: Opt[NodeId] = Opt.Empty
     val passArgs = password.fold(Seq.empty[String])(p => Seq("--requirepass", p))
-    val process = (runCommand ++: inRedisHome(executable) +: arguments ++: passArgs).run(
-      ProcessLogger { line =>
-        actorSystem.log.debug(line)
-        line match {
-          case PidRegex(pidStr) =>
-            pid = pidStr.toInt
-          case NodeLogRegex(rawNodeId) =>
-            nodeId = NodeId(rawNodeId).opt
-          case SentinelIdRegex(rawSentinelId) =>
-            nodeId = NodeId(rawSentinelId).opt
-            promise.success(())
-          case ReadyRegex() =>
-            promise.success(())
-          case _ =>
-        }
-      })
+    val process = (runCommand ++: inRedisHome(executable) +: arguments ++: passArgs).run(ProcessLogger { line =>
+      actorSystem.log.debug(line)
+      line match {
+        case PidRegex(pidStr) =>
+          pid = pidStr.toInt
+        case NodeLogRegex(rawNodeId) =>
+          nodeId = NodeId(rawNodeId).opt
+        case SentinelIdRegex(rawSentinelId) =>
+          nodeId = NodeId(rawSentinelId).opt
+          promise.success(())
+        case ReadyRegex() =>
+          promise.success(())
+        case _ =>
+      }
+    })
     promise.future.mapNow { _ =>
-      if (pid < 0) {
+      if pid < 0 then {
         throw new IllegalStateException("Could not determine Redis process PID")
       }
       RedisProcess(process, pid, nodeId)

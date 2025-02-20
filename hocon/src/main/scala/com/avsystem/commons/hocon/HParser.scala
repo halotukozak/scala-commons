@@ -15,14 +15,14 @@ object HParser {
 }
 class HParser(tokens: IndexedSeq[HToken]) {
 
-  import HParser._
-  import HTokenType._
-  import HTree._
+  import HParser.*
+  import HTokenType.*
+  import HTree.*
 
   private[this] var idx = 0
 
   private def fail(): Nothing =
-    if (eof) throw new EOFException
+    if eof then throw new EOFException
     else throw new Exception(s"unexpected token $cur at ${cur.pos}")
 
   private def cur: HToken = tokens(idx)
@@ -39,14 +39,15 @@ class HParser(tokens: IndexedSeq[HToken]) {
   }
 
   @tailrec private def skipWs(newlines: Boolean = true): Int =
-    if (eof) idx
-    else cur.tokenType match {
-      case Whitespace | Comment if newlines || !cur.multiline =>
-        advance()
-        skipWs(newlines)
-      case _ =>
-        idx
-    }
+    if eof then idx
+    else
+      cur.tokenType match {
+        case Whitespace | Comment if newlines || !cur.multiline =>
+          advance()
+          skipWs(newlines)
+        case _ =>
+          idx
+      }
 
   private def ahead(tt: HTokenType): Boolean =
     ahead(_.tokenType == tt)
@@ -64,13 +65,13 @@ class HParser(tokens: IndexedSeq[HToken]) {
     pass(t => tts.contains(t.tokenType))
 
   private def pass(test: HToken => Boolean): Boolean =
-    if (!eof && test(cur)) advance().thenReturn(true) else false
+    if !eof && test(cur) then advance().thenReturn(true) else false
 
   private def passUnquoted(text: String): Boolean =
     pass(t => t.tokenType == Unquoted && t.text == text)
 
   private def ensure(tt: HTokenType): HToken =
-    if (!eof && cur.tokenType == tt) {
+    if !eof && cur.tokenType == tt then {
       val res = cur
       advance()
       res
@@ -101,27 +102,27 @@ class HParser(tokens: IndexedSeq[HToken]) {
       skipWs()
       val comma = pass(Comma)
       skipWs()
-      if (eof || closing.contains(cur.tokenType)) elemsBuf.result()
-      else if (newline || comma) doParseElems()
+      if eof || closing.contains(cur.tokenType) then elemsBuf.result()
+      else if newline || comma then doParseElems()
       else fail()
     }
 
     skipWs()
-    if (eof || closing.contains(cur.tokenType)) Nil
+    if eof || closing.contains(cur.tokenType) then Nil
     else doParseElems()
   }
 
   def parseObject(braces: Boolean = true): HObject = {
     val start = idx
-    if (braces) {
+    if braces then {
       ensure(LBrace)
     }
-    val stats = parseElems(parseStat _, if (braces) Opt(RBrace) else Opt.Empty)
-    if (braces) {
+    val stats = parseElems(parseStat _, if braces then Opt(RBrace) else Opt.Empty)
+    if braces then {
       ensure(RBrace)
     } else {
       skipWs()
-      if (!eof) {
+      if !eof then {
         fail()
       }
     }
@@ -153,7 +154,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
 
   def parseIncludeTarget(): HIncludeTarget = {
     val start = skipWs()
-    if (passUnquoted(Required)) {
+    if passUnquoted(Required) then {
       ensure(LParen)
       skipWs()
       val regular = parseRegularIncludeTarget()
@@ -192,7 +193,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     skipWs()
     val append = cur.tokenType == PlusEquals
     val sepPresent = passAny(Colon, Equals, PlusEquals)
-    val value = if (sepPresent) parseValue() else parseObject()
+    val value = if sepPresent then parseValue() else parseObject()
     HField(path, value)(append, rangeFrom(start))
   }
 
@@ -200,7 +201,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     val start = skipWs()
     @tailrec def collectKeys(acc: List[HKey]): List[HKey] = {
       val nextKey = parseKey()
-      if (pass(Dot)) collectKeys(nextKey :: acc)
+      if pass(Dot) then collectKeys(nextKey :: acc)
       else nextKey :: acc
     }
     val result = collectKeys(Nil).foldRight(Opt.empty[HPath]) { (key, prefix) =>
@@ -213,7 +214,7 @@ class HParser(tokens: IndexedSeq[HToken]) {
     skipWs()
     val parts = new MListBuffer[HString]
     parts += parseString(inKey = true)
-    while (aheadAny(Whitespace, Unquoted, QuotedString, MultilineString, LParen, RParen)) {
+    while aheadAny(Whitespace, Unquoted, QuotedString, MultilineString, LParen, RParen) do {
       parts += parseString(inKey = true)
     }
     HKey(parts.result())(new HTokenRange(tokens, parts.head.tokens.start, parts.last.tokens.end))
@@ -223,10 +224,9 @@ class HParser(tokens: IndexedSeq[HToken]) {
     val start = skipWs()
     val values = new MListBuffer[HValue]
     values += parseNonConcat()
-    while (
-      aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) ||
-        ahead(unquotedStringPart(inKey = false))
-    ) {
+    while aheadAny(LBrace, LBracket, Splice, QuotedString, MultilineString) ||
+      ahead(unquotedStringPart(inKey = false))
+    do {
       values += parseNonConcat()
     }
     values.last match {
@@ -241,48 +241,50 @@ class HParser(tokens: IndexedSeq[HToken]) {
   }
 
   def parseNonConcat(): HValue = {
-    if (ahead(LBrace)) parseObject()
-    else if (ahead(LBracket)) parseArray()
-    else if (ahead(Splice)) parseSubst()
+    if ahead(LBrace) then parseObject()
+    else if ahead(LBracket) then parseArray()
+    else if ahead(Splice) then parseSubst()
     else {
       val str = parseString(inKey = false)
-      if (str.syntax == HStringSyntax.Unquoted) str.value match {
-        case Null => HNull()(str.tokens)
-        case True => HBoolean(value = true)(str.tokens)
-        case False => HBoolean(value = false)(str.tokens)
-        case num if NumberRegex.pattern.matcher(num).matches() => HNumber(BigDecimal(num))(str.tokens)
-        case _ => str
-      }
+      if str.syntax == HStringSyntax.Unquoted then
+        str.value match {
+          case Null => HNull()(str.tokens)
+          case True => HBoolean(value = true)(str.tokens)
+          case False => HBoolean(value = false)(str.tokens)
+          case num if NumberRegex.pattern.matcher(num).matches() => HNumber(BigDecimal(num))(str.tokens)
+          case _ => str
+        }
       else str
     }
   }
 
   private def unquotedStringPart(inKey: Boolean): HToken => Boolean =
-    token => token.tokenType match {
-      case Unquoted | LParen | RParen => true
-      case Dot => !inKey
-      case Whitespace => !token.multiline
-      case _ => false
-    }
+    token =>
+      token.tokenType match {
+        case Unquoted | LParen | RParen => true
+        case Dot => !inKey
+        case Whitespace => !token.multiline
+        case _ => false
+      }
 
   def parseString(inKey: Boolean): HString = {
     val start = idx
-    if (pass(QuotedString)) {
+    if pass(QuotedString) then {
       HString(prev.unquoted)(HStringSyntax.Quoted, rangeFrom(start))
-    } else if (pass(MultilineString)) {
+    } else if pass(MultilineString) then {
       HString(prev.unquoted)(HStringSyntax.Multiline, rangeFrom(start))
-    } else if (pass(unquotedStringPart(inKey))) {
-      while (ahead(unquotedStringPart(inKey))) {
+    } else if pass(unquotedStringPart(inKey)) then {
+      while ahead(unquotedStringPart(inKey)) do {
         advance()
       }
       val keepLast = prev.tokenType != Whitespace ||
         (inKey && aheadAny(Dot, QuotedString, MultilineString)) ||
         (!inKey && aheadAny(LBrace, LBracket, QuotedString, MultilineString, Splice))
-      val end = if (keepLast) idx else prev.idx
+      val end = if keepLast then idx else prev.idx
       val range = new HTokenRange(tokens, start, end)
       val value = range.iterator.map(_.text).mkString
       val syntax =
-        if (end == start || end == start + 1 && tokens(start).tokenType == Whitespace) HStringSyntax.Whitespace
+        if end == start || end == start + 1 && tokens(start).tokenType == Whitespace then HStringSyntax.Whitespace
         else HStringSyntax.Unquoted
       HString(value)(syntax, range)
     } else {

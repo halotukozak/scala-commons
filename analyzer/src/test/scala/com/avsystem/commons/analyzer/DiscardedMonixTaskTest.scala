@@ -5,7 +5,8 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
   test("simple") {
-    assertErrors(10,
+    assertErrors(
+      10,
       """
         |import monix.eval.Task
         |
@@ -31,7 +32,7 @@ class DiscardedMonixTaskTest extends AnyFunSuite with AnalyzerTest {
         |  Seq(1,2,3).map(_ => task)
         |  val tsk = task
         |}
-      """.stripMargin
+      """.stripMargin,
     )
   }
 }

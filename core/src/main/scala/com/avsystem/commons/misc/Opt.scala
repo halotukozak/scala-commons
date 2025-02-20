@@ -10,7 +10,7 @@ object Opt {
 
   def apply[A](value: A): Opt[A] = if value != null then new Opt[A](value) else Opt.Empty
 
-  def unapply[A](opt: Opt[A]): Opt[A] = opt //name-based extractor
+  def unapply[A](opt: Opt[A]): Opt[A] = opt // name-based extractor
 
   def some[A](value: A): Opt[A] =
     if value != null then new Opt[A](value)
@@ -24,7 +24,7 @@ object Opt {
 
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
-  final class WithFilter[+A] private[Opt](self: Opt[A], p: A => Boolean) {
+  final class WithFilter[+A] private[Opt] (self: Opt[A], p: A => Boolean) {
     def map[B](f: A => B): Opt[B] = self.filter(p).map(f)
 
     def flatMap[B](f: A => Opt[B]): Opt[B] = self.filter(p).flatMap(f)
@@ -35,30 +35,30 @@ object Opt {
   }
 
   extension [A](opt: => Opt[A])
-    /** When a given condition is true, evaluates the `opt` argument and returns it.
-     * When the condition is false, `opt` is not evaluated and `Opt.Empty` is
-     * returned.
+    /**
+     * When a given condition is true, evaluates the `opt` argument and returns it. When the condition is false, `opt`
+     * is not evaluated and `Opt.Empty` is returned.
      */
     def when(cond: Boolean): Opt[A] = if cond then opt else Opt.Empty
 
-    /** Unless a given condition is true, this will evaluate the `opt` argument and
-     * return it. Otherwise, `opt` is not evaluated and `Opt.Empty` is returned.
+    /**
+     * Unless a given condition is true, this will evaluate the `opt` argument and return it. Otherwise, `opt` is not
+     * evaluated and `Opt.Empty` is returned.
      */
     inline def unless(cond: Boolean): Opt[A] = when(!cond)
   end extension
 }
 
 /**
- * Like `Option` but implemented as value class (avoids boxing) and treats `null` as no value.
- * Therefore, there is no equivalent for `Some(null)`.
+ * Like `Option` but implemented as value class (avoids boxing) and treats `null` as no value. Therefore, there is no
+ * equivalent for `Some(null)`.
  *
- * If you need a value-class version of `Option` which differentiates between no value and `null` value,
- * use [[NOpt]].
+ * If you need a value-class version of `Option` which differentiates between no value and `null` value, use [[NOpt]].
  *
- * WARNING: Unfortunately, using `Opt` in pattern matches turns of exhaustivity checking.
- * Please be aware of that tradeoff.
+ * WARNING: Unfortunately, using `Opt` in pattern matches turns of exhaustivity checking. Please be aware of that
+ * tradeoff.
  */
-final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import Opt.*
 
@@ -101,8 +101,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     if isEmpty then ev(null) else value
 
   /**
-   * Analogous to `Option.map` except that when mapping function returns `null`,
-   * empty `Opt` is returned as a result.
+   * Analogous to `Option.map` except that when mapping function returns `null`, empty `Opt` is returned as a result.
    */
   inline def map[B](f: A => B): Opt[B] =
     if isEmpty then Opt.Empty else Opt(f(value))
@@ -123,7 +122,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     if isEmpty then Opt.Empty else ev(value)
 
   inline def filter(p: A => Boolean): Opt[A] =
-    if (isEmpty || p(value)) this else Opt.Empty
+    if isEmpty || p(value) then this else Opt.Empty
 
   def withFilter(p: A => Boolean): Opt.WithFilter[A] =
     new Opt.WithFilter[A](this, p)
@@ -144,13 +143,12 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     if !isEmpty then f(value)
 
   /**
-   * Analogous to `Option.collect` except that when the function returns `null`,
-   * empty `Opt` is returned as a result.
+   * Analogous to `Option.collect` except that when the function returns `null`, empty `Opt` is returned as a result.
    */
   def collect[B](pf: PartialFunction[A, B]): Opt[B] =
     if !isEmpty then {
       val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
-      new Opt(if (res == null) EmptyMarker else res)
+      new Opt(if res == null then EmptyMarker else res)
     } else Opt.Empty
 
   inline def orElse[B >: A](alternative: => Opt[B]): Opt[B] =
@@ -168,15 +166,18 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
   inline def toLeft[X](right: => X): Either[A, X] =
     if isEmpty then Right(right) else Left(value)
 
-  inline def zip[B](that: Opt[B]): Opt[(A, B)] =
+  inline infix def zip[B](that: Opt[B]): Opt[(A, B)] =
     if isEmpty || that.isEmpty then Opt.Empty else Opt((this.get, that.get))
 
   /**
    * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
    *
-   * @param sideEffect - code to be executed if opt is empty
-   * @return the same opt
-   * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+   * @param sideEffect
+   *   \- code to be executed if opt is empty
+   * @return
+   *   the same opt
+   * @example
+   *   {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
    */
   inline def forEmpty(sideEffect: => Unit): Opt[A] = {
     if isEmpty then sideEffect

@@ -1,17 +1,16 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.protocol.{BulkStringMsg, NullBulkStringMsg}
 
 /**
-  * Author: ghik
-  * Created: 05/10/16.
-  */
+ * Author: ghik Created: 05/10/16.
+ */
 trait KeyedScriptingApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   object getScript extends RedisScript[Opt[String]] {
     def source: String = "return redis.call('get', KEYS[1])"
@@ -49,7 +48,7 @@ trait KeyedScriptingApiSuite extends CommandsSuite {
 
 trait NodeScriptingApiSuite extends KeyedScriptingApiSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("SCRIPT EXISTS") {
     scriptExists(Nil).assertEquals(Seq.empty)
@@ -65,7 +64,7 @@ trait NodeScriptingApiSuite extends KeyedScriptingApiSuite {
 
 trait ConnectionScriptingApiSuite extends NodeScriptingApiSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("SCRIPT DEBUG") {
     scriptDebug(DebugMode.Yes).get

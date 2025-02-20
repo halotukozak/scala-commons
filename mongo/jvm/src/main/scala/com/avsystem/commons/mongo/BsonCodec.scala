@@ -2,16 +2,17 @@ package com.avsystem.commons
 package mongo
 
 import org.bson.types.ObjectId
-import org.bson._
+import org.bson.*
 
 import java.time.Instant
 import _root_.scala.collection.Factory
 import _root_.scala.language.higherKinds
 
 /**
-  * @author MKej
-  */
-trait BsonCodec[A, BSON <: BsonValue] {self =>
+ * @author
+ *   MKej
+ */
+trait BsonCodec[A, BSON <: BsonValue] { self =>
   def fromBson(bson: BSON): A
   def toBson(a: A): BSON
 
@@ -25,7 +26,7 @@ trait BsonCodec[A, BSON <: BsonValue] {self =>
   def collection[C[X] <: IterableOnce[X]](implicit fac: Factory[A, C[A]]): BsonCodec[C[A], BsonArray] =
     BsonCodec.create[C[A], BsonArray](
       ba => ba.iterator().asScala.map(bv => self.fromBson(bv.asInstanceOf[BSON])).to(fac),
-      col => new BsonArray(col.iterator.map(self.toBson).to(JList))
+      col => new BsonArray(col.iterator.map(self.toBson).to(JList)),
     )
 }
 
@@ -53,8 +54,6 @@ object BsonCodec {
   val string = create[String, BsonString](_.getValue, new BsonString(_))
 
   val doc = create[Doc, BsonDocument](new Doc(_), _.toBson)
-  val instant = create[Instant, BsonDateTime](
-    bdt => Instant.ofEpochMilli(bdt.getValue),
-    i => new BsonDateTime(i.toEpochMilli)
-  )
+  val instant =
+    create[Instant, BsonDateTime](bdt => Instant.ofEpochMilli(bdt.getValue), i => new BsonDateTime(i.toEpochMilli))
 }

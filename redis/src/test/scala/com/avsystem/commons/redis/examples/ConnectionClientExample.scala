@@ -2,15 +2,15 @@ package com.avsystem.commons
 package redis.examples
 
 import org.apache.pekko.actor.ActorSystem
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 
 // Global execution context is used for the sake of simplicity of this example,
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Basic example showing how to execute simple command on [[RedisConnectionClient]].
-  */
+ * Basic example showing how to execute simple command on [[RedisConnectionClient]].
+ */
 object ConnectionClientExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
 

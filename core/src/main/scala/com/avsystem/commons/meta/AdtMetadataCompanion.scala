@@ -2,20 +2,21 @@ package com.avsystem.commons
 package meta
 
 /**
-  * Base trait for companion objects of ADT metadata classes.
-  * ADT means "algebraic data type" which is, in practice, a case class or sealed hierarchy.
-  *
-  * Metadata class is a generic class that captures some metadata about a particular Scala type, using compile-time
-  * reflection. This is done with the `materialize` macro. The macro is steered by various meta-annotations used
-  * in the definition of the metadata class, e.g. [[adtParamMetadata]].
-  *
-  * @tparam M metadata class constructor
-  */
+ * Base trait for companion objects of ADT metadata classes. ADT means "algebraic data type" which is, in practice, a
+ * case class or sealed hierarchy.
+ *
+ * Metadata class is a generic class that captures some metadata about a particular Scala type, using compile-time
+ * reflection. This is done with the `materialize` macro. The macro is steered by various meta-annotations used in the
+ * definition of the metadata class, e.g. [[adtParamMetadata]].
+ *
+ * @tparam M
+ *   metadata class constructor
+ */
 trait AdtMetadataCompanion[M[_]] extends MetadataCompanion[M] {
-  def materialize[T]: M[T] =  ???
+  def materialize[T]: M[T] = ???
 //  macro AdtMetadataMacros.materialize[T]
 
-  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): M[T] =  ???
+  def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): M[T] = ???
 //  macro AdtMetadataMacros.fromApplyUnapplyProvider[T]
 }
 //

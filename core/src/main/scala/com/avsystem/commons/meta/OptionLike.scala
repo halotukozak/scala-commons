@@ -15,22 +15,22 @@ sealed trait OptionLike[O] {
   def get(opt: O): Value
 
   /**
-   * Determines whether `null` values should be collapsed into empty values (i.e. [[none]]).
-   * Used primarily by `GenCodec` when deserializing and dealing with e.g. JSON nulls vs missing fields.
+   * Determines whether `null` values should be collapsed into empty values (i.e. [[none]]). Used primarily by
+   * `GenCodec` when deserializing and dealing with e.g. JSON nulls vs missing fields.
    */
   def ignoreNulls: Boolean
 
-  def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B = if (isDefined(opt)) f(get(opt)) else ifEmpty
+  def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B = if isDefined(opt) then f(get(opt)) else ifEmpty
 
-  def getOrElse[B >: Value](opt: O, default: => B): B = if (isDefined(opt)) get(opt) else default
+  def getOrElse[B >: Value](opt: O, default: => B): B = if isDefined(opt) then get(opt) else default
 
-  def foreach(opt: O, f: Value => Unit): Unit = if (isDefined(opt)) f(get(opt))
+  def foreach(opt: O, f: Value => Unit): Unit = if isDefined(opt) then f(get(opt))
 
   final def convert[OO, V](opt: O, into: OptionLike.Aux[OO, V])(fun: Value => V): OO =
     fold(opt, into.none)(v => into.some(fun(v)))
 
   final def apply(value: Value): O =
-    if (ignoreNulls && (value.asInstanceOf[AnyRef] eq null)) none else some(value)
+    if ignoreNulls && (value.asInstanceOf[AnyRef] eq null) then none else some(value)
 }
 
 @bincompat
@@ -53,16 +53,12 @@ final class OptionLikeImpl[O, A](
 
   def get(opt: O): A = getFun(opt)
 
-  @bincompat private[meta] def this(
-    empty: O,
-    someFun: A => O,
-    isDefinedFun: O => Boolean,
-    getFun: O => A,
-  ) = this(empty, someFun, isDefinedFun, getFun, ignoreNulls = true)
+  @bincompat private[meta] def this(empty: O, someFun: A => O, isDefinedFun: O => Boolean, getFun: O => A) =
+    this(empty, someFun, isDefinedFun, getFun, ignoreNulls = true)
 }
 
 object OptionLike {
-  type Aux[O, V] = OptionLike[O] {type Value = V}
+  type Aux[O, V] = OptionLike[O] { type Value = V }
 
   given optionOptionLike[A]: BaseOptionLike[Option[A], A] =
     new OptionLikeImpl(None, Some(_), _.isDefined, _.get, ignoreNulls = true)
@@ -81,13 +77,12 @@ object OptionLike {
 }
 
 /**
- * If there is an instance of [[AutoOptionalParam]] for some type `T` then all case class &
- * RPC parameters of type `T` will be treated as if they were annotated with
- * [[com.avsystem.commons.serialization.optionalParam @optionalParam]].
+ * If there is an instance of [[AutoOptionalParam]] for some type `T` then all case class & RPC parameters of type `T`
+ * will be treated as if they were annotated with [[com.avsystem.commons.serialization.optionalParam @optionalParam]].
  *
- * As with `@optionalParam` annotation, independently there must be also
- * an instance of [[OptionLike]] for `T` for the entire mechanism to work. See the scaladoc of
- * [[com.avsystem.commons.serialization.optionalParam optionalParam]] for more information.
+ * As with `@optionalParam` annotation, independently there must be also an instance of [[OptionLike]] for `T` for the
+ * entire mechanism to work. See the scaladoc of [[com.avsystem.commons.serialization.optionalParam optionalParam]] for
+ * more information.
  */
 sealed trait AutoOptionalParam[T]
 

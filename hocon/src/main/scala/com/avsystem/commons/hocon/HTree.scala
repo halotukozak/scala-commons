@@ -12,8 +12,8 @@ sealed abstract class HTree extends Product {
 
   lazy val children: List[HTree] = productIterator.flatMap {
     case child: HTree => Iterator(child)
-    case optChild: Opt[HTree@unchecked] => optChild.iterator
-    case children: List[HTree@unchecked] => children.iterator
+    case optChild: Opt[HTree @unchecked] => optChild.iterator
+    case children: List[HTree @unchecked] => children.iterator
     case _ => Iterator.empty
   }.toList
 }
@@ -25,7 +25,8 @@ object HTree {
   final case class HBoolean(value: Boolean)(val tokens: HTokenRange) extends HValue
   final case class HNumber(value: BigDecimal)(val tokens: HTokenRange) extends HValue
   final case class HString(value: String)(val syntax: HStringSyntax, val tokens: HTokenRange)
-    extends HValue with HRegularIncludeTarget
+      extends HValue
+      with HRegularIncludeTarget
   final case class HSubst(path: HPath)(val optional: Boolean, val tokens: HTokenRange) extends HValue
   final case class HConcat(values: List[HValue])(val tokens: HTokenRange) extends HValue
 
@@ -52,10 +53,9 @@ object HTree {
 
   sealed trait HIncludeTarget extends HTree
   sealed trait HRegularIncludeTarget extends HIncludeTarget
-  final case class HRequiredInclude(target: HRegularIncludeTarget)(val tokens: HTokenRange)
-    extends HIncludeTarget
+  final case class HRequiredInclude(target: HRegularIncludeTarget)(val tokens: HTokenRange) extends HIncludeTarget
   final case class HQualifiedInclude(qualifier: HIncludeQualifier, target: HString)(val tokens: HTokenRange)
-    extends HRegularIncludeTarget
+      extends HRegularIncludeTarget
 
   final class HIncludeQualifier(implicit enumCtx: EnumCtx) extends AbstractValueEnum
   object HIncludeQualifier extends AbstractValueEnumCompanion[HIncludeQualifier] {
@@ -78,7 +78,7 @@ object HTree {
         case _ => ""
       }
 
-      if (withPos) {
+      if withPos then {
         sb.append(s"<${tree.pos.startLine + 1}:${tree.pos.startColumn + 1}:")
       }
       val prefix = s"${tree.productPrefix}$attrs"
@@ -88,21 +88,22 @@ object HTree {
         case HTree.HBoolean(value) => sb.append(value)
         case HTree.HNumber(value) => sb.append(value)
         case HTree.HString(value) => sb.append(JsonStringOutput.write(value))
-        case _ => tree.children match {
-          case Nil =>
-          case single :: Nil =>
-            reprIn(single, indent, single.pos != tree.pos)
-          case multiple =>
-            multiple.foreach { child =>
-              sb.append("\n").append(" " * (indent + 1))
-              reprIn(child, indent + 1, withPos = true)
-            }
-            sb.append("\n").append(" " * indent)
-        }
+        case _ =>
+          tree.children match {
+            case Nil =>
+            case single :: Nil =>
+              reprIn(single, indent, single.pos != tree.pos)
+            case multiple =>
+              multiple.foreach { child =>
+                sb.append("\n").append(" " * (indent + 1))
+                reprIn(child, indent + 1, withPos = true)
+              }
+              sb.append("\n").append(" " * indent)
+          }
       }
 
       sb.append(")")
-      if (withPos) {
+      if withPos then {
         sb.append(s":${tree.pos.endLine + 1}:${tree.pos.endColumn + 1}>")
       }
 

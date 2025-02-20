@@ -3,6 +3,6 @@ package serialization.macros
 
 import serialization.GenCodec
 
-def materializeImpl[T: Type](using quotes: Quotes) : Expr[GenCodec[T]] = '{
+def materializeImpl[T: Type](using quotes: Quotes): Expr[GenCodec[T]] = '{
   ???
 }

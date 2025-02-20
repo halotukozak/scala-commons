@@ -10,10 +10,13 @@ import java.util.stream.*
 import scala.compiletime.summonInline
 import scala.quoted.{Expr, Quotes, Type}
 
-inline def specializedJStreamAsScala[T, Stream <: SpecializedJStream[T] | JStream[T]]: AsScala[Stream, SpecializedScalaJStream[T]] =
+inline def specializedJStreamAsScala[T, Stream <: SpecializedJStream[T] | JStream[T]]
+  : AsScala[Stream, SpecializedScalaJStream[T]] =
   ${ specializedJStreamAsScalaImpl[T, Stream] }
 
-private def specializedJStreamAsScalaImpl[T: Type, Stream <: SpecializedJStream[T] | JStream[T] : Type](using Quotes): Expr[AsScala[Stream, SpecializedScalaJStream[T]]] = {
+private def specializedJStreamAsScalaImpl[T: Type, Stream <: SpecializedJStream[T] | JStream[T]: Type](using
+  Quotes,
+): Expr[AsScala[Stream, SpecializedScalaJStream[T]]] = {
   Type.of[Stream] match
     case '[JIntStream] => '{ new ScalaJIntStream(_: JIntStream) }
     case '[JStream[Int]] => '{ new ScalaJStream(_: JStream[Int]).asIntStream }
@@ -27,10 +30,12 @@ private def specializedJStreamAsScalaImpl[T: Type, Stream <: SpecializedJStream[
 def specializedJStreamAsScalaAny[T, Stream <: JStream[T]]: AsScala[Stream, SpecializedScalaJStream[T]] =
   stream => mkScalaJsStreamSpecialized(new ScalaJStream(stream))
 
-
-inline def specializedScalaJStreamAsJava[T, Stream <: SpecializedScalaJStream[T] | ScalaJStream[T]]: AsJava[Stream, JStream[T]] =
+inline def specializedScalaJStreamAsJava[T, Stream <: SpecializedScalaJStream[T] | ScalaJStream[T]]
+  : AsJava[Stream, JStream[T]] =
   ${ specializedScalaJStreamAsJavaImpl[T, Stream] }
-def specializedScalaJStreamAsJavaImpl[T: Type, Stream <: SpecializedScalaJStream[T] | ScalaJStream[T] : Type](using Quotes): Expr[AsJava[Stream, JStream[T]]] = {
+def specializedScalaJStreamAsJavaImpl[T: Type, Stream <: SpecializedScalaJStream[T] | ScalaJStream[T]: Type](using
+  Quotes,
+): Expr[AsJava[Stream, JStream[T]]] = {
   Type.of[Stream] match
     case '[ScalaJIntStream] => '{ (_: ScalaJIntStream).asJava }
     case '[ScalaJStream[Int]] => '{ (_: ScalaJStream[Int]).asJava }

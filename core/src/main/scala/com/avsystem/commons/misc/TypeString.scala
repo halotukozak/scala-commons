@@ -6,12 +6,12 @@ import misc.macros.{javaClassName, typeStringImpl}
 import scala.quoted.Type
 
 /**
- * Typeclass that contains string representation of a concrete type. This representation should correctly parse
- * and typecheck when used as a type in Scala source code.
+ * Typeclass that contains string representation of a concrete type. This representation should correctly parse and
+ * typecheck when used as a type in Scala source code.
  *
- * Instances of `TypeString` are implicitly macro-materialized. The macro will fail if the type contains
- * references to local symbols, i.e. symbols that only exist in limited scope and cannot be referred to from
- * any place in source code. This includes type parameters, this-references to enclosing classes, etc.
+ * Instances of `TypeString` are implicitly macro-materialized. The macro will fail if the type contains references to
+ * local symbols, i.e. symbols that only exist in limited scope and cannot be referred to from any place in source code.
+ * This includes type parameters, this-references to enclosing classes, etc.
  *
  * For example, the code below will NOT compile:
  * {{{
@@ -43,8 +43,8 @@ object TypeString {
 }
 
 /**
- * Typeclass that contains JVM fully qualified class name corresponding to given type.
- * `JavaClassName.of[T]` is always equal to `classTag[T].runtimeClass.getName`
+ * Typeclass that contains JVM fully qualified class name corresponding to given type. `JavaClassName.of[T]` is always
+ * equal to `classTag[T].runtimeClass.getName`
  *
  * `JavaClassName` can be used instead of `ClassTag` in ScalaJS when ScalaJS linker is configured to drop class names.
  * Also, unlike `ClassTag`, `JavaClassName` contains just a string so it can be easily serialized and deserialized.

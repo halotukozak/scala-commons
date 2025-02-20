@@ -7,7 +7,7 @@ import scala.annotation.nowarn
 object ApiTypecheckingTest {
 
   locally {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
 
     val tupleBatch: RedisBatch[(Opt[String], Long)] =
       (get("key1"), incr("key2")).sequence
@@ -19,9 +19,8 @@ object ApiTypecheckingTest {
       (1 to 10).map(i => (get(s"stringKey$i"), incr(s"numberKey$i"))).sequence
   }
 
-
   locally {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
 
     // tuple of batches -> single batch of a tuple
     val tupleBatch: RedisBatch[(Opt[String], Long)] =
@@ -37,7 +36,7 @@ object ApiTypecheckingTest {
   }
 
   locally {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
 
     // collection of batches -> single batch of a collection
     val seqBatch: RedisBatch[Seq[Opt[String]]] =
@@ -51,7 +50,7 @@ object ApiTypecheckingTest {
   locally {
     val ser = RedisSerialization.Strings.valueType[Int]
     val api = RedisApi.Batches[ser.type]
-    import api._
+    import api.*
     val transactionOp: RedisOp[Unit] = for {
       // we're sending WATCH and GET commands in a single batch
       value <- watch("number") *> get("number").map(_.getOrElse(1))
@@ -67,7 +66,7 @@ object ApiTypecheckingTest {
   }
 
   locally {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val keys = (0 to 5).map(i => s"key$i")
     val sumBatch1: RedisBatch[Long] = RedisBatch.foldLeft(keys.map(scard), 0L)(_ + _)
     val sumBatch2: RedisBatch[Long] = RedisBatch.foldLeftMap(keys, 0L)(scard)(_ + _)

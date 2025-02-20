@@ -5,8 +5,7 @@ import com.avsystem.commons.serialization.{ListOutput, ObjectOutput}
 import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonBinary, BsonValue, BsonWriter}
 
-final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: Boolean = false)
-  extends BsonOutput {
+final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: Boolean = false) extends BsonOutput {
 
   override def writeNull(): Unit =
     bw.writeNull()
@@ -21,7 +20,7 @@ final class BsonWriterOutput(bw: BsonWriter, override val legacyOptionEncoding: 
     bw.writeInt32(int)
 
   override def writeLong(long: Long): Unit =
-    if (long.isValidInt) writeInt(long.toInt)
+    if long.isValidInt then writeInt(long.toInt)
     else bw.writeInt64(long)
 
   override def writeTimestamp(millis: Long): Unit =

@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 import com.avsystem.commons.serialization.HasApplyUnapplyCodec
 
 case class HashRecord(str: String, int: OptArg[Int] = OptArg.Empty, list: List[Double] = Nil)
@@ -11,7 +11,7 @@ trait HashesApiSuite extends CommandsSuite {
 
   private val api = RedisApi.Batches.StringTyped.recordType[HashRecord]
 
-  import api._
+  import api.*
 
   apiTest("HDEL") {
     setup(hset("key", "field", "value"), hmset("key2", "field1" -> "value1", "field2" -> "value2"))

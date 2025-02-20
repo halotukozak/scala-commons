@@ -5,9 +5,8 @@ import com.avsystem.commons.serialization.GenCodec
 import org.bson.codecs.{Codec, DecoderContext, EncoderContext}
 import org.bson.{BsonReader, BsonWriter}
 
-class GenCodecBasedBsonCodec[T](legacyOptionEncoding: Boolean)(
-  implicit ct: ClassTag[T], genCodec: GenCodec[T]
-) extends Codec[T] {
+class GenCodecBasedBsonCodec[T](legacyOptionEncoding: Boolean)(implicit ct: ClassTag[T], genCodec: GenCodec[T])
+    extends Codec[T] {
   override def getEncoderClass: Class[T] = ct.runtimeClass.asInstanceOf[Class[T]]
 
   override def decode(reader: BsonReader, decoderContext: DecoderContext): T =

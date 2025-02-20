@@ -16,7 +16,7 @@ final case class HToken(tokenType: HTokenType, idx: Int, pos: SourcePos) {
 
   lazy val unquoted: String = tokenType match {
     case HTokenType.Comment =>
-      if (text.startsWith("#")) text.drop(1) else text.drop(2)
+      if text.startsWith("#") then text.drop(1) else text.drop(2)
     case HTokenType.QuotedString =>
       new JsonReader(text).parseString()
     case HTokenType.MultilineString =>
@@ -31,7 +31,8 @@ final case class HToken(tokenType: HTokenType, idx: Int, pos: SourcePos) {
 }
 
 final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val end: Int)
-  extends AbstractSeq[HToken] with IndexedSeq[HToken] { //TODO: IndexedSeqOptimized
+    extends AbstractSeq[HToken]
+    with IndexedSeq[HToken] { // TODO: IndexedSeqOptimized
 
   require(allTokens.nonEmpty)
   require(start >= 0 && start <= allTokens.length)
@@ -39,14 +40,13 @@ final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val e
   require(end >= start)
 
   val pos: SourcePos =
-    if (start == end) allTokens(start).pos.emptyStartPos else
-      allTokens(start).pos join allTokens(end - 1).pos
+    if start == end then allTokens(start).pos.emptyStartPos else allTokens(start).pos join allTokens(end - 1).pos
 
   def input: SourceFile = pos.input
 
   def length: Int = end - start
   def apply(idx: Int): HToken =
-    if (idx < 0 || idx >= length) throw new IndexOutOfBoundsException(idx.toString)
+    if idx < 0 || idx >= length then throw new IndexOutOfBoundsException(idx.toString)
     else allTokens(start + idx)
 
   def join(other: HTokenRange): HTokenRange = {
@@ -62,8 +62,8 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
   case object Whitespace extends HTokenType {
     override def pass(input: String, idx: Int): Int = {
       @tailrec def loop(idx: Int): Int =
-        if (idx >= input.length) idx
-        else if (input(idx).isWhitespace) loop(idx + 1)
+        if idx >= input.length then idx
+        else if input(idx).isWhitespace then loop(idx + 1)
         else idx
       loop(idx)
     }
@@ -71,16 +71,16 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
 
   case object Comment extends HTokenType {
     def pass(input: String, idx: Int): Int =
-      if (idx >= input.length) idx
-      else if (input.charAt(idx) == '#' || input.substring(idx, math.min(idx + 2, input.length)) == "//") {
+      if idx >= input.length then idx
+      else if input.charAt(idx) == '#' || input.substring(idx, math.min(idx + 2, input.length)) == "//" then {
         val nlIdx = input.indexOf('\n', idx)
-        if (nlIdx == -1) input.length else nlIdx
+        if nlIdx == -1 then input.length else nlIdx
       } else 0
   }
 
   sealed abstract class Delimiter(val text: String) extends HTokenType {
     def pass(input: String, idx: Int): Int =
-      if (input.substring(idx, idx + text.length) == text) idx + text.length else 0
+      if input.substring(idx, idx + text.length) == text then idx + text.length else 0
   }
 
   case object Bof extends HTokenType {
@@ -107,7 +107,7 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
   sealed abstract class Patterned(regex: Regex) extends HTokenType {
     def pass(input: String, idx: Int): Int = {
       val matcher = regex.pattern.matcher(CharSubSequence(input, idx, input.length))
-      if (matcher.lookingAt()) idx + matcher.end() else idx
+      if matcher.lookingAt() then idx + matcher.end() else idx
     }
   }
 
@@ -116,11 +116,11 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
 
     def pass(input: String, idx: Int): Int = {
       @tailrec def loop(idx: Int, afterSlash: Boolean = false): Int =
-        if (idx >= input.length) idx
+        if idx >= input.length then idx
         else {
           val c = input.charAt(idx)
-          if (c.isWhitespace || Forbidden.contains(c)) idx
-          else if (afterSlash && c == '/') idx - 1
+          if c.isWhitespace || Forbidden.contains(c) then idx
+          else if afterSlash && c == '/' then idx - 1
           else loop(idx + 1, c == '/')
         }
       loop(idx)
@@ -139,33 +139,36 @@ class HLexer(input: SourceFile) {
   private[this] var off = -1
 
   def next(): HToken =
-    if (off == -1) {
+    if off == -1 then {
       off = 0
       tokenIdx += 1
       HToken(HTokenType.Bof, tokenIdx, input.pos(off, off))
-    }
-    else if (off == chars.length) {
+    } else if off == chars.length then {
       val pos = input.pos(off, off)
       off += 1
       HToken(HTokenType.Eof, tokenIdx, pos)
-    }
-    else {
-      HTokenType.values.iterator.flatMap { tt =>
-        val nextOff = tt.pass(chars, off)
-        if (nextOff <= off) Opt.Empty else Opt {
-          val token = HToken(tt, tokenIdx, input.pos(off, nextOff))
-          off = nextOff
-          tokenIdx += 1
-          token
+    } else {
+      HTokenType.values.iterator
+        .flatMap { tt =>
+          val nextOff = tt.pass(chars, off)
+          if nextOff <= off then Opt.Empty
+          else
+            Opt {
+              val token = HToken(tt, tokenIdx, input.pos(off, nextOff))
+              off = nextOff
+              tokenIdx += 1
+              token
+            }
         }
-      }.nextOpt.getOrElse {
-        throw new Exception(s"Unexpected character ${chars.charAt(off)} at ${input.pos(off, off)}")
-      }
+        .nextOpt
+        .getOrElse {
+          throw new Exception(s"Unexpected character ${chars.charAt(off)} at ${input.pos(off, off)}")
+        }
     }
 
   def tokenize(): IndexedSeq[HToken] = {
     val res = IArraySeq.newBuilder[HToken]
-    while (off <= chars.length) {
+    while off <= chars.length do {
       res += next()
     }
     res.result()

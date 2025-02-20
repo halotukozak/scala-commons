@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package macros.meta
 
-
-
 //package com.avsystem.commons
 //package macros.meta
 //

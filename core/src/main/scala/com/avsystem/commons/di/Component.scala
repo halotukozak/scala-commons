@@ -9,36 +9,37 @@ import scala.annotation.compileTimeOnly
 import scala.annotation.unchecked.uncheckedVariance
 
 final case class ComponentInitializationException(component: Component[?], cause: Throwable)
-  extends Exception(s"failed to initialize component ${component.info}", cause)
+    extends Exception(s"failed to initialize component ${component.info}", cause)
 
 final case class DependencyCycleException(cyclePath: List[Component[?]])
-  extends Exception(s"component dependency cycle detected:\n${cyclePath.iterator.map(_.info).map("  " + _).mkString(" ->\n")}")
+    extends Exception(
+      s"component dependency cycle detected:\n${cyclePath.iterator.map(_.info).map("  " + _).mkString(" ->\n")}",
+    )
 
-final case class ComponentInfo(
-  name: String,
-  filePath: String,
-  fileName: String,
-  lineNumber: Int,
-) {
+final case class ComponentInfo(name: String, filePath: String, fileName: String, lineNumber: Int) {
   override def toString: String = s"$name($fileName:$lineNumber)"
 }
 
 object ComponentInfo {
   def apply(namePrefix: String, sourceInfo: SourceInfo): ComponentInfo =
-    new ComponentInfo(namePrefix + sourceInfo.enclosingSymbols.head, sourceInfo.filePath, sourceInfo.fileName, sourceInfo.line)
+    new ComponentInfo(
+      namePrefix + sourceInfo.enclosingSymbols.head,
+      sourceInfo.filePath,
+      sourceInfo.fileName,
+      sourceInfo.line,
+    )
 
   @compileTimeOnly("implicit ComponentInfo is only available inside code passed to component/singleton macro")
   given info: ComponentInfo = sys.error("stub")
 }
 
 /**
- * Represents a lazily initialized component in a dependency injection setting. The name "component" indicates
- * that the value is often an application building block like a database service, data access object, HTTP server etc.
- * which is associated with some side-effectful initialization code.
- * However, [[Component]] can hold values of any type.
+ * Represents a lazily initialized component in a dependency injection setting. The name "component" indicates that the
+ * value is often an application building block like a database service, data access object, HTTP server etc. which is
+ * associated with some side-effectful initialization code. However, [[Component]] can hold values of any type.
  *
- * You can think of [[Component]] as a high-level `lazy val` with more features:
- * parallel initialization of dependencies, dependency cycle detection, source code awareness.
+ * You can think of [[Component]] as a high-level `lazy val` with more features: parallel initialization of
+ * dependencies, dependency cycle detection, source code awareness.
  */
 final class Component[+T](
   val info: ComponentInfo,
@@ -47,9 +48,10 @@ final class Component[+T](
   destroyer: DestroyFunction[T] = Component.emptyDestroy,
   cachedStorage: Opt[AtomicReference[Future[T]]] = Opt.Empty,
 ) {
+
   /**
-   * Returns dependencies of this component extracted from the component definition.
-   * You can use this to inspect the dependency graph without initializing any components.
+   * Returns dependencies of this component extracted from the component definition. You can use this to inspect the
+   * dependency graph without initializing any components.
    */
   lazy val dependencies: IndexedSeq[Component[?]] = deps
 
@@ -71,13 +73,13 @@ final class Component[+T](
     case _ => false
 
   /**
-   * Phantom method that indicates an asynchronous reference to this component inside definition of some other component.
-   * This method is rewritten in compile time by [[Components.component]] or [[Components.singleton]] macro.
-   * The component being referred is extracted as a dependency and initialized before the component that refers to
-   * it. This way multiple dependencies can be initialized in parallel.
+   * Phantom method that indicates an asynchronous reference to this component inside definition of some other
+   * component. This method is rewritten in compile time by [[Components.component]] or [[Components.singleton]] macro.
+   * The component being referred is extracted as a dependency and initialized before the component that refers to it.
+   * This way multiple dependencies can be initialized in parallel.
    *
    * @example
-   * {{{
+   *   {{{
    *   class FooService
    *   class BarService
    *   class Application(foo: FooService, bar: BarService)
@@ -89,7 +91,7 @@ final class Component[+T](
    *     // before `app` is initialized, `foo` and `bar` can be initialized in parallel
    *     def app: Component[Application] = singleton(new Application(foo.ref, bar.ref))
    *   }
-   * }}}
+   *   }}}
    */
   @compileTimeOnly(".ref can only be used inside code passed to component/singleton(...) macro")
   def ref: T = sys.error("stub")
@@ -107,8 +109,8 @@ final class Component[+T](
     new Component(info, deps ++ moreDeps, creator, destroyer, cachedStorage)
 
   /**
-   * Specifies an asynchronous function that will be used to destroy this component, i.e.
-   * free up any resources that this component allocated (threads, network connections, etc). See [[destroy]].
+   * Specifies an asynchronous function that will be used to destroy this component, i.e. free up any resources that
+   * this component allocated (threads, network connections, etc). See [[destroy]].
    */
   def asyncDestroyWith(destroyFun: DestroyFunction[T]): Component[T] = {
     val newDestroyer: DestroyFunction[T] =
@@ -117,33 +119,32 @@ final class Component[+T](
   }
 
   /**
-   * Specifies a function that will be used to destroy this component, i.e. free up any resources that this
-   * component allocated (threads, network connections, etc). See [[destroy]].
+   * Specifies a function that will be used to destroy this component, i.e. free up any resources that this component
+   * allocated (threads, network connections, etc). See [[destroy]].
    */
   def destroyWith(destroyFun: T => Unit): Component[T] =
     asyncDestroyWith(implicit ctx => t => Future(destroyFun(t)))
 
   /**
-   * Validates this component by checking its dependency graph for cycles.
-   * A [[DependencyCycleException]] is thrown when a cycle is detected.
+   * Validates this component by checking its dependency graph for cycles. A [[DependencyCycleException]] is thrown when
+   * a cycle is detected.
    */
   def validate(): Unit =
     Component.validateAll(List(this))
 
   /**
-   * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`).
-   * Returns a `Future` containing the initialized component value.
-   * NOTE: the component is initialized only once and its value is cached.
+   * Forces initialization of this component and its dependencies (in parallel, using given `ExecutionContext`). Returns
+   * a `Future` containing the initialized component value. NOTE: the component is initialized only once and its value
+   * is cached.
    */
   def init(using ExecutionContext): Future[T] =
     doInit(starting = true)
 
   /**
-   * Destroys this component and all its dependencies (in reverse initialization order, i.e. first the component
-   * and then its dependencies. Destroying calls the function that was registered with [[destroyWith]] or
+   * Destroys this component and all its dependencies (in reverse initialization order, i.e. first the component and
+   * then its dependencies. Destroying calls the function that was registered with [[destroyWith]] or
    * [[asyncDestroyWith]] and clears the cached component instance so that it is created anew if [[init]] is called
-   * again.
-   * If possible, independent components are destroyed in parallel, using given `ExecutionContext`.
+   * again. If possible, independent components are destroyed in parallel, using given `ExecutionContext`.
    */
   def destroy(using ExecutionContext): Future[Unit] =
     Component.destroyAll(List(this))
@@ -151,7 +152,10 @@ final class Component[+T](
   private def sameStorage(otherStorage: AtomicReference[?]): Boolean =
     storage eq otherStorage
 
-  private[di] def cached(cachedStorage: AtomicReference[Future[T @uncheckedVariance]], info: ComponentInfo): Component[T] =
+  private[di] def cached(
+    cachedStorage: AtomicReference[Future[T @uncheckedVariance]],
+    info: ComponentInfo,
+  ): Component[T] =
     new Component(info, deps, creator, destroyer, Opt(cachedStorage))
 
   private def doDestroy(using ec: ExecutionContext): Future[Unit] =
@@ -164,16 +168,16 @@ final class Component[+T](
     storage.getPlain match {
       case null =>
         val promise = Promise[T]()
-        if (storage.compareAndSet(null, promise.future)) {
-          if (starting) {
+        if storage.compareAndSet(null, promise.future) then {
+          if starting then {
             validate()
           }
           val resultFuture =
-            Future.traverse(dependencies)(_.doInit(starting = false))
+            Future
+              .traverse(dependencies)(_.doInit(starting = false))
               .flatMap(resolvedDeps => creator(resolvedDeps)(ec))
-              .recoverNow {
-                case NonFatal(cause) =>
-                  throw ComponentInitializationException(this, cause)
+              .recoverNow { case NonFatal(cause) =>
+                throw ComponentInitializationException(this, cause)
               }
           promise.completeWith(resultFuture)
         }
@@ -204,10 +208,9 @@ object Component {
 
   /**
    * Destroys all given components and their dependencies by calling their destroy function (registered with
-   * [[Component.destroyWith()]] or [[Component.asyncDestroyWith()]]) and clearing up cached component instances.
-   * It is ensured that a component is only destroyed after all components that depend on it are destroyed
-   * (reverse initialization order).
-   * Independent components are destroyed in parallel, using given `ExecutionContext`.
+   * [[Component.destroyWith()]] or [[Component.asyncDestroyWith()]]) and clearing up cached component instances. It is
+   * ensured that a component is only destroyed after all components that depend on it are destroyed (reverse
+   * initialization order). Independent components are destroyed in parallel, using given `ExecutionContext`.
    */
   def destroyAll(components: Seq[Component[?]])(using ExecutionContext): Future[Unit] = {
     val reverseGraph = new MHashMap[Component[?], MListBuffer[Component[?]]]
@@ -216,12 +219,11 @@ object Component {
       _.dependencies.toList,
       onEnter = { (c, _) =>
         reverseGraph.getOrElseUpdate(c, new MListBuffer) // make sure there is entry for all nodes
-        if (c.dependencies.nonEmpty)
+        if c.dependencies.nonEmpty then
           c.dependencies.foreach { dep =>
             reverseGraph.getOrElseUpdate(dep, new MListBuffer) += c
           }
-        else
-          terminals += c
+        else terminals += c
       },
     )
     val destroyFutures = new MHashMap[Component[?], Future[Unit]]
@@ -234,11 +236,10 @@ object Component {
 }
 
 /**
- * A wrapper over [[Component]] that has an implicit conversion from arbitrary expression
- * of type T to [[AutoComponent]]. This is used when you need to accept a parameter that may contain other
- * component references.
+ * A wrapper over [[Component]] that has an implicit conversion from arbitrary expression of type T to
+ * [[AutoComponent]]. This is used when you need to accept a parameter that may contain other component references.
  *
- * Using [[AutoComponent]] avoids explicit wrapping of expressions passed as that parameter
- * into [[Component]] (using `component` macro).
+ * Using [[AutoComponent]] avoids explicit wrapping of expressions passed as that parameter into [[Component]] (using
+ * `component` macro).
  */
 final case class AutoComponent[+T](component: Component[T]) extends AnyVal

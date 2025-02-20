@@ -57,24 +57,23 @@ final class JavaInteropTest extends AnyFunSuite:
 
     assertSame(
       ints.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaIntStream).asJava.boxed,
-      ints.flatMap(jIntFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToInt(jToIntFunction(identity)))).boxed,
+      ints.flatMap(jIntFunction(i => JArrayList(i - 1, i, i + 1).stream.mapToInt(jToIntFunction(identity)))).boxed,
     )
 
     def longs = LongStream.of(1, 2, 3, 4, 5, 6)
 
     assertSame(
       longs.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaLongStream).asJava.boxed,
-      longs.flatMap(jLongFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToLong(jToLongFunction(identity)))).boxed,
+      longs.flatMap(jLongFunction(i => JArrayList(i - 1, i, i + 1).stream.mapToLong(jToLongFunction(identity)))).boxed,
     )
 
     def doubles = DoubleStream.of(1, 2, 3, 4, 5, 6)
 
     assertSame(
       doubles.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaDoubleStream).asJava.boxed,
-      doubles.flatMap(jDoubleFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToDouble(jToDoubleFunction(identity)))).boxed,
+      doubles
+        .flatMap(jDoubleFunction(i => JArrayList(i - 1, i, i + 1).stream.mapToDouble(jToDoubleFunction(identity))))
+        .boxed,
     )
   }
 
@@ -169,9 +168,12 @@ final class JavaInteropTest extends AnyFunSuite:
 
     assert(gfut.isDone == sfut.isCompleted)
 
-    gfut.addListener(jRunnable {
-      listenerCalled = true
-    }, MoreExecutors.directExecutor())
+    gfut.addListener(
+      jRunnable {
+        listenerCalled = true
+      },
+      MoreExecutors.directExecutor(),
+    )
     promise.success(123)
 
     assert(Await.result(sfut, Duration.Inf) == gfut.get)

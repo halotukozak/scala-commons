@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package macros.meta
 
-
-
 //package com.avsystem.commons
 //package macros.meta
 //
@@ -43,9 +41,7 @@ package macros.meta
 //  final lazy val UnmatchedErrorArg: Symbol = UnmatchedAT.member(TermName("error"))
 //  final lazy val UnmatchedParamErrorArg: Symbol = UnmatchedParamAT.member(TermName("error"))
 //
-//  def isOptionalParam(param: Symbol, tpe: Type): Boolean =
-//    findAnnotation(param, OptionalParamAT).isDefined || inferImplicitValue(getType(tq"$AutoOptionalParamCls[$tpe]")) != EmptyTree
-//
+
 //  def primaryConstructor(ownerType: Type, ownerParam: Option[MacroSymbol]): Symbol =
 //    primaryConstructorOf(ownerType, ownerParam.fold("")(p => s"${p.problemStr}:\n"))
 //

@@ -1,18 +1,12 @@
 package com.avsystem.commons
 package di
 
-
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-final case class DynamicConfig(
-  databaseUrl: String,
-  bulbulator: BulbulatorConfig,
-)
+final case class DynamicConfig(databaseUrl: String, bulbulator: BulbulatorConfig)
 
-final case class BulbulatorConfig(
-  types: List[String],
-)
+final case class BulbulatorConfig(types: List[String])
 
 abstract class MyComponent {
   println(s"starting $this initialization on ${Thread.currentThread()}")
@@ -28,26 +22,13 @@ abstract class MyComponent {
 
 final class DynamicDep(db: Database) extends MyComponent
 
-final class Database(
-  databaseUrl: String,
-) extends MyComponent
+final class Database(databaseUrl: String) extends MyComponent
 
-final class BulbulatorDao(
-  config: BulbulatorConfig,
-)(using
-  db: Database,
-) extends MyComponent
+final class BulbulatorDao(config: BulbulatorConfig)(using db: Database) extends MyComponent
 
-final class DeviceDao(using
-  db: Database,
-) extends MyComponent
+final class DeviceDao(using db: Database) extends MyComponent
 
-final class FullApplication(
-  dynamicDep: DynamicDep,
-)(using
-  bulbulatorDao: BulbulatorDao,
-  deviceDao: DeviceDao,
-) {
+final class FullApplication(dynamicDep: DynamicDep)(using bulbulatorDao: BulbulatorDao, deviceDao: DeviceDao) {
   println("full initialization")
 }
 

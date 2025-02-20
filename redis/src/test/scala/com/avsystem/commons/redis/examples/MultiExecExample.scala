@@ -2,16 +2,16 @@ package com.avsystem.commons
 package redis.examples
 
 import org.apache.pekko.actor.ActorSystem
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 
 // Global execution context is used for the sake of simplicity of this example,
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Example that shows execution of simple `MULTI`-`EXEC` blocks. For full Redis transactions with optimistic locking
-  * and `WATCH` command, see [[TransactionExample]].
-  */
+ * Example that shows execution of simple `MULTI`-`EXEC` blocks. For full Redis transactions with optimistic locking and
+ * `WATCH` command, see [[TransactionExample]].
+ */
 object MultiExecExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
 

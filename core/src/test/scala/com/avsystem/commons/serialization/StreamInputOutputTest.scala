@@ -50,10 +50,7 @@ final class StreamInputOutputTest extends AnyFunSuite {
     BigDecimal(BigInt("2356342454564522135435"), 150),
     Array[Byte](1, 2, 4, 2),
     Obj(10, "x"),
-    List(
-      List.empty,
-      List(Obj(123, "y"), Obj(124, "z")),
-    ),
+    List(List.empty, List(Obj(123, "y"), Obj(124, "z"))),
   )
 
   given wrapCodec: GenCodec[Wrap] = GenCodec.materialize[Wrap]
@@ -87,7 +84,9 @@ final class StreamInputOutputTest extends AnyFunSuite {
 
   test("simple encode/decode") {
     assertEncDec(1)
-    assert(Array[Byte](1, 3, 8) sameElements encDec(Array[Byte](1, 3, 8))(using arrayCodec)) //todo: should not be explicit
+    assert(
+      Array[Byte](1, 3, 8) sameElements encDec(Array[Byte](1, 3, 8))(using arrayCodec),
+    ) // todo: should not be explicit
     assertEncDec("x")
     assertEncDec(List.empty[String])
     assertEncDec(List[String]("   "))

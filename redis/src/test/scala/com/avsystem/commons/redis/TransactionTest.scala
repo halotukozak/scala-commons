@@ -8,15 +8,14 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.Await
 
 class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   test("empty transaction") {
     setup(set("key", "42"))
     val batch = RedisBatch.success(42).transaction
     batch.assertEquals(42)
 
-    assertCommunication(
-      """
+    assertCommunication("""
         |*1\r\n
         |$5\r\n
         |MULTI\r\n
@@ -26,16 +25,14 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
         |
         |+OK\r\n
         |*0\r\n
-        | """.stripMargin
-    )
+        | """.stripMargin)
   }
 
   test("simple transaction") {
     val batch = set("randomkey", "value").transaction
     batch.assert(identity)
 
-    assertCommunication(
-      """
+    assertCommunication("""
         |*1\r\n
         |$5\r\n
         |MULTI\r\n
@@ -54,20 +51,15 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
         |+QUEUED\r\n
         |*1\r\n
         |+OK\r\n
-        | """.stripMargin
-    )
+        | """.stripMargin)
   }
 
   test("nested transactions") {
-    val batch = (
-      get("nestedkey"),
-      set("nestedkey", "value").transaction
-    ).sequence.transaction
+    val batch = (get("nestedkey"), set("nestedkey", "value").transaction).sequence.transaction
 
     batch.assertEquals((Opt.Empty, true))
 
-    assertCommunication(
-      """
+    assertCommunication("""
         |*1\r\n
         |$5\r\n
         |MULTI\r\n
@@ -93,8 +85,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
         |*2\r\n
         |$-1\r\n
         |+OK\r\n
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 
   test("simple transaction with watch") {
@@ -107,8 +98,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
 
     assert(redisClient.executeOp(operation).futureValue == "42")
 
-    assertCommunication(
-      """
+    assertCommunication("""
         |*2\r\n
         |$5\r\n
         |WATCH\r\n
@@ -142,8 +132,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
         |+QUEUED\r\n
         |*1\r\n
         |+OK\r\n
-        | """.stripMargin
-    )
+        | """.stripMargin)
   }
 
   test("optimistic lock failure") {
@@ -161,8 +150,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
     } yield value
 
     intercept[OptimisticLockException](throw redisClient.executeOp(operation).failed.futureValue)
-    assertCommunication(
-      """
+    assertCommunication("""
         |*2\r\n
         |$5\r\n
         |WATCH\r\n
@@ -195,8 +183,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
         |+OK\r\n
         |+QUEUED\r\n
         |*-1\r\n
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 
   test("EXECABORT") {
@@ -213,8 +200,7 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
       case obj => throw new MatchError(obj)
     }
 
-    assertCommunication(
-      """
+    assertCommunication("""
         |*1\r\n
         |$5\r\n
         |MULTI\r\n
@@ -234,19 +220,16 @@ class TransactionTest extends RedisNodeCommandsSuite with CommunicationLogging {
         |+QUEUED\r\n
         |-ERR wrong number of arguments for \'get\' command\r\n
         |-EXECABORT Transaction discarded because of previous errors.\r\n
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 }
 
 class SingleConnectionTransactionTest extends RedisNodeCommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
-  override def nodeConfig = super.nodeConfig.copy(
-    poolSize = 1,
-    connectionConfigs = _ => ConnectionConfig(debugListener = listener)
-  )
+  override def nodeConfig =
+    super.nodeConfig.copy(poolSize = 1, connectionConfigs = _ => ConnectionConfig(debugListener = listener))
 
   test("simple transaction with cleanup") {
     setup(set("key", "0"))

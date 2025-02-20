@@ -36,7 +36,6 @@ final case class CodeSizeTester02(
 object CodeSizeTester02:
   given codec: GenCodec[CodeSizeTester02] = GenCodec.materialize
 
-
 final case class CodeSizeTester03(
   int: Int,
   string: String,
@@ -81,7 +80,6 @@ final case class CodeSizeTester06(
 object CodeSizeTester06:
   given codec: GenCodec[CodeSizeTester06] = GenCodec.materialize
 
-
 final case class CodeSizeTester07(
   int: Int,
   string: String,
@@ -103,7 +101,6 @@ final case class CodeSizeTester08(
 
 object CodeSizeTester08:
   given codec: GenCodec[CodeSizeTester08] = GenCodec.materialize
-
 
 final case class CodeSizeTester09(
   int: Int,

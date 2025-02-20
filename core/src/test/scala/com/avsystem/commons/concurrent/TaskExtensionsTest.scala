@@ -41,4 +41,3 @@ final class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheck
       result shouldBe expected
     }
   }
-

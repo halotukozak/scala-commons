@@ -5,8 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class CheckBincompatTest extends AnyFunSuite with AnalyzerTest {
   test("definitions of @bincompat annotated symbols should not be rejected") {
-    assertNoErrors(
-      """
+    assertNoErrors("""
         |import com.avsystem.commons.annotation.bincompat
         |
         |@bincompat class klass
@@ -14,12 +13,12 @@ class CheckBincompatTest extends AnyFunSuite with AnalyzerTest {
         |@bincompat object objekt {
         |  @bincompat def method: Int = 42
         |}
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 
   test("usage of @bincompat annotated symbols should be rejected") {
-    assertErrors(3,
+    assertErrors(
+      3,
       """
         |import com.avsystem.commons.annotation.bincompat
         |
@@ -36,7 +35,7 @@ class CheckBincompatTest extends AnyFunSuite with AnalyzerTest {
         |  println(new klass)
         |  println(outer.method)
         |}
-      """.stripMargin
+      """.stripMargin,
     )
   }
 }

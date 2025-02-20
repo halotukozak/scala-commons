@@ -7,12 +7,11 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
-  * Author: ghik
-  * Created: 27/06/16.
-  */
+ * Author: ghik Created: 27/06/16.
+ */
 trait UsesMasterSlaveServers extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
 
   val masterSlavePath: String = "masterSlave/" + System.currentTimeMillis()
@@ -33,20 +32,33 @@ trait UsesMasterSlaveServers extends BeforeAndAfterAll with RedisProcessUtils { 
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     prepareDirectory()
-    val processesFut = Future.traverse(ports)(port => launchRedis(
-      "--port", port.toString,
-      "--daemonize", "no",
-      "--pidfile", "redis.pid",
-      "--dbfilename", "dump.rdb",
-      "--dir", s"$masterSlavePath/$port"
-    ))
-    val sentinelsFut = Future.traverse(sentinelPorts)(port => launchSentinel(
-      s"$masterSlavePath/$port/sentinel.conf",
-      "--port", port.toString,
-      "--daemonize", "no",
-      "--pidfile", "redis.pid",
-      "--dir", s"$masterSlavePath/$port"
-    ))
+    val processesFut = Future.traverse(ports)(port =>
+      launchRedis(
+        "--port",
+        port.toString,
+        "--daemonize",
+        "no",
+        "--pidfile",
+        "redis.pid",
+        "--dbfilename",
+        "dump.rdb",
+        "--dir",
+        s"$masterSlavePath/$port",
+      ),
+    )
+    val sentinelsFut = Future.traverse(sentinelPorts)(port =>
+      launchSentinel(
+        s"$masterSlavePath/$port/sentinel.conf",
+        "--port",
+        port.toString,
+        "--daemonize",
+        "no",
+        "--pidfile",
+        "redis.pid",
+        "--dir",
+        s"$masterSlavePath/$port",
+      ),
+    )
     redisProcesses = Await.result(processesFut, 10.seconds)
     sentinelProcesses = Await.result(sentinelsFut, 10.seconds)
   }

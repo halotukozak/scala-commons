@@ -20,22 +20,18 @@ final class ValueEnumTest extends AnyFunSuite:
   }
 
   test("enum constant member validation") {
-    assertCompiles(
-      """
+    assertCompiles("""
         |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
         |object Enumz extends AbstractValueEnumCompanion[Enumz] {
         |  final val Constant: Value = new Enumz
         |}
-      """.stripMargin,
-    )
-    assertDoesNotCompile(
-      """
+      """.stripMargin)
+    assertDoesNotCompile("""
         |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
         |object Enumz extends AbstractValueEnumCompanion[Enumz] {
         |  private final val Constant: Value = new Enumz
         |}
-      """.stripMargin,
-    )
+      """.stripMargin)
     // This test case is not valid in Scala 3
     //    assertDoesNotCompile(
     //      """
@@ -45,22 +41,18 @@ final class ValueEnumTest extends AnyFunSuite:
     //        |}
     //      """.stripMargin,
     //    )
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
         |object Enumz extends AbstractValueEnumCompanion[Enumz] {
         |  val Constant: Value = new Enumz
         |}
-      """.stripMargin,
-    )
-    assertDoesNotCompile(
-      """
+      """.stripMargin)
+    assertDoesNotCompile("""
         |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
         |object Enumz extends AbstractValueEnumCompanion[Enumz] {
         |  final lazy val Constant: Value = new Enumz
         |}
-      """.stripMargin,
-    )
+      """.stripMargin)
     // This test case is not valid in Scala 3
     //    assertDoesNotCompile(
     //      """
@@ -71,15 +63,12 @@ final class ValueEnumTest extends AnyFunSuite:
     //      """.stripMargin,
     //    )
 
-
-    assertDoesNotCompile(
-      """
+    assertDoesNotCompile("""
         |final class Enumz(implicit enumCtx: EnumCtx) extends AbstractValueEnum
         |object Enumz extends AbstractValueEnumCompanion[Enumz] {
         |  object Inner {
         |    final val Constant: Value = new Enumz
         |  }
         |}
-      """.stripMargin,
-    )
+      """.stripMargin)
   }

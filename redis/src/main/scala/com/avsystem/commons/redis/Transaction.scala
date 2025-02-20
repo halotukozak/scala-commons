@@ -5,7 +5,7 @@ import com.avsystem.commons.redis.RawCommand.Level
 import com.avsystem.commons.redis.RedisBatch.Index
 import com.avsystem.commons.redis.commands.{Exec, Multi}
 import com.avsystem.commons.redis.exception.{OptimisticLockException, RedisException, UnexpectedReplyException}
-import com.avsystem.commons.redis.protocol._
+import com.avsystem.commons.redis.protocol.*
 
 import scala.annotation.tailrec
 
@@ -16,19 +16,21 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
 
   def rawCommands(inTransaction: Boolean): RawCommands = new RawCommands {
     def emitCommands(consumer: RawCommand => Unit): Unit = {
-      if (!inTransaction) {
+      if !inTransaction then {
         consumer(Multi)
       }
       batch.rawCommandPacks.emitCommandPacks(_.rawCommands(inTransaction = true).emitCommands(consumer))
-      if (!inTransaction) {
+      if !inTransaction then {
         consumer(Exec)
       }
     }
   }
 
   def checkLevel(minAllowed: Level, clientType: String): Unit =
-    batch.rawCommandPacks.emitCommandPacks(_.rawCommands(inTransaction = true)
-      .emitCommands(_.checkLevel(minAllowed, clientType)))
+    batch.rawCommandPacks.emitCommandPacks(
+      _.rawCommands(inTransaction = true)
+        .emitCommands(_.checkLevel(minAllowed, clientType)),
+    )
 
   def createPreprocessor(replyCount: Int): ReplyPreprocessor = new ReplyPreprocessor {
     private var singleError: Opt[FailureReply] = Opt.Empty
@@ -37,7 +39,7 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
     private var ctr = 0
 
     private def setSingleError(exception: => RedisException): Unit =
-      if (singleError.isEmpty) {
+      if singleError.isEmpty then {
         singleError = FailureReply(exception).opt
       }
 
@@ -52,8 +54,8 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
     private def setDefaultError(fillWith: ErrorMsg): Unit = {
       val buf = errorsBuffer
       var i = 0
-      while (i < buf.length) {
-        if (buf(i) == null) {
+      while i < buf.length do {
+        if buf(i) == null then {
           buf(i) = fillWith
         }
         i += 1
@@ -96,16 +98,17 @@ final class Transaction[+A](batch: RedisBatch[A]) extends SinglePackBatch[A] {
   }
 
   def decodeReplies(replies: Int => RedisReply, index: Index, inTransaction: Boolean): A =
-    if (inTransaction) batch.decodeReplies(replies, index, inTransaction)
-    else replies(index.inc()) match {
-      case TransactionReply(elements) =>
-        batch.decodeReplies(elements, new Index, inTransaction = true)
-      case fr: FailureReply =>
-        batch.decodeReplies(_ => fr, new Index, inTransaction = true)
-      case msg =>
-        val failure = FailureReply(new UnexpectedReplyException(s"Unexpected reply for transaction: $msg"))
-        batch.decodeReplies(_ => failure, new Index, inTransaction = true)
-    }
+    if inTransaction then batch.decodeReplies(replies, index, inTransaction)
+    else
+      replies(index.inc()) match {
+        case TransactionReply(elements) =>
+          batch.decodeReplies(elements, new Index, inTransaction = true)
+        case fr: FailureReply =>
+          batch.decodeReplies(_ => fr, new Index, inTransaction = true)
+        case msg =>
+          val failure = FailureReply(new UnexpectedReplyException(s"Unexpected reply for transaction: $msg"))
+          batch.decodeReplies(_ => failure, new Index, inTransaction = true)
+      }
 
   override def transaction: Transaction[A] = this
 }

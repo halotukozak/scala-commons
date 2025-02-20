@@ -16,8 +16,7 @@ abstract class BlockingUtils {
   inline def defaultBufferSize: Int = 128
 
   /**
-   * Default scheduler used to run `Task`s and `Observable`s.
-   * This scheduler is not meant for blocking code.
+   * Default scheduler used to run `Task`s and `Observable`s. This scheduler is not meant for blocking code.
    */
   given scheduler: Scheduler
 
@@ -27,15 +26,15 @@ abstract class BlockingUtils {
   def ioScheduler: Scheduler
 
   /**
-   * Wraps blocking code into a [[Future]], making sure that blocking happens on an unbounded thread pool
-   * meant specifically for that purpose.
+   * Wraps blocking code into a [[Future]], making sure that blocking happens on an unbounded thread pool meant
+   * specifically for that purpose.
    */
   inline def asFuture[T](blockingCode: => T): Future[T] =
     Future(blockingCode)(ioScheduler)
 
   /**
-   * Wraps blocking code into a `Task`, making sure that blocking happens on an unbounded thread pool
-   * meant specifically for that purpose.
+   * Wraps blocking code into a `Task`, making sure that blocking happens on an unbounded thread pool meant specifically
+   * for that purpose.
    */
   inline def asTask[T](blockingCode: => T): Task[T] =
     Task.eval(blockingCode).executeOn(ioScheduler, forceAsync = true)
@@ -69,10 +68,19 @@ abstract class BlockingUtils {
   inline def toIterator[T](observable: Observable[T], nextElementTimeout: Long, unit: TimeUnit): CloseableIterator[T] =
     new ObservableBlockingIterator[T](observable, nextElementTimeout, unit, defaultBufferSize)
 
-  inline def toIterator[T](observable: Observable[T], nextElementTimeout: Duration, bufferSize: Int): CloseableIterator[T] =
+  inline def toIterator[T](
+    observable: Observable[T],
+    nextElementTimeout: Duration,
+    bufferSize: Int,
+  ): CloseableIterator[T] =
     new ObservableBlockingIterator[T](observable, nextElementTimeout.length, nextElementTimeout.unit, bufferSize)
 
-  inline def toIterator[T](observable: Observable[T], nextElementTimeout: Long, unit: TimeUnit, bufferSize: Int): CloseableIterator[T] =
+  inline def toIterator[T](
+    observable: Observable[T],
+    nextElementTimeout: Long,
+    unit: TimeUnit,
+    bufferSize: Int,
+  ): CloseableIterator[T] =
     new ObservableBlockingIterator[T](observable, nextElementTimeout, unit, bufferSize)
 }
 

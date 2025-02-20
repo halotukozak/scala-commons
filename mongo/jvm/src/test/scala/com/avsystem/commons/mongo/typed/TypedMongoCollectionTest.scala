@@ -11,7 +11,7 @@ import org.scalactic.source.Position
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.time._
+import org.scalatest.time.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -29,7 +29,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   final val Rte = RecordTestEntity
   final val Rtaie = RecordTestAutoIdEntity
 
-  import UnionTestEntity._
+  import UnionTestEntity.*
 
   private val client = TypedMongoClient()
   private val db = client.getDatabase("test")
@@ -107,12 +107,18 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   }
 
   test("find with filtering projection") {
-    assert(rteColl.find(projection = Rte.ref(_.intOpt.get)).toListL.value ==
-      entities.flatMap(_.intOpt))
-    assert(rteColl.find(projection = Rte.ref(_.union.as[CaseOne].id)).toListL.value ==
-      entities.map(_.union).collect { case c1: CaseOne => c1.id })
-    assert(rteColl.find(Rte.ref(_.int) < 10, projection = Rte.ref(_.union.as[CaseOne].id)).toListL.value ==
-      entities.filter(_.int < 10).map(_.union).collect { case c1: CaseOne => c1.id })
+    assert(
+      rteColl.find(projection = Rte.ref(_.intOpt.get)).toListL.value ==
+        entities.flatMap(_.intOpt),
+    )
+    assert(
+      rteColl.find(projection = Rte.ref(_.union.as[CaseOne].id)).toListL.value ==
+        entities.map(_.union).collect { case c1: CaseOne => c1.id },
+    )
+    assert(
+      rteColl.find(Rte.ref(_.int) < 10, projection = Rte.ref(_.union.as[CaseOne].id)).toListL.value ==
+        entities.filter(_.int < 10).map(_.union).collect { case c1: CaseOne => c1.id },
+    )
   }
 
   test("find with sort") {
@@ -179,7 +185,7 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     rteColl.insertOne(entity).value
     val update = Rte.ref(_.intList).updateFiltered(_ > 1, _.inc(1))
     assert(rteColl.updateOne(Rte.IdRef.is(entity.id), update).value.getModifiedCount == 1)
-    assert(rteColl.findById(entity.id).value.exists(_.intList == entity.intList.map(i => if (i > 1) i + 1 else i)))
+    assert(rteColl.findById(entity.id).value.exists(_.intList == entity.intList.map(i => if i > 1 then i + 1 else i)))
   }
 
   test("update many") {
@@ -188,16 +194,20 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
     rteColl.insertMany(entities).value
     val filter = Rte.IdRef.in(entities.map(_.id))
     assert(rteColl.updateMany(filter, Rte.ref(_.int).inc(5)).value.getModifiedCount == entities.size)
-    assert(rteColl.find(filter, sort = Rte.ref(_.int).ascending).toListL.value == entities.map(e => e.copy(int = e.int + 5)))
+    assert(
+      rteColl.find(filter, sort = Rte.ref(_.int).ascending).toListL.value == entities.map(e => e.copy(int = e.int + 5)),
+    )
   }
 
   test("native operation") {
     val fieldRef = "$" + Rte.ref(_.intList).rawPath
     val pipeline = JList(Aggregates.project(Bson.document("intSum", Bson.document("$sum", Bson.string(fieldRef)))))
-    assert(rteColl
-      .multiResultNativeOp(_.aggregate(pipeline, classOf[Document]))
-      .map(_.getInteger("intSum", 0)).toListL
-      .value == entities.map(_.intList.sum),
+    assert(
+      rteColl
+        .multiResultNativeOp(_.aggregate(pipeline, classOf[Document]))
+        .map(_.getInteger("intSum", 0))
+        .toListL
+        .value == entities.map(_.intList.sum),
     )
   }
 

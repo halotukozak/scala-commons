@@ -1,8 +1,6 @@
 //package com.avsystem.commons
 //package macros
 //
-//import scala.deriving.Mirror
-//
 //trait ApplierUnapplier[T, F] {
 //  def apply(f: F): T
 //
@@ -10,15 +8,15 @@
 //}
 //
 //object ApplyUnapplyTest {
-//  final case class Empty()
+//  case class Empty()
 //
-//  final case class Single(int: Int)
+//  case class Single(int: Int)
 //
-//  final case class Multiple(int: Int, str: String)
+//  case class Multiple(int: Int, str: String)
 //
-//  final case class Gadt[T](t: T, list: List[T], cos: String)
+//  case class Gadt[T](t: T, list: List[T], cos: String)
 //
-//  final case class Generic[T](value: String)
+//  case class Generic[T](value: String)
 //
 //  trait Custom[T]
 //
@@ -26,22 +24,9 @@
 //    def apply[T](t: T): Custom[T] = null
 //
 //    def unapply[T](whatever: Custom[T]): Option[T] = None
-//
-//    given [T]: Mirror.ProductOf[Custom[T]] = new Mirror.Product {
-//      type MirroredType = T
-//      type MirroredMonoType = T
-//      type MirroredElemTypes = Custom[T] *: EmptyTuple
-//      
-//      def fromProduct(product: Product): MirroredType = 
-//        product.asInstanceOf[Custom[T]].asInstanceOf[MirroredType]
-//    }
 //  }
 //
-//  def applierUnapplier[T: Mirror.ProductOf, F]: ApplierUnapplier[T, F] = new ApplierUnapplier[T, F] {
-//    def apply(f: F): T = ???
-//
-//    def unapply(t: T): F = ???
-//  }
+//  inline def applierUnapplier[T, F]: ApplierUnapplier[T, F] = ${ TestMacros.applierUnapplierImpl[T, F] }
 //
 //  applierUnapplier[Empty, Unit]
 //  applierUnapplier[Single, Int]

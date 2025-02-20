@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package ser
 
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.json.{JsonBinaryFormat, JsonOptions, JsonStringInput, JsonStringOutput}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 10, time = 2)
@@ -36,11 +36,12 @@ class GenCodecBenchmarks {
 object GenCodecBenchmarks {
   implicit def cleanOptionCodec[T: GenCodec]: GenCodec[Option[T]] =
     GenCodec.create[Option[T]](
-      i => if (i.readNull()) None else Some(GenCodec.read[T](i)),
-      (o, vo) => vo match {
-        case Some(v) => GenCodec.write[T](o, v)
-        case None => o.writeNull()
-      }
+      i => if i.readNull() then None else Some(GenCodec.read[T](i)),
+      (o, vo) =>
+        vo match {
+          case Some(v) => GenCodec.write[T](o, v)
+          case None => o.writeNull()
+        },
     )
 
   val somes: BSeq[Option[String]] = MArrayBuffer.tabulate(1000)(i => Some(i.toString))

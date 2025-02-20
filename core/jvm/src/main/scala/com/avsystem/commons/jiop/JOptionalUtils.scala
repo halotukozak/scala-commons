@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package jiop
 
-
 import jiop.macros.specializedOptionAsJava
 
 import java.util as ju
@@ -86,27 +85,31 @@ trait JOptionalUtils {
   }
 
   extension [T](option: Option[T]) {
+
     /**
-     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
-     * is not able to hold null
+     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
+     * not able to hold null
      */
     inline def toJOptional: JOptional[T] =
       if option.isDefined then ju.Optional.of(option.get) else ju.Optional.empty()
   }
   extension [T](opt: Opt[T] | NOpt[T] | OptArg[T]) {
+
     /**
-     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional
-     * is not able to hold null
+     * Note that in scala Some(null) is valid value. It will throw an exception in such case, because java Optional is
+     * not able to hold null
      */
 
     inline def toJOptional: JOptional[T] =
-      if opt.isDefined then ju.Optional.of {
-        opt match
-          case Opt(value) => value
-          case OptArg(value) => value
-          case NOpt(value) => value
-          case _ => throw new MatchError(opt)
-      } else ju.Optional.empty()
+      if opt.isDefined then
+        ju.Optional.of {
+          opt match
+            case Opt(value) => value
+            case OptArg(value) => value
+            case NOpt(value) => value
+            case _ => throw new MatchError(opt)
+        }
+      else ju.Optional.empty()
   }
 
   extension (option: Option[Double]) {

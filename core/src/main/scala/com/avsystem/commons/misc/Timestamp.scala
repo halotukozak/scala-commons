@@ -6,11 +6,11 @@ import serialization.IsoInstant
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.FiniteDuration
 
-/** Millisecond-precision, general purpose, cross compiled timestamp
- * representation.
+/**
+ * Millisecond-precision, general purpose, cross compiled timestamp representation.
  *
  * @param millis
- * milliseconds since UNIX epoch, UTC
+ *   milliseconds since UNIX epoch, UTC
  */
 opaque type Timestamp = Long
 
@@ -31,18 +31,18 @@ extension (timestamp: Timestamp)
   def +(duration: FiniteDuration): Timestamp = Timestamp(millis + duration.toMillis)
   def -(duration: FiniteDuration): Timestamp = Timestamp(millis - duration.toMillis)
 
-  /** Computes a [[FiniteDuration]] between this timestamp and some other
-   * timestamp later in time.
+  /**
+   * Computes a [[FiniteDuration]] between this timestamp and some other timestamp later in time.
    */
   def until(end: Timestamp): FiniteDuration = FiniteDuration(end.millis - millis, TimeUnit.MILLISECONDS)
 
-  /** Computes a [[FiniteDuration]] between some timestamp earlier in time and
-   * this timestamp.
+  /**
+   * Computes a [[FiniteDuration]] between some timestamp earlier in time and this timestamp.
    */
   def since(start: Timestamp): FiniteDuration = start.until(timestamp)
 
-  /** Computes a difference between two timestamps, expressed as
-   * [[FiniteDuration]]. Alias for [[since]].
+  /**
+   * Computes a difference between two timestamps, expressed as [[FiniteDuration]]. Alias for [[since]].
    */
   def -(start: Timestamp): FiniteDuration = since(start)
 

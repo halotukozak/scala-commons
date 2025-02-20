@@ -1,10 +1,11 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.*
+import com.avsystem.commons.redis.commands.ReplyDecoders.*
 
 trait HashesApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/hdel HDEL]] */
   def hdel(key: Key, field: Field): Result[Boolean] =
     execute(new Hdel(key, field.single).map(_ > 0))
@@ -13,8 +14,10 @@ trait HashesApi extends ApiSubset {
   def hdel(key: Key, field: Field, fields: Field*): Result[Int] =
     execute(new Hdel(key, field +:: fields))
 
-  /** Executes [[http://redis.io/commands/hdel HDEL]]
-    * or simply returns 0 when `fields` is empty, without sending the command to Redis */
+  /**
+   * Executes [[http://redis.io/commands/hdel HDEL]] or simply returns 0 when `fields` is empty, without sending the
+   * command to Redis
+   */
   def hdel(key: Key, fields: Iterable[Field]): Result[Int] =
     execute(new Hdel(key, fields))
 
@@ -54,8 +57,10 @@ trait HashesApi extends ApiSubset {
   def hmget(key: Key, field: Field, fields: Field*): Result[Seq[Opt[Value]]] =
     execute(new Hmget(key, field +:: fields))
 
-  /** Executes [[http://redis.io/commands/hmget HMGET]]
-    * or simply returns empty `Seq` when `fields` is empty, without sending the command to Redis */
+  /**
+   * Executes [[http://redis.io/commands/hmget HMGET]] or simply returns empty `Seq` when `fields` is empty, without
+   * sending the command to Redis
+   */
   def hmget(key: Key, fields: Iterable[Field]): Result[Seq[Opt[Value]]] =
     execute(new Hmget(key, fields))
 
@@ -63,13 +68,17 @@ trait HashesApi extends ApiSubset {
   def hmset(key: Key, fieldValue: (Field, Value), fieldValues: (Field, Value)*): Result[Unit] =
     execute(new Hmset(key, fieldValue +:: fieldValues))
 
-  /** Executes [[http://redis.io/commands/hmset HMSET]]
-    * or does nothing when `fieldValues` is empty, without sending the command to Redis */
+  /**
+   * Executes [[http://redis.io/commands/hmset HMSET]] or does nothing when `fieldValues` is empty, without sending the
+   * command to Redis
+   */
   def hmset(key: Key, fieldValues: Iterable[(Field, Value)]): Result[Unit] =
     execute(new Hmset(key, fieldValues))
 
-  /** Executes [[http://redis.io/commands/hmset HMSET]]
-    * or does nothing when `data` is empty, without sending the command to Redis */
+  /**
+   * Executes [[http://redis.io/commands/hmset HMSET]] or does nothing when `data` is empty, without sending the command
+   * to Redis
+   */
   def hmsetRecord(key: Key, data: Record): Result[Unit] =
     execute(new HmsetRecord(key, data))
 
@@ -79,14 +88,19 @@ trait HashesApi extends ApiSubset {
 
   /** Executes [[http://redis.io/commands/hrandfield HRANDFIELD]] */
   def hrandfield(key: Key, count: Int, distinct: Boolean = true): Result[Seq[Field]] =
-    execute(new HrandfieldCount(key, if (distinct) count else -count))
+    execute(new HrandfieldCount(key, if distinct then count else -count))
 
   /** Executes [[http://redis.io/commands/hrandfield HRANDFIELD]] */
   def hrandfieldWithvalues(key: Key, count: Int, distinct: Boolean = true): Result[BMap[Field, Value]] =
-    execute(new HrandfieldWithvalues(key, if (distinct) count else -count))
+    execute(new HrandfieldWithvalues(key, if distinct then count else -count))
 
   /** Executes [[http://redis.io/commands/hscan HSCAN]] */
-  def hscan(key: Key, cursor: Cursor, matchPattern: OptArg[Field] = OptArg.Empty, count: OptArg[Int] = OptArg.Empty): Result[(Cursor, Seq[(Field, Value)])] =
+  def hscan(
+    key: Key,
+    cursor: Cursor,
+    matchPattern: OptArg[Field] = OptArg.Empty,
+    count: OptArg[Int] = OptArg.Empty,
+  ): Result[(Cursor, Seq[(Field, Value)])] =
     execute(new Hscan(key, cursor, matchPattern.toOpt, count.toOpt))
 
   /** Executes [[http://redis.io/commands/hset HSET]] */
@@ -97,13 +111,17 @@ trait HashesApi extends ApiSubset {
   def hset(key: Key, fieldValue: (Field, Value), fieldValues: (Field, Value)*): Result[Int] =
     execute(new Hset(key, fieldValue +:: fieldValues))
 
-  /** Executes [[http://redis.io/commands/hset HSET]]
-    * or does nothing when `fieldValues` is empty, without sending the command to Redis */
+  /**
+   * Executes [[http://redis.io/commands/hset HSET]] or does nothing when `fieldValues` is empty, without sending the
+   * command to Redis
+   */
   def hset(key: Key, fieldValues: Iterable[(Field, Value)]): Result[Int] =
     execute(new Hset(key, fieldValues))
 
-  /** Executes [[http://redis.io/commands/hset HSET]]
-    * or does nothing when `data` is empty, without sending the command to Redis */
+  /**
+   * Executes [[http://redis.io/commands/hset HSET]] or does nothing when `data` is empty, without sending the command
+   * to Redis
+   */
   def hsetRecord(key: Key, data: Record): Result[Int] =
     execute(new HsetRecord(key, data))
 
@@ -128,18 +146,19 @@ trait HashesApi extends ApiSubset {
     val encoded: Encoded = encoder("HEXISTS").key(key).data(field).result
   }
 
-  private final class Hget(key: Key, field: Field)
-    extends RedisOptDataCommand[Value] with NodeCommand {
+  private final class Hget(key: Key, field: Field) extends RedisOptDataCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("HGET").key(key).data(field).result
   }
 
   private final class Hgetall(key: Key)
-    extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkAsMapOf[Field, Value]) with NodeCommand {
+      extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkAsMapOf[Field, Value])
+      with NodeCommand {
     val encoded: Encoded = encoder("HGETALL").key(key).result
   }
 
   private final class HgetallRecord(key: Key)
-    extends AbstractRedisCommand[Opt[Record]](flatMultiBulkAsRecordOpt) with NodeCommand {
+      extends AbstractRedisCommand[Opt[Record]](flatMultiBulkAsRecordOpt)
+      with NodeCommand {
     val encoded: Encoded = encoder("HGETALL").key(key).result
   }
 
@@ -147,7 +166,9 @@ trait HashesApi extends ApiSubset {
     val encoded: Encoded = encoder("HINCRBY").key(key).data(field).add(increment).result
   }
 
-  private final class Hincrbyfloat(key: Key, field: Field, increment: Double) extends RedisDoubleCommand with NodeCommand {
+  private final class Hincrbyfloat(key: Key, field: Field, increment: Double)
+      extends RedisDoubleCommand
+      with NodeCommand {
     val encoded: Encoded = encoder("HINCRBYFLOAT").key(key).data(field).add(increment).result
   }
 
@@ -159,8 +180,7 @@ trait HashesApi extends ApiSubset {
     val encoded: Encoded = encoder("HLEN").key(key).result
   }
 
-  private final class Hmget(key: Key, fields: Iterable[Field])
-    extends RedisOptDataSeqCommand[Value] with NodeCommand {
+  private final class Hmget(key: Key, fields: Iterable[Field]) extends RedisOptDataSeqCommand[Value] with NodeCommand {
     val encoded: Encoded = encoder("HMGET").key(key).datas(fields).result
     override def immediateResult: Opt[Seq[Opt[Value]]] = whenEmpty(fields, Seq.empty)
   }
@@ -172,27 +192,28 @@ trait HashesApi extends ApiSubset {
 
   private final class HmsetRecord(key: Key, data: Record) extends RedisUnitCommand with NodeCommand {
     val encoded: Encoded = encoder("HMSET").key(key).dataPairs(data).result
-    override def immediateResult: Opt[Unit] = if (encoded.elements.size <= 2) Opt(()) else Opt.Empty
+    override def immediateResult: Opt[Unit] = if encoded.elements.size <= 2 then Opt(()) else Opt.Empty
   }
 
-  private final class Hrandfield(key: Key)
-    extends RedisOptDataCommand[Field] with NodeCommand {
+  private final class Hrandfield(key: Key) extends RedisOptDataCommand[Field] with NodeCommand {
     val encoded: Encoded = encoder("HRANDFIELD").key(key).result
   }
 
-  private final class HrandfieldCount(key: Key, count: Int)
-    extends RedisDataSeqCommand[Field] with NodeCommand {
+  private final class HrandfieldCount(key: Key, count: Int) extends RedisDataSeqCommand[Field] with NodeCommand {
     val encoded: Encoded = encoder("HRANDFIELD").key(key).add(count).result
   }
 
   private final class HrandfieldWithvalues(key: Key, count: Int)
-    extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkAsMapOf[Field, Value]) with NodeCommand {
+      extends AbstractRedisCommand[BMap[Field, Value]](flatMultiBulkAsMapOf[Field, Value])
+      with NodeCommand {
     val encoded: Encoded = encoder("HRANDFIELD").key(key).add(count).add("WITHVALUES").result
   }
 
   private final class Hscan(key: Key, cursor: Cursor, matchPattern: Opt[Field], count: Opt[Int])
-    extends RedisScanCommand[(Field, Value)](flatMultiBulkAsPairSeqOf[Field, Value]) with NodeCommand {
-    val encoded: Encoded = encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
+      extends RedisScanCommand[(Field, Value)](flatMultiBulkAsPairSeqOf[Field, Value])
+      with NodeCommand {
+    val encoded: Encoded =
+      encoder("HSCAN").key(key).add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).result
   }
 
   private final class Hset(key: Key, fieldValues: Iterable[(Field, Value)]) extends RedisIntCommand with NodeCommand {
@@ -202,7 +223,7 @@ trait HashesApi extends ApiSubset {
 
   private final class HsetRecord(key: Key, data: Record) extends RedisIntCommand with NodeCommand {
     val encoded: Encoded = encoder("HSET").key(key).dataPairs(data).result
-    override def immediateResult: Opt[Int] = if (encoded.elements.size <= 2) Opt(0) else Opt.Empty
+    override def immediateResult: Opt[Int] = if encoded.elements.size <= 2 then Opt(0) else Opt.Empty
   }
 
   private final class Hsetnx(key: Key, field: Field, value: Value) extends RedisBooleanCommand with NodeCommand {

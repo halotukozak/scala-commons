@@ -10,27 +10,29 @@ import scala.util.chaining.scalaUtilChainingOps
 
 trait SharedExtensions {
   extension [A](a: A) {
+
     /**
-     * The "pipe" operator. Alternative syntax to apply a function on an argument.
-     * Useful for fluent expressions and avoiding intermediate variables.
+     * The "pipe" operator. Alternative syntax to apply a function on an argument. Useful for fluent expressions and
+     * avoiding intermediate variables.
      *
      * @example
-     * {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
+     *   {{{someVeryLongExpression() |> (v => if(condition(v)) something(v) else somethingElse(v))}}}
      */
     inline def |>[B](f: A => B): B = f(a)
     inline def applyIf[A0 >: A](predicate: A => Boolean)(f: A => A0): A0 =
       if predicate(a) then f(a) else a
 
     /**
-     * Explicit syntax to discard the value of a side-effecting expression.
-     * Useful when `-Ywarn-value-discard` compiler option is enabled.
+     * Explicit syntax to discard the value of a side-effecting expression. Useful when `-Ywarn-value-discard` compiler
+     * option is enabled.
      */
-    //noinspection UnitMethodIsParameterless
+    // noinspection UnitMethodIsParameterless
     @nowarn
     inline def discard: Unit = ()
     inline def thenReturn[T](value: T): T = value
     inline def option: Option[A] = Option(a)
     inline def opt: Opt[A] = Opt(a)
+
     /**
      * Converts a boxed primitive type into an `Opt` of its corresponding primitive type, converting `null` into
      * `Opt.Empty`. For example, calling `.unboxedOpt` on a `java.lang.Integer` will convert it to `Opt[Int]`.
@@ -39,46 +41,44 @@ trait SharedExtensions {
     inline def checkNotNull(msg: String): A = if a != null then a else throw new NullPointerException(msg)
 
     /**
-     * Alternative syntax for applying some side effects on a value before returning it,
-     * without having to declare an intermediate variable. Also, using `setup` confines the "setting-up"
-     * code in a separate code block which has more clarity and avoids polluting outer scope.
+     * Alternative syntax for applying some side effects on a value before returning it, without having to declare an
+     * intermediate variable. Also, using `setup` confines the "setting-up" code in a separate code block which has more
+     * clarity and avoids polluting outer scope.
      *
      * @example
-     * {{{
+     *   {{{
      * import javax.swing._
      * // this entire expression returns the panel
      * new JPanel().setup { p =>
      *   p.setEnabled(true)
      *   p.setSize(100, 100)
      * }
-     * }}}
+     *   }}}
      */
     inline def setup(code: A => Any): A = a.tap(code)
     inline def matchOpt[B](pf: PartialFunction[A, B]): Opt[B] = pf.applyOpt(a)
 
     /**
-     * To be used instead of normal `match` keyword in pattern matching in order to suppress
-     * non-exhaustive match checking.
+     * To be used instead of normal `match` keyword in pattern matching in order to suppress non-exhaustive match
+     * checking.
      *
      * @example
-     * {{{
+     *   {{{
      *   Option(42) uncheckedMatch {
      *     case Some(int) => println(int)
      *   }
-     * }}}
+     *   }}}
      */
     inline def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
     /**
-     * Prints AST of the prefix in a compilation error.
-     * Useful for debugging macros.
+     * Prints AST of the prefix in a compilation error. Useful for debugging macros.
      */
     //    def showAst: A = macro macros.UniversalMacros.showAst[A]
 
     /**
-     * Prints raw AST of the prefix in a compilation error.
-     * Useful for debugging macros.
+     * Prints raw AST of the prefix in a compilation error. Useful for debugging macros.
      */
     //    def showRawAst: A = macro macros.UniversalMacros.showRawAst[A]
     //
@@ -94,8 +94,10 @@ trait SharedExtensions {
     inline def evalTry: Try[A] = Try(a)
     inline def optIf(condition: Boolean): Opt[A] = if condition then Opt(a) else Opt.Empty
     inline def optionIf(condition: Boolean): Option[A] = Option.when(condition)(a)
-    inline def recoverFrom[T <: Throwable : ClassTag](fallbackValue: => A): A = try a catch case _: T => fallbackValue
-    inline def recoverToOpt[T <: Throwable : ClassTag]: Opt[A] = try Opt(a) catch case _: T => Opt.Empty
+    inline def recoverFrom[T <: Throwable: ClassTag](fallbackValue: => A): A = try a
+    catch case _: T => fallbackValue
+    inline def recoverToOpt[T <: Throwable: ClassTag]: Opt[A] = try Opt(a)
+    catch case _: T => Opt.Empty
 
   }
 
@@ -104,6 +106,7 @@ trait SharedExtensions {
   }
 
   extension (str: String) {
+
     /**
      * Makes sure that `String` value is not `null` by replacing `null` with empty string.
      */
@@ -115,24 +118,28 @@ trait SharedExtensions {
       else str.substring(0, 1).toLowerCase + str.substring(1)
 
     /**
-     * Removes a newline character from every sequence of consecutive newline characters. If the sequence contained
-     * just one newline character without any whitespace before and after it, a space is inserted.
+     * Removes a newline character from every sequence of consecutive newline characters. If the sequence contained just
+     * one newline character without any whitespace before and after it, a space is inserted.
      *
-     * e.g. `My hovercraft\nis full of eels.\n\nMy hovercraft is\n full of eels.` becomes
-     * `My hovercraft is full of eels.\nMy hovercraft is full of eels.`
+     * e.g. `My hovercraft\nis full of eels.\n\nMy hovercraft is\n full of eels.` becomes `My hovercraft is full of
+     * eels.\nMy hovercraft is full of eels.`
      *
-     * Useful for multi-line string literals with lines wrapped in source code but without intention of including
-     * these line breaks in actual runtime string.
+     * Useful for multi-line string literals with lines wrapped in source code but without intention of including these
+     * line breaks in actual runtime string.
      */
     inline def unwrapLines: String =
-      RemovableLineBreak.replaceAllIn(str, { m =>
-        val insertSpace = m.end == m.start + 1 && m.start - 1 >= 0 && m.end < str.length &&
-          !Character.isWhitespace(str.charAt(m.start - 1)) && !Character.isWhitespace(str.charAt(m.end))
-        if (insertSpace) " " else m.matched.substring(1)
-      })
+      RemovableLineBreak.replaceAllIn(
+        str,
+        { m =>
+          val insertSpace = m.end == m.start + 1 && m.start - 1 >= 0 && m.end < str.length &&
+            !Character.isWhitespace(str.charAt(m.start - 1)) && !Character.isWhitespace(str.charAt(m.end))
+          if insertSpace then " " else m.matched.substring(1)
+        },
+      )
+
     /**
-     * Adds a `|` character at the beginning of every line in this string except the first line.
-     * This is necessary when splicing multiline strings into multiline string interpolations.
+     * Adds a `|` character at the beginning of every line in this string except the first line. This is necessary when
+     * splicing multiline strings into multiline string interpolations.
      */
     inline def multilineSafe: String = str.replace("\n", "\n|")
 
@@ -141,7 +148,7 @@ trait SharedExtensions {
       else {
         val commonIndentLength = str.linesIterator
           .map(l => l.indexWhere(_ != ' '))
-          .map(i => if (i < 0) Int.MaxValue else i)
+          .map(i => if i < 0 then Int.MaxValue else i)
           .min
 
         str.linesIterator
@@ -153,7 +160,7 @@ trait SharedExtensions {
   extension (int: Int)
     inline def times(code: => Any): Unit = {
       var i = 0
-      while (i < int) {
+      while i < int do {
         code
         i += 1
       }
@@ -167,10 +174,12 @@ trait SharedExtensions {
     inline def transformNow[S](f: Try[A] => Try[S]): Future[S] = fut.transform(f)(RunNowEC)
     inline def transformWithNow[S](f: Try[A] => Future[S]): Future[S] = fut.transformWith(f)(RunNowEC)
     inline def wrapToTry: Future[Try[A]] = fut.transformNow(Success(_))
+
     /**
      * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
      */
     inline def mapNow[B](f: A => B): Future[B] = fut.map(f)(RunNowEC)
+
     /**
      * FlatMaps a `Future` using [[concurrent.RunNowEC RunNowEC]].
      */
@@ -178,10 +187,12 @@ trait SharedExtensions {
     inline def filterNow(p: A => Boolean): Future[A] = fut.filter(p)(RunNowEC)
     inline def collectNow[B](pf: PartialFunction[A, B]): Future[B] = fut.collect(pf)(RunNowEC)
     inline def recoverNow[U >: A](pf: PartialFunction[Throwable, U]): Future[U] = fut.recover(pf)(RunNowEC)
-    inline def recoverWithNow[B >: A](pf: PartialFunction[Throwable, Future[B]]): Future[B] = fut.recoverWith(pf)(RunNowEC)
+    inline def recoverWithNow[B >: A](pf: PartialFunction[Throwable, Future[B]]): Future[B] =
+      fut.recoverWith(pf)(RunNowEC)
     inline def zipWithNow[B, R](that: Future[B])(f: (A, B) => R): Future[R] = fut.zipWith(that)(f)(RunNowEC)
     inline def toUnit: Future[Unit] = mapNow(_ => ())
     inline def toVoid: Future[Void] = mapNow(_ => null: Void)
+
     /**
      * Returns a `Future` that completes with the specified `result`, but only after this future completes.
      */
@@ -189,6 +200,7 @@ trait SharedExtensions {
       val p = Promise[T]()
       fut.onComplete(_ => p.completeWith(result))(RunNowEC)
       p.future
+
     /**
      * Returns a `Future` that completes successfully, but only after this future completes.
      */
@@ -197,39 +209,50 @@ trait SharedExtensions {
   }
 
   extension [A](fut: => Future[A]) {
+
     /**
-     * Evaluates a left-hand-side expression that returns a `Future` and ensures that all exceptions thrown by
-     * that expression are converted to a failed `Future`.
-     * Also, if left-hand-side expression returns `null`, it's converted to a `Future` failed with
-     * `NullPointerException`.
+     * Evaluates a left-hand-side expression that returns a `Future` and ensures that all exceptions thrown by that
+     * expression are converted to a failed `Future`. Also, if left-hand-side expression returns `null`, it's converted
+     * to a `Future` failed with `NullPointerException`.
      */
     inline def catchFailures: Future[A] =
-      val result = try fut catch case NonFatal(t) => Future.failed(t)
+      val result =
+        try fut
+        catch case NonFatal(t) => Future.failed(t)
       if result != null then result else Future.failed(new NullPointerException("null Future"))
   }
   extension (fut: Future.type) {
+
     /**
-     * Evaluates an expression and wraps its value into a `Future`. Failed `Future` is returned if expression
-     * evaluation throws an exception. This is very similar to `Future.apply` but evaluates the argument immediately,
-     * without dispatching it to some `ExecutionContext`.
+     * Evaluates an expression and wraps its value into a `Future`. Failed `Future` is returned if expression evaluation
+     * throws an exception. This is very similar to `Future.apply` but evaluates the argument immediately, without
+     * dispatching it to some `ExecutionContext`.
      */
     inline def eval[T](expr: => T): Future[T] =
-      try Future.successful(expr) catch case NonFatal(cause) => Future.failed(cause)
+      try Future.successful(expr)
+      catch case NonFatal(cause) => Future.failed(cause)
 
-    /** Different version of `Future.traverse`. Transforms a `IterableOnce[A]` into a `Future[IterableOnce[B]]`,
-     * which only completes after all `in` `Future`s are completed, using the provided function `A => Future[B]`.
-     * This is useful for performing a parallel map. For example, to apply a function to all items of a list
+    /**
+     * Different version of `Future.traverse`. Transforms a `IterableOnce[A]` into a `Future[IterableOnce[B]]`, which
+     * only completes after all `in` `Future`s are completed, using the provided function `A => Future[B]`. This is
+     * useful for performing a parallel map. For example, to apply a function to all items of a list
      *
-     * @tparam A the type of the value inside the Futures in the `IterableOnce`
-     * @tparam B the type of the value of the returned `Future`
-     * @tparam M the type of the `IterableOnce` of Futures
-     * @param in the `IterableOnce` of Futures which will be sequenced
-     * @param fn the function to apply to the `IterableOnce` of Futures to produce the results
-     * @return the `Future` of the `IterableOnce` of results
+     * @tparam A
+     *   the type of the value inside the Futures in the `IterableOnce`
+     * @tparam B
+     *   the type of the value of the returned `Future`
+     * @tparam M
+     *   the type of the `IterableOnce` of Futures
+     * @param in
+     *   the `IterableOnce` of Futures which will be sequenced
+     * @param fn
+     *   the function to apply to the `IterableOnce` of Futures to produce the results
+     * @return
+     *   the `Future` of the `IterableOnce` of results
      */
-    inline def traverseCompleted[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Future[B])(
-      using bf: BuildFrom[M[A], B, M[B]],
-    ): Future[M[B]] = {
+    inline def traverseCompleted[A, B, M[X] <: IterableOnce[X]](
+      in: M[A],
+    )(fn: A => Future[B])(using bf: BuildFrom[M[A], B, M[B]]): Future[M[B]] = {
       val (barrier, i) = in.iterator.foldLeft((Future.unit, Future.successful(bf.newBuilder(in)))) {
         case ((priorFinished, fr), a) =>
           val transformed = fn(a)
@@ -239,30 +262,35 @@ trait SharedExtensions {
     }
 
     /**
-     * Different version of `Future.sequence`. Transforms a `IterableOnce[Future[A]]`
-     * into a `Future[IterableOnce[A]`, which only completes after all `in` `Future`s are completed.
+     * Different version of `Future.sequence`. Transforms a `IterableOnce[Future[A]]` into a `Future[IterableOnce[A]`,
+     * which only completes after all `in` `Future`s are completed.
      *
-     * @tparam A the type of the value inside the Futures
-     * @tparam M the type of the `IterableOnce` of Futures
-     * @param in the `IterableOnce` of Futures which will be sequenced
-     * @return the `Future` of the `IterableOnce` of results
+     * @tparam A
+     *   the type of the value inside the Futures
+     * @tparam M
+     *   the type of the `IterableOnce` of Futures
+     * @param in
+     *   the `IterableOnce` of Futures which will be sequenced
+     * @return
+     *   the `Future` of the `IterableOnce` of results
      */
-    inline def sequenceCompleted[A, M[X] <: IterableOnce[X]](in: M[Future[A]])(
-      using bf: BuildFrom[M[Future[A]], A, M[A]],
+    inline def sequenceCompleted[A, M[X] <: IterableOnce[X]](in: M[Future[A]])(using
+      bf: BuildFrom[M[Future[A]], A, M[A]],
     ): Future[M[A]] = traverseCompleted(in)(identity)
 
   }
 
   extension [A](option: Option[A]) {
+
     /**
      * Converts this `Option` into `Opt`. Because `Opt` cannot hold `null`, `Some(null)` is translated to `Opt.Empty`.
      */
     inline def toOpt: Opt[A] = if option.isEmpty then Opt.Empty else Opt(option.get)
 
     /**
-     * Converts this `Option` into `OptRef`, changing the element type into boxed representation if
-     * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
-     * `Some(null)` is translated to `OptRef.Empty`.
+     * Converts this `Option` into `OptRef`, changing the element type into boxed representation if necessary (e.g.
+     * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `Some(null)` is translated to
+     * `OptRef.Empty`.
      */
     inline def toOptRef[B >: Null](using boxing: Boxing[A, B]): OptRef[B] =
       if option.isEmpty then OptRef.Empty else OptRef(boxing.fun(option.get))
@@ -270,16 +298,20 @@ trait SharedExtensions {
     inline def toNOpt: NOpt[A] = if option.isEmpty then NOpt.Empty else NOpt.some(option.get)
 
     /**
-     * Converts this `Option` into `OptArg`. Because `OptArg` cannot hold `null`, `Some(null)` is translated to `OptArg.Empty`.
+     * Converts this `Option` into `OptArg`. Because `OptArg` cannot hold `null`, `Some(null)` is translated to
+     * `OptArg.Empty`.
      */
     inline def toOptArg: OptArg[A] = if option.isEmpty then OptArg.Empty else OptArg(option.get)
 
     /**
      * Apply side effect only if Option is empty. It's a bit like foreach for None
      *
-     * @param sideEffect - code to be executed if option is empty
-     * @return the same option
-     * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+     * @param sideEffect
+     *   \- code to be executed if option is empty
+     * @return
+     *   the same option
+     * @example
+     *   {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
      */
     inline def forEmpty(sideEffect: => Unit): Option[A] = {
       if option.isEmpty then sideEffect
@@ -294,58 +326,72 @@ trait SharedExtensions {
   }
 
   extension [A](tr: Try[A]) {
+
     /**
      * Converts this `Try` into `Opt`. Because `Opt` cannot hold `null`, `Success(null)` is translated to `Opt.Empty`.
      */
     inline def toOpt: Opt[A] = if tr.isFailure then Opt.Empty else Opt(tr.get)
 
     /**
-     * Converts this `Try` into `OptRef`, changing the element type into boxed representation if
-     * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
-     * `Success(null)` is translated to `OptRef.Empty`.
+     * Converts this `Try` into `OptRef`, changing the element type into boxed representation if necessary (e.g.
+     * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `Success(null)` is translated to
+     * `OptRef.Empty`.
      */
-    inline def toOptRef[B >: Null](using boxing: Boxing[A, B]): OptRef[B] = if tr.isFailure then OptRef.Empty else OptRef(boxing.fun(tr.get))
+    inline def toOptRef[B >: Null](using boxing: Boxing[A, B]): OptRef[B] =
+      if tr.isFailure then OptRef.Empty else OptRef(boxing.fun(tr.get))
 
     inline def toNOpt: NOpt[A] = if tr.isFailure then NOpt.Empty else NOpt.some(tr.get)
 
     /**
-     * Converts this `Try` into `OptArg`. Because `OptArg` cannot hold `null`, `Success(null)` is translated to `OptArg.Empty`.
+     * Converts this `Try` into `OptArg`. Because `OptArg` cannot hold `null`, `Success(null)` is translated to
+     * `OptArg.Empty`.
      */
     inline def toOptArg: OptArg[A] = if tr.isFailure then OptArg.Empty else OptArg(tr.get)
   }
 
   extension [A](tr: => Try[A]) {
+
     /**
-     * Evaluates a left-hand side expression that return `Try`,
-     * catches all exceptions and converts them into a `Failure`.
+     * Evaluates a left-hand side expression that return `Try`, catches all exceptions and converts them into a
+     * `Failure`.
      */
-    inline def catchFailures: Try[A] = try tr catch case NonFatal(t) => Failure(t)
+    inline def catchFailures: Try[A] = try tr
+    catch case NonFatal(t) => Failure(t)
 
   }
 
   extension (t: Try.type) {
 
-    /** Simple version of `TryOps.traverse`. Transforms a `IterableOnce[Try[A]]` into a `Try[IterableOnce[A]]`.
-     * Useful for reducing many `Try`s into a single `Try`.
+    /**
+     * Simple version of `TryOps.traverse`. Transforms a `IterableOnce[Try[A]]` into a `Try[IterableOnce[A]]`. Useful
+     * for reducing many `Try`s into a single `Try`.
      */
     inline def sequence[A, M[X] <: IterableOnce[X]](in: M[Try[A]])(using bf: BuildFrom[M[Try[A]], A, M[A]]): Try[M[A]] =
-      in.iterator.foldLeft(Try(bf.newBuilder(in))) {
-        case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
-        case (tr, tb) => for (r <- tr; a <- tb) yield r += a
-      }.map(_.result())
+      in.iterator
+        .foldLeft(Try(bf.newBuilder(in))) {
+          case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+          case (tr, tb) => for (r <- tr; a <- tb) yield r += a
+        }
+        .map(_.result())
 
-    /** Transforms a `IterableOnce[A]` into a `Try[IterableOnce[B]]` using the provided function `A => Try[B]`.
-     * For example, to apply a function to all items of a list:
+    /**
+     * Transforms a `IterableOnce[A]` into a `Try[IterableOnce[B]]` using the provided function `A => Try[B]`. For
+     * example, to apply a function to all items of a list:
      *
      * {{{
      *    val myTryList = TryOps.traverse(myList)(x => Try(myFunc(x)))
      * }}}
      */
-    inline def traverse[A, B, M[X] <: IterableOnce[X]](in: M[A])(fn: A => Try[B])(using bf: BuildFrom[M[A], B, M[B]]): Try[M[B]] =
-      in.iterator.map(fn).foldLeft(Try(bf.newBuilder(in))) {
-        case (f@Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
-        case (tr, tb) => for (r <- tr; b <- tb) yield r += b
-      }.map(_.result())
+    inline def traverse[A, B, M[X] <: IterableOnce[X]](
+      in: M[A],
+    )(fn: A => Try[B])(using bf: BuildFrom[M[A], B, M[B]]): Try[M[B]] =
+      in.iterator
+        .map(fn)
+        .foldLeft(Try(bf.newBuilder(in))) {
+          case (f @ Failure(e), Failure(newEx)) => e.addSuppressed(newEx); f
+          case (tr, tb) => for (r <- tr; b <- tb) yield r += b
+        }
+        .map(_.result())
 
   }
 
@@ -353,10 +399,10 @@ trait SharedExtensions {
   private final val NoValueMarkerFunc = (_: Any) => NoValueMarker
 
   extension [A, B](pf: PartialFunction[A, B]) {
+
     /**
-     * The same thing as `orElse` but with arguments flipped.
-     * Useful in situations where `orElse` would have to be called on a partial function literal,
-     * which does not work well with type inference.
+     * The same thing as `orElse` but with arguments flipped. Useful in situations where `orElse` would have to be
+     * called on a partial function literal, which does not work well with type inference.
      */
     inline def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre.orElse(pf)
 
@@ -404,7 +450,8 @@ trait SharedExtensions {
 
     inline def findOpt(p: A => Boolean): Opt[A] = it.find(p).toOpt
 
-    inline def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(using fac: Factory[B, C[B]]): C[B] = coll.iterator.collect(f).flatten.to(fac)
+    inline def flatCollect[B](f: PartialFunction[A, IterableOnce[B]])(using fac: Factory[B, C[B]]): C[B] =
+      coll.iterator.collect(f).flatten.to(fac)
 
     inline def collectFirstOpt[B](pf: PartialFunction[A, B]): Opt[B] = it.collectFirst(pf).toOpt
 
@@ -412,7 +459,8 @@ trait SharedExtensions {
 
     inline def reduceLeftOpt[B >: A](op: (B, A) => B): Opt[B] = if it.isEmpty then Opt.Empty else it.reduceLeft(op).opt
 
-    inline def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] = if it.isEmpty then Opt.Empty else it.reduceRight(op).opt
+    inline def reduceRightOpt[B >: A](op: (A, B) => B): Opt[B] =
+      if it.isEmpty then Opt.Empty else it.reduceRight(op).opt
 
     inline def maxOpt(implicit ord: Ordering[A]): Opt[A] = if it.isEmpty then Opt.Empty else it.max.opt
 
@@ -454,7 +502,8 @@ trait SharedExtensions {
         case Right(r) => rightBuilder += r
       })
       (leftBuilder.result(), rightBuilder.result())
-    }}
+    }
+  }
 
   extension [C[X] <: IterableOnce[X], K, V](coll: C[(K, V)]) {
 
@@ -518,7 +567,7 @@ trait SharedExtensions {
     inline def drainTo[C[_]](n: Int)(using fac: Factory[A, C[A]]): C[A] = {
       val builder = fac.newBuilder
       var i = 0
-      while (it.hasNext && i < n) {
+      while it.hasNext && i < n do {
         builder += it.next()
         i += 1
       }
@@ -549,14 +598,13 @@ trait SharedExtensions {
 
   }
 
-
   extension (it: Iterator.type) {
     def untilEmpty[T](elem: => Opt[T]): Iterator[T] = new AbstractIterator[T] {
       private var fetched = false
       private var value = Opt.empty[T]
 
       def hasNext: Boolean = {
-        if (!fetched) {
+        if !fetched then {
           value = elem
           fetched = true
         }

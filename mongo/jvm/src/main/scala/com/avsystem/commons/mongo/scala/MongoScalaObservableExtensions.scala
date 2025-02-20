@@ -2,9 +2,10 @@ package com.avsystem.commons
 package mongo.scala
 
 trait MongoScalaObservableExtensions {
-  import MongoScalaObservableExtensions._
+  import MongoScalaObservableExtensions.*
 
-  implicit def mongoObservableOps[T](obs: org.mongodb.scala.Observable[T]): MongoObservableOps[T] = new MongoObservableOps[T](obs)
+  implicit def mongoObservableOps[T](obs: org.mongodb.scala.Observable[T]): MongoObservableOps[T] =
+    new MongoObservableOps[T](obs)
 }
 
 object MongoScalaObservableExtensions extends MongoScalaObservableExtensions {

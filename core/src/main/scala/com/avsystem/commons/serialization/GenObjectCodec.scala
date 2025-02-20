@@ -42,11 +42,12 @@ object GenObjectCodec {
 
   def fromApplyUnapplyProvider[T](applyUnapplyProvider: Any): GenObjectCodec[T] = ???
 
-  def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] = new GenObjectCodec[T] {
-    def readObject(input: ObjectInput): T = readFun(input)
+  def create[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any): GenObjectCodec[T] =
+    new GenObjectCodec[T] {
+      def readObject(input: ObjectInput): T = readFun(input)
 
-    def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
-  }
+      def writeObject(output: ObjectOutput, value: T): Unit = writeFun(output, value)
+    }
 
   def makeLazy[T](codec: => GenObjectCodec[T]): GenObjectCodec[T] = new GenObjectCodec[T] {
     private lazy val underlying = codec
@@ -58,7 +59,8 @@ object GenObjectCodec {
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
   implicit def fromTransparentWrapping[R, T](implicit
-    tw: TransparentWrapping[R, T], wrappedCodec: GenObjectCodec[R],
+    tw: TransparentWrapping[R, T],
+    wrappedCodec: GenObjectCodec[R],
   ): GenObjectCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
@@ -66,7 +68,7 @@ object GenObjectCodec {
     new Transformed[T, R](GenObjectCodec[R], toRaw, fromRaw)
 
   final class Transformed[A, B](val wrapped: GenObjectCodec[B], onWrite: A => B, onRead: B => A)
-    extends GenObjectCodec[A] {
+      extends GenObjectCodec[A] {
 
     def readObject(input: ObjectInput): A = onRead(wrapped.readObject(input))
 

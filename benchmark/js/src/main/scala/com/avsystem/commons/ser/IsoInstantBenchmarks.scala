@@ -14,9 +14,9 @@ object IsoInstantBenchmarks {
 
   def parse(string: String, validate: Boolean): Long = {
     def fail = throw new ReadFailure(s"invalid ISO instant: $string")
-    if (!validate || regex.test(string)) {
+    if !validate || regex.test(string) then {
       val parsed = js.Date.parse(string)
-      if (parsed.isNaN) fail
+      if parsed.isNaN then fail
       else parsed.toLong
     } else fail
   }
@@ -28,7 +28,7 @@ object IsoInstantBenchmarks {
       },
       Benchmark("without regex validation") {
         parse("2013-11-27T12:55:32.234Z", validate = false)
-      }
-    )
+      },
+    ),
   )
 }

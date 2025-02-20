@@ -1,15 +1,14 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 
 /**
-  * Author: ghik
-  * Created: 11/10/16.
-  */
+ * Author: ghik Created: 11/10/16.
+ */
 trait ListsApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("LINDEX") {
     setup(rpush("key", "a", "b", "c"))
@@ -166,11 +165,7 @@ trait ListsApiSuite extends CommandsSuite {
   }
 
   apiTest("BLPOP") {
-    setup(
-      rpush("key", "a", "b"),
-      rpush("{key}1", "a1", "b1"),
-      rpush("{key}2", "a2", "b2")
-    )
+    setup(rpush("key", "a", "b"), rpush("{key}1", "a1", "b1"), rpush("{key}2", "a2", "b2"))
     blpop("key", 1).assertEquals("a".opt)
     blpop("key", 1).assertEquals("b".opt)
     blpop("key", 1).assertEquals(Opt.Empty)
@@ -179,11 +174,7 @@ trait ListsApiSuite extends CommandsSuite {
   }
 
   apiTest("BRPOP") {
-    setup(
-      rpush("key", "a", "b"),
-      rpush("{key}1", "a1", "b1"),
-      rpush("{key}2", "a2", "b2")
-    )
+    setup(rpush("key", "a", "b"), rpush("{key}1", "a1", "b1"), rpush("{key}2", "a2", "b2"))
     brpop("key", 1).assertEquals("b".opt)
     brpop("key", 1).assertEquals("a".opt)
     brpop("key", 1).assertEquals(Opt.Empty)
@@ -192,10 +183,7 @@ trait ListsApiSuite extends CommandsSuite {
   }
 
   apiTest("BRPOPLPUSH") {
-    setup(
-      rpush("{key}1", "a1", "b1"),
-      rpush("{key}2", "a2", "b2")
-    )
+    setup(rpush("{key}1", "a1", "b1"), rpush("{key}2", "a2", "b2"))
     brpoplpush("{key}1", "{key}2", 1).assertEquals("b1".opt)
     brpoplpush("{key}1", "{key}2", 1).assertEquals("a1".opt)
     brpoplpush("{key}1", "{key}2", 1).assertEquals(Opt.Empty)

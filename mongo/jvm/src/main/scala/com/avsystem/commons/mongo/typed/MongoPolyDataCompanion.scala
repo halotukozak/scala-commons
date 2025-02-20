@@ -12,16 +12,16 @@ trait MongoPolyAdtInstances[D[_]] {
   def codec[T: GenCodec]: GenObjectCodec[D[T]]
 
   /**
-    * We need to accept an implicit `GenCodec[T]` because materialization of
-    * [[MongoAdtFormat]] requires a [[GenObjectCodec]] ([[MongoAdtFormat.codec]]). In practice, it can be derived
-    * from the `MongoFormat[T]` that is already accepted by this method but we have to be careful about priority of
-    * implicits. Because of that, this implicit is actually provided by [[AbstractMongoPolyDataCompanion.format]].
-    */
-  def format[T: MongoFormat : GenCodec]: MongoAdtFormat[D[T]]
+   * We need to accept an implicit `GenCodec[T]` because materialization of [[MongoAdtFormat]] requires a
+   * [[GenObjectCodec]] ([[MongoAdtFormat.codec]]). In practice, it can be derived from the `MongoFormat[T]` that is
+   * already accepted by this method but we have to be careful about priority of implicits. Because of that, this
+   * implicit is actually provided by [[AbstractMongoPolyDataCompanion.format]].
+   */
+  def format[T: MongoFormat: GenCodec]: MongoAdtFormat[D[T]]
 }
 
-abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implicits)(
-  implicit instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]],
+abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implicits)(implicit
+  instances: MacroInstances[Implicits, MongoPolyAdtInstances[D]],
 ) {
   implicit def codec[T: GenCodec]: GenObjectCodec[D[T]] = instances(implicits, this).codec[T]
 
@@ -45,17 +45,17 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implic
 }
 
 /**
-  * Like [[MongoDataCompanion]] buf for generic types (with exactly one unbounded type parameter).
-  *
-  * @example
-  * {{{
-  *   case class Point[+T](x: T, y: T)
-  *   object Point extends MongoPolyDataCompanion[Point] {
-  *     def XRef[T: MongoFormat]: MongoPropertyRef[Point[T], T] =
-  *       Point.dsl[T].ref(_.x)
-  *   }
-  * }}}
-  */
-abstract class MongoPolyDataCompanion[D[_]](
-  implicit instances: MacroInstances[BsonGenCodecs.type, MongoPolyAdtInstances[D]],
+ * Like [[MongoDataCompanion]] buf for generic types (with exactly one unbounded type parameter).
+ *
+ * @example
+ *   {{{
+ *   case class Point[+T](x: T, y: T)
+ *   object Point extends MongoPolyDataCompanion[Point] {
+ *     def XRef[T: MongoFormat]: MongoPropertyRef[Point[T], T] =
+ *       Point.dsl[T].ref(_.x)
+ *   }
+ *   }}}
+ */
+abstract class MongoPolyDataCompanion[D[_]](implicit
+  instances: MacroInstances[BsonGenCodecs.type, MongoPolyAdtInstances[D]],
 ) extends AbstractMongoPolyDataCompanion[BsonGenCodecs.type, D](BsonGenCodecs)

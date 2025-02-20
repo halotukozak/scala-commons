@@ -6,7 +6,7 @@ import org.bson.{BsonDocument, BsonValue}
 
 sealed trait MongoUpdateOperator[T] extends Product {
 
-  import MongoUpdateOperator._
+  import MongoUpdateOperator.*
 
   def rawOperator: String = "$" + productPrefix.uncapitalize
 
@@ -22,7 +22,7 @@ sealed trait MongoUpdateOperator[T] extends Product {
     case SetOnInsert(value, format) => format.writeBson(value)
     case Unset() => Bson.string("")
 
-    case push: Push[_, ct] =>
+    case push: Push[?, ct] =>
       val doc = new BsonDocument
       doc.put("$each", Bson.array(push.values.iterator.map(push.format.writeBson)))
       push.position.foreach(v => doc.put("$position", Bson.int(v)))
@@ -30,16 +30,16 @@ sealed trait MongoUpdateOperator[T] extends Product {
       push.sort.foreach(v => doc.put("$sort", v.toBson))
       doc
 
-    case addToSet: AddToSet[_, ct] =>
+    case addToSet: AddToSet[?, ct] =>
       Bson.document("$each", Bson.array(addToSet.values.iterator.map(addToSet.format.writeBson)))
 
-    case pop: Pop[_, _] =>
-      Bson.int(if (pop.first) -1 else 1)
+    case pop: Pop[?, ?] =>
+      Bson.int(if pop.first then -1 else 1)
 
-    case pull: Pull[_, _] =>
+    case pull: Pull[?, ?] =>
       pull.filter.toBson
 
-    case pullAll: PullAll[_, ct] =>
+    case pullAll: PullAll[?, ct] =>
       Bson.array(pullAll.values.iterator.map(pullAll.format.writeBson))
   }
 }
@@ -64,19 +64,16 @@ object MongoUpdateOperator {
     position: Opt[Int],
     slice: Opt[Int],
     sort: Opt[MongoOrder[T]],
-    format: MongoFormat[T]
+    format: MongoFormat[T],
   ) extends MongoUpdateOperator[C[T]]
 
-  final case class AddToSet[C[X] <: Iterable[X], T](
-    values: Iterable[T],
-    format: MongoFormat[T]
-  ) extends MongoUpdateOperator[C[T]]
+  final case class AddToSet[C[X] <: Iterable[X], T](values: Iterable[T], format: MongoFormat[T])
+      extends MongoUpdateOperator[C[T]]
 
   final case class Pop[C[X] <: Iterable[X], T](first: Boolean) extends MongoUpdateOperator[C[T]]
 
   final case class Pull[C[X] <: Iterable[X], T](filter: MongoFilter[T]) extends MongoUpdateOperator[C[T]]
 
-  final case class PullAll[C[X] <: Iterable[X], T](
-    values: Iterable[T], format: MongoFormat[T]
-  ) extends MongoUpdateOperator[C[T]]
+  final case class PullAll[C[X] <: Iterable[X], T](values: Iterable[T], format: MongoFormat[T])
+      extends MongoUpdateOperator[C[T]]
 }

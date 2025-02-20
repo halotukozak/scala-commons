@@ -1,20 +1,19 @@
 package com.avsystem.commons
 package misc
 
-
 import annotation.explicitGenerics
 import misc.macros.caseObjectsForImpl
-
-import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
+import serialization.{GenCodec, GenKeyCodec}
 
 import scala.compiletime.{constValue, erasedValue, summonInline}
 import scala.deriving.Mirror
 
 object SealedUtils {
+
   /**
-   * A macro which reifies a list of all case objects of a sealed trait or class `T`.
-   * WARNING: the order of case objects in the resulting list is guaranteed to be consistent with
-   * declaration order ONLY for enums extending [[OrderedEnum]]. Otherwise, the order may be arbitrary.
+   * A macro which reifies a list of all case objects of a sealed trait or class `T`. WARNING: the order of case objects
+   * in the resulting list is guaranteed to be consistent with declaration order ONLY for enums extending
+   * [[OrderedEnum]]. Otherwise, the order may be arbitrary.
    */
   @explicitGenerics
   inline def caseObjectsFor[T]: List[T] = ???
@@ -36,8 +35,8 @@ object SealedUtils {
 }
 
 /**
- * Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects.
- * For example:
+ * Base trait for companion objects of sealed traits that serve as enums, i.e. their only values are case objects. For
+ * example:
  *
  * {{{
  *   sealed trait SomeEnum
@@ -52,15 +51,16 @@ object SealedUtils {
  * }}}
  */
 trait SealedEnumCompanion[T] {
+
   /**
    * Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
    */
   given evidence: this.type = this
 
   /**
-   * Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately
-   * for every sealed enum, but can be implemented simply by using the [[caseObjects]] macro.
-   * It's important to *always* state the type of `values` explicitly, as a workaround for SI-7046. For example:
+   * Holds a list of all case objects of a sealed trait or class `T`. This must be implemented separately for every
+   * sealed enum, but can be implemented simply by using the [[caseObjects]] macro. It's important to *always* state the
+   * type of `values` explicitly, as a workaround for SI-7046. For example:
    *
    * {{{
    *   val values: List[MyEnum] = caseObjects
@@ -72,10 +72,10 @@ trait SealedEnumCompanion[T] {
   def values: Seq[T]
 
   /**
-   * A macro which reifies a list of all case objects of the sealed trait or class `T`.
-   * WARNING: the order of case objects in the resulting list is well defined only for enums that extend [[OrderedEnum]].
-   * In such case, the order is consistent with declaration order in source file. However, if the enum is not an
-   * [[OrderedEnum]], the order may be arbitrary.
+   * A macro which reifies a list of all case objects of the sealed trait or class `T`. WARNING: the order of case
+   * objects in the resulting list is well defined only for enums that extend [[OrderedEnum]]. In such case, the order
+   * is consistent with declaration order in source file. However, if the enum is not an [[OrderedEnum]], the order may
+   * be arbitrary.
    */
   protected inline def caseObjects: List[T] = SealedUtils.caseObjectsFor[T]
 }
@@ -83,16 +83,17 @@ trait SealedEnumCompanion[T] {
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
 
 /**
- * Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct
- * textual representation (name).
+ * Base trait for enums implemented as sealed hierarchy with case objects where every enum value has distinct textual
+ * representation (name).
  *
- * Typically, if a trait or class extends `NamedEnum`, its companion object extends [[NamedEnumCompanion]].
- * Enum values can then be looked up by name using [[NamedEnumCompanion.byName]].
+ * Typically, if a trait or class extends `NamedEnum`, its companion object extends [[NamedEnumCompanion]]. Enum values
+ * can then be looked up by name using [[NamedEnumCompanion.byName]].
  */
 trait NamedEnum extends Serializable {
+
   /**
-   * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely
-   * by each case object in the sealed hierarchy.
+   * Used as a key for a map returned from `byName`. It is recommended to override this method uniquely by each case
+   * object in the sealed hierarchy.
    */
   def name: String
 
@@ -100,11 +101,10 @@ trait NamedEnum extends Serializable {
 }
 
 /**
- * Subtrait of [[NamedEnum]] which requires its values to be `Product`s and uses `Product.productPrefix` as
- * the name of each enum constant. In practice this means that all the objects extending [[AutoNamedEnum]] should
- * be `case object`s so that object names are automatically used as enum constant names.
- * That's because case classes and objects automatically implement `Product` and use their source
- * name as `Product.productPrefix`.
+ * Subtrait of [[NamedEnum]] which requires its values to be `Product`s and uses `Product.productPrefix` as the name of
+ * each enum constant. In practice this means that all the objects extending [[AutoNamedEnum]] should be `case object`s
+ * so that object names are automatically used as enum constant names. That's because case classes and objects
+ * automatically implement `Product` and use their source name as `Product.productPrefix`.
  */
 trait AutoNamedEnum extends NamedEnum with Product {
   def name: String = productPrefix
@@ -118,9 +118,9 @@ trait LowerCaseAutoNamedEnum extends AutoNamedEnum {
 }
 
 /**
- * Base trait for companion objects of sealed traits that serve as named enums. `NamedEnumCompanion` is an
- * extension of [[SealedEnumCompanion]] which additionally requires that every enum value has distinct string
- * representation. Values can then be looked up by that representation using [[NamedEnumCompanion.byName]]
+ * Base trait for companion objects of sealed traits that serve as named enums. `NamedEnumCompanion` is an extension of
+ * [[SealedEnumCompanion]] which additionally requires that every enum value has distinct string representation. Values
+ * can then be looked up by that representation using [[NamedEnumCompanion.byName]]
  *
  * Example:
  *
@@ -137,13 +137,15 @@ trait LowerCaseAutoNamedEnum extends AutoNamedEnum {
  * }}}
  *
  * `NamedEnumCompanion` also automatically provides implicit typeclass instances for
- * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] and [[com.avsystem.commons.serialization.GenCodec GenCodec]].
+ * [[com.avsystem.commons.serialization.GenKeyCodec GenKeyCodec]] and
+ * [[com.avsystem.commons.serialization.GenCodec GenCodec]].
  */
 trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
+
   /**
-   * Returns a map from all case objects names to their instances.
-   * Since `byName` uses [[caseObjects]] macro it does NOT guarantee an order of elements. It is also essential
-   * to provide unique names for each case object in the sealed hierarchy to retrieve valid hierarchy.
+   * Returns a map from all case objects names to their instances. Since `byName` uses [[caseObjects]] macro it does NOT
+   * guarantee an order of elements. It is also essential to provide unique names for each case object in the sealed
+   * hierarchy to retrieve valid hierarchy.
    */
 
   private var _byName: Map[String, T] = compiletime.uninitialized
@@ -156,19 +158,22 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
   }
 
   private def decode(str: String): T =
-    byName.getOrElse(str, throw new NoSuchElementException(s"Invalid value: $str, expected one of: ${values.iterator.map(_.name).mkString(",")}"))
+    byName.getOrElse(
+      str,
+      throw new NoSuchElementException(
+        s"Invalid value: $str, expected one of: ${values.iterator.map(_.name).mkString(",")}",
+      ),
+    )
 
   implicit /*lazy*/ val keyCodec: GenKeyCodec[T] = GenKeyCodec.create(decode, _.name)
 
-  implicit /*lazy*/ val codec: GenCodec[T] = GenCodec.nullableSimple[T](
-    input => decode(input.readString()),
-    (output, value) => output.writeString(value.name),
-  )
+  implicit /*lazy*/ val codec: GenCodec[T] =
+    GenCodec.nullableSimple[T](input => decode(input.readString()), (output, value) => output.writeString(value.name))
 }
 
 /**
- * Trait to be extended by enums whose values are ordered by declaration order. Ordering is derived from
- * [[SourceInfo]] object, which is typically accepted as an implicit, e.g.
+ * Trait to be extended by enums whose values are ordered by declaration order. Ordering is derived from [[SourceInfo]]
+ * object, which is typically accepted as an implicit, e.g.
  *
  * {{{
  *   sealed abstract class MyOrderedEnum(given sourceInfo: SourceInfo) extends OrderedEnum
@@ -186,7 +191,6 @@ trait NamedEnumCompanion[T <: NamedEnum] extends SealedEnumCompanion[T] {
 trait OrderedEnum:
   def sourceInfo: SourceInfo
 
-
 object OrderedEnum {
   private object reusableOrdering extends Ordering[OrderedEnum]:
     def compare(x: OrderedEnum, y: OrderedEnum): Int = Integer.compare(x.sourceInfo.offset, y.sourceInfo.offset)
@@ -195,4 +199,5 @@ object OrderedEnum {
 }
 
 abstract class AbstractNamedEnumCompanion[T <: NamedEnum]
-  extends AbstractSealedEnumCompanion[T] with NamedEnumCompanion[T]
+    extends AbstractSealedEnumCompanion[T]
+    with NamedEnumCompanion[T]

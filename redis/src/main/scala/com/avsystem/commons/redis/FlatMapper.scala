@@ -5,15 +5,15 @@ import com.avsystem.commons.redis.HasFlatMap.FlatMapOps
 import com.avsystem.commons.redis.RedisOp.{FlatMappedOp, LeafOp}
 
 /**
-  * Typeclass that steers flat-mapping of [[RedisBatch]]es and [[RedisOp]]s with each other.
-  * It could be defined simpler as:
-  * {{{
-  *   trait FlatMapper[-L[_],-R[_]] {
-  *     def flatMap[A,B](left: L[A])(rightFun: A => R[B]): RedisOp[B]
-  *   }
-  * }}}
-  * but unfortunately IntelliJ Scala plugin (3.0.7.31) does not understand that well (in `flatMap` callsites)
-  */
+ * Typeclass that steers flat-mapping of [[RedisBatch]]es and [[RedisOp]]s with each other. It could be defined simpler
+ * as:
+ * {{{
+ *   trait FlatMapper[-L[_],-R[_]] {
+ *     def flatMap[A,B](left: L[A])(rightFun: A => R[B]): RedisOp[B]
+ *   }
+ * }}}
+ * but unfortunately IntelliJ Scala plugin (3.0.7.31) does not understand that well (in `flatMap` callsites)
+ */
 trait FlatMapper[A, B, -L, -R] {
   def flatMap(left: L)(rightFun: A => R): RedisOp[B]
 }

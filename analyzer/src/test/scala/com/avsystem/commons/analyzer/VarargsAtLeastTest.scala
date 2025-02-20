@@ -5,39 +5,33 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class VarargsAtLeastTest extends AnyFunSuite with AnalyzerTest {
   test("too few varargs parameters should be rejected") {
-    assertErrors(
-      """
+    assertErrors("""
         |import com.avsystem.commons.analyzer.TestUtils
         |
         |object whatever {
         |  TestUtils.need3Params(1, 2)
         |}
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 
   test("enough varargs parameters should not be rejected") {
-    assertNoErrors(
-      """
+    assertNoErrors("""
         |import com.avsystem.commons.analyzer.TestUtils
         |
         |object whatever {
         |  TestUtils.need3Params(1, 2, 3)
         |  TestUtils.need3Params(1, 2, 3, 4)
         |}
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 
   test("collection passed as varargs parameter should not be rejected") {
-    assertNoErrors(
-      """
+    assertNoErrors("""
         |import com.avsystem.commons.analyzer.TestUtils
         |
         |object whatever {
         |  TestUtils.need3Params(List(1,2): _*)
         |}
-      """.stripMargin
-    )
+      """.stripMargin)
   }
 }

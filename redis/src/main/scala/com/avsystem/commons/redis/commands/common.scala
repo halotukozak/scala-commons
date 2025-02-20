@@ -11,7 +11,7 @@ object SortOrder extends NamedEnumCompanion[SortOrder] {
   case object Desc extends SortOrder("DESC")
 
   def apply(asc: Boolean): SortOrder =
-    if (asc) Asc else Desc
+    if asc then Asc else Desc
 
   val values: List[SortOrder] = caseObjects
 }

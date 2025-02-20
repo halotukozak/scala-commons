@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.{GenCodec, ListOutput, ObjectOutput}
-import org.bson._
+import org.bson.*
 import org.bson.types.{Decimal128, ObjectId}
 
 object BsonValueOutput {
@@ -13,10 +13,8 @@ object BsonValueOutput {
   }
 }
 
-final class BsonValueOutput(
-  receiver: BsonValue => Unit = _ => (),
-  override val legacyOptionEncoding: Boolean = false
-) extends BsonOutput {
+final class BsonValueOutput(receiver: BsonValue => Unit = _ => (), override val legacyOptionEncoding: Boolean = false)
+    extends BsonOutput {
 
   private var _value: Opt[BsonValue] = Opt.empty
 
@@ -43,7 +41,7 @@ final class BsonValueOutput(
     setValue(new BsonInt32(int))
 
   override def writeLong(long: Long): Unit =
-    if (long.isValidInt) writeInt(long.toInt)
+    if long.isValidInt then writeInt(long.toInt)
     else setValue(new BsonInt64(long))
 
   override def writeTimestamp(millis: Long): Unit =
@@ -71,8 +69,7 @@ final class BsonValueOutput(
     setValue(bsonValue)
 }
 
-final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean)
-  extends ListOutput {
+final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncoding: Boolean) extends ListOutput {
   private val array = new BsonArray()
 
   override def writeElement(): BsonOutput =
@@ -81,8 +78,7 @@ final class BsonValueListOutput(receiver: BsonArray => Unit, legacyOptionEncodin
   override def finish(): Unit = receiver(array)
 }
 
-final class BsonValueObjectOutput(receiver: BsonDocument => Unit, legacyOptionEncoding: Boolean)
-  extends ObjectOutput {
+final class BsonValueObjectOutput(receiver: BsonDocument => Unit, legacyOptionEncoding: Boolean) extends ObjectOutput {
   private val doc = new BsonDocument()
 
   override def writeField(key: String): BsonOutput =

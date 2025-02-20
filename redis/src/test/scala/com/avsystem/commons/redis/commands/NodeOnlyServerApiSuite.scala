@@ -3,7 +3,7 @@ package redis.commands
 
 import com.avsystem.commons.redis.RedisNodeCommandsSuite
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 class NodeOnlyServerApiSuite extends RedisNodeCommandsSuite {
 
@@ -18,5 +18,5 @@ class NodeOnlyServerApiSuite extends RedisNodeCommandsSuite {
     clientKill(clients(2).id, Skipme(false)).assertEquals(1)
     clientKill(ClientType.Master).assertEquals(0)
   }
-  */
+   */
 }

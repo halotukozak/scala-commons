@@ -6,9 +6,8 @@ import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.protocol.RedisMsg
 
 /**
-  * Author: ghik
-  * Created: 29/07/16.
-  */
+ * Author: ghik Created: 29/07/16.
+ */
 class TestDebugListener extends DebugListener {
   private var receiving = false
   private val builder = new StringBuilder
@@ -19,7 +18,7 @@ class TestDebugListener extends DebugListener {
   }
 
   def onSend(data: ByteString) = synchronized {
-    if (receiving) {
+    if receiving then {
       builder.append("\n")
       receiving = false
     }
@@ -27,7 +26,7 @@ class TestDebugListener extends DebugListener {
   }
 
   def onReceive(data: ByteString) = synchronized {
-    if (!receiving) {
+    if !receiving then {
       builder.append("\n")
       receiving = true
     }

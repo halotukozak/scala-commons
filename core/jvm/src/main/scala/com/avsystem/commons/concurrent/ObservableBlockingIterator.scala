@@ -14,18 +14,13 @@ import scala.concurrent.duration.{FiniteDuration, TimeUnit}
 import scala.concurrent.{TimeoutException, blocking}
 
 /**
- * An `Iterator` backed by a `BlockingQueue` backed by an `Observable`.
- * This essentially turns an `Observable` into an `Iterator`
- * (which requires blocking so use this only as a last resort).
+ * An `Iterator` backed by a `BlockingQueue` backed by an `Observable`. This essentially turns an `Observable` into an
+ * `Iterator` (which requires blocking so use this only as a last resort).
  */
-final class ObservableBlockingIterator[T](
-  observable: Observable[T],
-  timeout: Long,
-  unit: TimeUnit,
-  bufferSize: Int,
-)(using
-  val scheduler: Scheduler,
-) extends CloseableIterator[T] with Subscriber[T] {
+final class ObservableBlockingIterator[T](observable: Observable[T], timeout: Long, unit: TimeUnit, bufferSize: Int)(
+  using val scheduler: Scheduler,
+) extends CloseableIterator[T]
+    with Subscriber[T] {
 
   import ObservableBlockingIterator.*
 
@@ -41,8 +36,7 @@ final class ObservableBlockingIterator[T](
     if queue.remainingCapacity > 1 then { // there's more than one spot in the queue, add this element and acknowledge immediately
       queue.add(safeElem)
       Ack.Continue
-    }
-    else {
+    } else {
       // not sure if there's more than one spot in the queue - add the element but return a Promise-backed Future of acknowledgement
       // NOTE: the Observable protocol guarantees that `onNext/onError/onComplete` is never called when the queue is full
       val promise = Promise[Ack]()

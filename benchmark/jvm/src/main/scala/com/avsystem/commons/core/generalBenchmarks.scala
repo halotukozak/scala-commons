@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package core
 
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 
 @Warmup(iterations = 5)
@@ -10,7 +10,7 @@ import org.openjdk.jmh.infra.Blackhole
 @BenchmarkMode(Array(Mode.Throughput))
 class LoopBenchmark {
 
-  import LoopBenchmark._
+  import LoopBenchmark.*
 
   @Benchmark
   def rangeForeachTest(blackhole: Blackhole): Unit = {
@@ -47,7 +47,7 @@ class LoopBenchmark {
     val x = 42
     var bin: Int = 0
     val it = collection.iterator
-    while (it.hasNext) {
+    while it.hasNext do {
       bin = it.next() + x
     }
     blackhole.consume(bin)
@@ -58,7 +58,7 @@ class LoopBenchmark {
     val x = 42
     var bin: Int = 0
     var l = collection
-    while (l.nonEmpty) {
+    while l.nonEmpty do {
       bin = l.head + x
       l = l.tail
     }
@@ -84,7 +84,7 @@ class AllocationBenchmark {
   def copyTest(blackhole: Blackhole): Unit = {
     var box = new Box(0)
     var i = 0
-    while (i < 1000) {
+    while i < 1000 do {
       box = box.copy(n = i)
       i += 1
     }
@@ -95,7 +95,7 @@ class AllocationBenchmark {
   def mutateTest(blackhole: Blackhole): Unit = {
     val box = new Box(0)
     var i = 0
-    while (i < 1000) {
+    while i < 1000 do {
       box.n = i
       i += 1
     }

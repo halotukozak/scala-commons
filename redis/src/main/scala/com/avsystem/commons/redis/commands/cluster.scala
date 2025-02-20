@@ -1,10 +1,10 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.misc.{Opt => _, OptArg => _, _}
+import com.avsystem.commons.misc.{Opt as _, OptArg as _, *}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.*
+import com.avsystem.commons.redis.commands.ReplyDecoders.*
 import com.avsystem.commons.redis.protocol.SimpleStringMsg
 
 import scala.collection.mutable
@@ -23,12 +23,14 @@ trait KeyedClusterApi extends ApiSubset {
 }
 
 trait NodeClusterApi extends KeyedClusterApi {
+
   /** Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]] */
   def clusterAddslots(slot: Int, slots: Int*): Result[Unit] =
     execute(new ClusterAddslots(slot +:: slots))
 
-  /** Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]]
-    * or does nothing when `slots` is empty. */
+  /**
+   * Executes [[http://redis.io/commands/cluster-addslots CLUSTER ADDSLOTS]] or does nothing when `slots` is empty.
+   */
   def clusterAddslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterAddslots(slots))
 
@@ -48,8 +50,9 @@ trait NodeClusterApi extends KeyedClusterApi {
   def clusterDelslots(slot: Int, slots: Int*): Result[Unit] =
     execute(new ClusterDelslots(slot +:: slots))
 
-  /** Executes [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]]
-    * or does nothing when `slots` is empty */
+  /**
+   * Executes [[http://redis.io/commands/cluster-delslots CLUSTER DELSLOTS]] or does nothing when `slots` is empty
+   */
   def clusterDelslots(slots: Iterable[Int]): Result[Unit] =
     execute(new ClusterDelslots(slots))
 
@@ -128,7 +131,9 @@ trait NodeClusterApi extends KeyedClusterApi {
     override def immediateResult: Opt[Unit] = whenEmpty(slots, ())
   }
 
-  private object ClusterBumpepoch extends AbstractRedisCommand[BumpepochResult](simpleBumpepochResult) with NodeCommand {
+  private object ClusterBumpepoch
+      extends AbstractRedisCommand[BumpepochResult](simpleBumpepochResult)
+      with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "BUMPEPOCH").result
   }
 
@@ -162,7 +167,8 @@ trait NodeClusterApi extends KeyedClusterApi {
   }
 
   private object ClusterInfo
-    extends AbstractRedisCommand[ClusterStateInfo](bulk(bs => ClusterStateInfo(bs.utf8String))) with NodeCommand {
+      extends AbstractRedisCommand[ClusterStateInfo](bulk(bs => ClusterStateInfo(bs.utf8String)))
+      with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "INFO").result
   }
 
@@ -178,7 +184,9 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded: Encoded = encoder("CLUSTER", "NODES").result
   }
 
-  private final class ClusterReplicas(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos) with NodeCommand {
+  private final class ClusterReplicas(nodeId: NodeId)
+      extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos)
+      with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "REPLICAS").add(nodeId.raw).result
   }
 
@@ -202,20 +210,23 @@ trait NodeClusterApi extends KeyedClusterApi {
     val encoded: Encoded = encoder("CLUSTER", "SETSLOT").add(slot).add(subcommand).result
   }
 
-  private final class ClusterSlaves(nodeId: NodeId) extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos) with NodeCommand {
+  private final class ClusterSlaves(nodeId: NodeId)
+      extends AbstractRedisCommand[Seq[NodeInfo]](multiBulkAsNodeInfos)
+      with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "SLAVES").add(nodeId.raw).result
   }
 
-  private object ClusterSlots
-    extends RedisSeqCommand[SlotRangeMapping](multiBulkAsSlotRangeMapping) with NodeCommand {
+  private object ClusterSlots extends RedisSeqCommand[SlotRangeMapping](multiBulkAsSlotRangeMapping) with NodeCommand {
     val encoded: Encoded = encoder("CLUSTER", "SLOTS").result
   }
 }
 
 trait ConnectionClusterApi extends NodeClusterApi {
+
   /** Executes [[http://redis.io/commands/readonly READONLY]] */
   def readonly: Result[Unit] =
     execute(Readonly)
+
   /** Executes [[http://redis.io/commands/readwrite READWRITE]] */
   def readwrite: Result[Unit] =
     execute(Readwrite)
@@ -251,12 +262,14 @@ object SetslotCmd {
   case class Node(nodeId: NodeId) extends SetslotCmd
 
   implicit val SubcommandCommandArg: CommandArg[SetslotCmd] =
-    CommandArg((encoder, arg) => arg match {
-      case Migrating(NodeId(nodeId)) => encoder.add("MIGRATING").add(nodeId)
-      case Importing(NodeId(nodeId)) => encoder.add("IMPORTING").add(nodeId)
-      case Stable => encoder.add("STABLE")
-      case Node(NodeId(nodeId)) => encoder.add("NODE").add(nodeId)
-    })
+    CommandArg((encoder, arg) =>
+      arg match {
+        case Migrating(NodeId(nodeId)) => encoder.add("MIGRATING").add(nodeId)
+        case Importing(NodeId(nodeId)) => encoder.add("IMPORTING").add(nodeId)
+        case Stable => encoder.add("STABLE")
+        case Node(NodeId(nodeId)) => encoder.add("NODE").add(nodeId)
+      },
+    )
 }
 
 case class ClusterStateInfo(info: String) extends ParsedInfo(info, "\r\n", ":") {
@@ -318,7 +331,7 @@ case class NodeInfo(infoLine: String) {
 
 class NodeFlags(val raw: Int) extends AnyVal {
 
-  import NodeFlags._
+  import NodeFlags.*
 
   def |(other: NodeFlags): NodeFlags = new NodeFlags(raw | other.raw)
   def &(other: NodeFlags): NodeFlags = new NodeFlags(raw & other.raw)
@@ -334,10 +347,11 @@ class NodeFlags(val raw: Int) extends AnyVal {
   def noaddr: Boolean = (this & Noaddr) != Noflags
 
   override def toString: String =
-    if (this == Noflags) "noflags"
-    else reprValuePairs.iterator
-      .collect({ case (str, flags) if (this & flags) != Noflags => str })
-      .mkString(",")
+    if this == Noflags then "noflags"
+    else
+      reprValuePairs.iterator
+        .collect({ case (str, flags) if (this & flags) != Noflags => str })
+        .mkString(",")
 }
 
 object NodeFlags {
@@ -357,19 +371,22 @@ object NodeFlags {
     "fail?" -> Pfail,
     "fail" -> Fail,
     "handshake" -> Handshake,
-    "noaddr" -> Noaddr
+    "noaddr" -> Noaddr,
   )
 
   def apply(str: String): NodeFlags = {
     val flagSet = str.split(',').to(mutable.HashSet)
-    reprValuePairs.foldLeft(Noflags) {
-      case (res, (s, flags)) => if (flagSet(s)) res | flags else res
+    reprValuePairs.foldLeft(Noflags) { case (res, (s, flags)) =>
+      if flagSet(s) then res | flags else res
     }
   }
 }
 
 case class SlotRangeMapping(
-  range: SlotRange, master: NodeAddress, masterId: Opt[NodeId], slaves: Seq[(NodeAddress, Opt[NodeId])]
+  range: SlotRange,
+  master: NodeAddress,
+  masterId: Opt[NodeId],
+  slaves: Seq[(NodeAddress, Opt[NodeId])],
 ) {
   private def nodeRepr(addr: NodeAddress, idOpt: Opt[NodeId]): String =
     addr.toString + idOpt.fold("")(id => s" (${id.raw})")
@@ -379,7 +396,7 @@ case class SlotRangeMapping(
 case class SlotRange(start: Int, end: Int) {
   def toRange: Range = start to end
   def contains(slot: Int): Boolean = slot >= start && slot <= end
-  override def toString: String = if (start == end) start.toString else s"$start-$end"
+  override def toString: String = if start == end then start.toString else s"$start-$end"
 }
 object SlotRange {
   final val LastSlot = Hash.TotalSlots - 1

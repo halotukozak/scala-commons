@@ -7,8 +7,8 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class KeyEscaperTest extends AnyFunSuite with ScalaCheckPropertyChecks {
 
-  import KeyEscaper._
-  import KeyEscaperTest._
+  import KeyEscaper.*
+  import KeyEscaperTest.*
 
   test("custom keys") {
     val customCases = List(
@@ -20,10 +20,10 @@ class KeyEscaperTest extends AnyFunSuite with ScalaCheckPropertyChecks {
       "plain$ with$ $dollars$" -> "plain$ with$ $dollars$",
       "Sentence." -> "Sentence\\_",
       "$operator" -> "\\$operator",
-      "$worst.of.both.worlds" -> "\\$worst\\_of\\_both\\_worlds"
+      "$worst.of.both.worlds" -> "\\$worst\\_of\\_both\\_worlds",
     )
 
-    for ((input, expected) <- customCases) {
+    for (input, expected) <- customCases do {
       val escaped = escape(input)
       assert(escaped == expected)
       assert(unescape(escaped) == input)

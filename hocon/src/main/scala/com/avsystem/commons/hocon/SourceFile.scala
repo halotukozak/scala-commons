@@ -13,13 +13,14 @@ final class SourceFile(val contents: String, val name: String) {
     val b = new mutable.ArrayBuilder.ofInt
     b += 0
     @tailrec def loop(i: Int): Unit =
-      if (i < contents.length()) contents.charAt(i) match {
-        case '\n' =>
-          b += i + 1
-          loop(i + 1)
-        case _ =>
-          loop(i + 1)
-      }
+      if i < contents.length() then
+        contents.charAt(i) match {
+          case '\n' =>
+            b += i + 1
+            loop(i + 1)
+          case _ =>
+            loop(i + 1)
+        }
     loop(0)
     b.result()
   }
@@ -33,31 +34,32 @@ final class SourceFile(val contents: String, val name: String) {
 
   // excluding the newline character
   def lineLength(line: Int): Int =
-    if (line < 0 || line >= lineCount) 0
-    else if (line == lineCount - 1) contents.length() - lineOffsets(line)
+    if line < 0 || line >= lineCount then 0
+    else if line == lineCount - 1 then contents.length() - lineOffsets(line)
     else lineOffsets(line + 1) - lineOffsets(line) - 1
 
   def offsetFor(line: Int, column: Int): Int =
-    if (line < 0) 0
-    else if (line >= lineCount) contents.length
+    if line < 0 then 0
+    else if line >= lineCount then contents.length
     else lineOffsets(line) + math.min(column, lineLength(line))
 
   def lineOf(offset: Int): Int =
-    if (offset < 0) 0
-    else if (offset >= contents.length()) lineCount - 1
+    if offset < 0 then 0
+    else if offset >= contents.length() then lineCount - 1
     else {
       @tailrec def binsearch(beg: Int, end: Int): Int =
-        if (beg > end) end else {
+        if beg > end then end
+        else {
           val mid = (beg + end) / 2
-          if (lineOffsets(mid) > offset) binsearch(beg, mid - 1)
+          if lineOffsets(mid) > offset then binsearch(beg, mid - 1)
           else binsearch(mid + 1, end)
         }
       binsearch(0, lineCount - 1)
     }
 
   def coordsOf(offset: Int): (Int, Int) =
-    if (offset < 0) (0, 0)
-    else if (offset >= contents.length()) (lineCount - 1, contents.length() - lineOffsets(lineCount - 1))
+    if offset < 0 then (0, 0)
+    else if offset >= contents.length() then (lineCount - 1, contents.length() - lineOffsets(lineCount - 1))
     else {
       val line = lineOf(offset)
       val column = offset - lineOffsets(line)
@@ -91,7 +93,7 @@ final case class SourcePos(input: SourceFile, start: Int, end: Int) {
 
   override def toString: String = {
     val fromRepr = s"${startLine + 1}:${startColumn + 1}"
-    val toRepr = if (isEmpty) "" else s"-${endLine + 1}:${endColumn + 1}"
+    val toRepr = if isEmpty then "" else s"-${endLine + 1}:${endColumn + 1}"
     s"${input.name}:$fromRepr$toRepr"
   }
 
@@ -99,10 +101,13 @@ final case class SourcePos(input: SourceFile, start: Int, end: Int) {
 
   /** 0-based starting line number */
   def startLine: Int = startCoords._1
+
   /** 0-based starting column number */
   def startColumn: Int = startCoords._2
+
   /** 0-based ending line number */
   def endLine: Int = endCoords._1
+
   /** 0-based ending column number */
   def endColumn: Int = endCoords._2
 

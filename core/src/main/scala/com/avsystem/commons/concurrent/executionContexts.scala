@@ -7,9 +7,9 @@ import scala.concurrent.ExecutionContextExecutor
 /**
  * DO NOT USE THIS IF YOU DON'T KNOW WHAT YOU'RE DOING.
  *
- * This execution context runs callbacks immediately in whatever happens to be current thread.
- * This may help with performance but is otherwise very unsafe. It may introduce unwanted load or block
- * some crucial threads in the system. This may even collapse the entire system in pessimistic case.
+ * This execution context runs callbacks immediately in whatever happens to be current thread. This may help with
+ * performance but is otherwise very unsafe. It may introduce unwanted load or block some crucial threads in the system.
+ * This may even collapse the entire system in pessimistic case.
  *
  * Note: Since Scala 2.13, this is essentially the same thing as [[ExecutionContext.parasitic]].
  */
@@ -24,7 +24,6 @@ object RunNowEC extends ExecutionContextExecutor {
   def reportFailure(cause: Throwable): Unit = cause.printStackTrace()
 }
 
-
 object RunInQueueEC extends RunInQueueEC {
   def get: ExecutionContextExecutor = this
 
@@ -35,8 +34,8 @@ object RunInQueueEC extends RunInQueueEC {
 /**
  * DO NOT USE THIS IF YOU DON'T KNOW WHAT YOU'RE DOING.
  *
- * This execution context runs callbacks immediately in whatever happens to be current thread, additionally
- * maintaining a queue that may prevent stack from growing.
+ * This execution context runs callbacks immediately in whatever happens to be current thread, additionally maintaining
+ * a queue that may prevent stack from growing.
  *
  * This may help with performance but is otherwise very unsafe.
  */
@@ -50,9 +49,10 @@ class RunInQueueEC extends ExecutionContextExecutor {
     val shouldRun = queue.isEmpty
     queue += runnable
     if shouldRun then
-      while (queue.nonEmpty) {
+      while queue.nonEmpty do {
         val task = queue.head
-        try task.run() catch case NonFatal(t) => reportFailure(t)
+        try task.run()
+        catch case NonFatal(t) => reportFailure(t)
         queue.dequeue()
       }
   }

@@ -1,17 +1,17 @@
 package com.avsystem.commons
 package misc.macros
 
-import misc.ValueEnum
-
-import scala.deriving.Mirror
-
 inline def enumValName[Value, ValName](valNameConstructor: String => ValName) =
   ${ enumValNameImpl[Value, ValName]('{ valNameConstructor }) }
-def enumValNameImpl[Value: Type, ValName: Type](valNameConstructor: Expr[String => ValName])(using quotes: Quotes) = {
+
+private def enumValNameImpl[Value: Type, ValName: Type](
+  valNameConstructor: Expr[String => ValName],
+)(using quotes: Quotes) = {
+  val macroUtils = new HasMacroUtils {}
+  import macroUtils.*
   import quotes.reflect.*
   def omitAnonClass(owner: Symbol): Symbol =
-    if owner.isClassConstructor && owner.owner.isAnonymousClass then
-      owner.owner.owner
+    if owner.isClassConstructor && owner.owner.isAnonymousClass then owner.owner.owner
     else owner
 
   val owner = omitAnonClass(Symbol.spliceOwner.owner)
@@ -25,11 +25,12 @@ def enumValNameImpl[Value: Type, ValName: Type](valNameConstructor: Expr[String 
     owner.typeRef <:< TypeRepr.of[Value]
 
   if !valid then
-    report.errorAndAbort("ValueEnum must be assigned to a public, final, non-lazy val in its companion object " +
-      "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass")
+    report.errorAndAbort(
+      "ValueEnum must be assigned to a public, final, non-lazy val in its companion object " +
+        "with explicit `Value` type annotation, e.g. `final val MyEnumValue: Value = new MyEnumClass",
+    )
 
   val name = Expr(owner.name.toString)
 
   '{ $valNameConstructor($name) }
 }
-

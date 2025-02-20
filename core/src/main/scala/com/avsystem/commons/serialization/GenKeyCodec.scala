@@ -10,9 +10,9 @@ import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 import scala.annotation.implicitNotFound
 
 /**
- * Typeclass which implements two-directional conversion between values of some type and field names
- * used in [[ObjectOutput.writeField]] and [[ObjectInput.nextField]] ([[FieldInput.fieldName]]).
- * Every type which has a natural, unambiguous string representation should have a `GenKeyCodec`.
+ * Typeclass which implements two-directional conversion between values of some type and field names used in
+ * [[ObjectOutput.writeField]] and [[ObjectInput.nextField]] ([[FieldInput.fieldName]]). Every type which has a natural,
+ * unambiguous string representation should have a `GenKeyCodec`.
  */
 @implicitNotFound("No GenKeyCodec found for ${T}")
 trait GenKeyCodec[T <: Any] {
@@ -28,9 +28,8 @@ object GenKeyCodec {
   def apply[T](using gkc: GenKeyCodec[T]): GenKeyCodec[T] = gkc
 
   /**
-   * Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom).
-   * The generated codec uses object name by default as key value.
-   * This can be adjusted with `@name` annotation.
+   * Materializes a `GenKeyCodec` for a "sealed enum" (sealed hierarchy with case objects at the bottom). The generated
+   * codec uses object name by default as key value. This can be adjusted with `@name` annotation.
    */
   def forSealedEnum[T]: GenKeyCodec[T] = ???
 
@@ -51,15 +50,18 @@ object GenKeyCodec {
   final class Transformed[A, B](val wrapped: GenKeyCodec[B], onWrite: A => B, onRead: B => A) extends GenKeyCodec[A] {
     def read(key: String): A = {
       val wrappedValue = wrapped.read(key)
-      try onRead(wrappedValue) catch {
+      try onRead(wrappedValue)
+      catch {
         case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
       }
     }
 
     def write(value: A): String = {
-      val wrappedValue = try onWrite(value) catch {
-        case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
-      }
+      val wrappedValue =
+        try onWrite(value)
+        catch {
+          case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
+        }
       wrapped.write(wrappedValue)
     }
   }
@@ -102,7 +104,7 @@ object GenKeyCodec {
 
   given BytesKeyCodec: GenKeyCodec[Bytes] = GenKeyCodec.create(Bytes.fromBase64(_), _.base64)
 
-  given jEnumKeyCodec[E <: Enum[E] : ClassTag]: GenKeyCodec[E] =
+  given jEnumKeyCodec[E <: Enum[E]: ClassTag]: GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(classTag[E].runtimeClass.asInstanceOf[Class[E]], string),
       `enum` => `enum`.name(),
@@ -110,6 +112,7 @@ object GenKeyCodec {
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
   given fromTransparentWrapping[R, T](using
-    tw: TransparentWrapping[R, T], wrappedCodec: GenKeyCodec[R],
+    tw: TransparentWrapping[R, T],
+    wrappedCodec: GenKeyCodec[R],
   ): GenKeyCodec[T] = new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 }

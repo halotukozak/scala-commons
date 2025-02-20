@@ -15,7 +15,7 @@ final class HeadIterator[+A](head: A, tail: Iterator[A]) extends Iterator[A] {
   private[this] var atHead = true
   def hasNext: Boolean = atHead || tail.hasNext
   override def next(): A =
-    if (atHead) {
+    if atHead then {
       atHead = false
       head
     } else tail.next()

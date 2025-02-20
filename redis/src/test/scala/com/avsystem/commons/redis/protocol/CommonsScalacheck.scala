@@ -5,9 +5,8 @@ import scala.annotation.nowarn
 import org.scalacheck.Shrink
 
 /**
-  * Author: ghik
-  * Created: 04/04/16.
-  */
+ * Author: ghik Created: 04/04/16.
+ */
 object CommonsScalacheck {
   @nowarn("msg=deprecated")
   implicit def shrinkOpt[T: Shrink]: Shrink[Opt[T]] = Shrink {

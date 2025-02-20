@@ -23,11 +23,8 @@ sealed trait GenStructure[T] extends TypedMetadata[T] {
 
 object GenStructure extends AdtMetadataCompanion[GenStructure]
 
-case class GenField[T](
-  @infer ts: TypeString[T],
-  @infer codec: GenCodec[T],
-  @composite info: GenParamInfo[T],
-) extends TypedMetadata[T] {
+case class GenField[T](@infer ts: TypeString[T], @infer codec: GenCodec[T], @composite info: GenParamInfo[T])
+    extends TypedMetadata[T] {
   def rawName: String = info.rawName
 
   def repr: String = s"[$info.flags]${info.annotName.fold("")(n => s"<${n.name}> ")}$ts"
@@ -37,9 +34,11 @@ case class GenField[T](
   @composite info: GenUnionInfo[T],
   @multi @adtCaseMetadata cases: Map[String, GenCase[?]],
 ) extends GenStructure[T] {
-  def repr: String = cases.iterator.map {
-    case (name, gr) => s"case $name:${gr.repr}"
-  }.mkString(s"[${info.flags}]\n", "\n", "")
+  def repr: String = cases.iterator
+    .map { case (name, gr) =>
+      s"case $name:${gr.repr}"
+    }
+    .mkString(s"[${info.flags}]\n", "\n", "")
 }
 
 sealed trait GenCase[T] extends TypedMetadata[T] {
@@ -50,9 +49,7 @@ sealed trait GenCase[T] extends TypedMetadata[T] {
   def sealedParents: List[GenSealedParent[?]]
 }
 
-case class GenSealedParent[T](
-  @infer repr: TypeString[T],
-) extends TypedMetadata[T]
+case class GenSealedParent[T](@infer repr: TypeString[T]) extends TypedMetadata[T]
 
 @positioned(positioned.here) case class GenCustomCase[T](
   @composite info: GenCaseInfo[T],
@@ -66,11 +63,14 @@ case class GenSealedParent[T](
   @composite info: GenCaseInfo[T],
   @multi @adtParamMetadata fields: Map[String, GenField[?]],
   @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[?]],
-) extends GenCase[T] with GenStructure[T] {
+) extends GenCase[T]
+    with GenStructure[T] {
 
-  def repr(indent: Int): String = fields.iterator.map {
-    case (name, gf) => s"${" " * indent}$name: ${gf.repr}"
-  }.mkString(s"[${info.flags}]\n", "\n", "")
+  def repr(indent: Int): String = fields.iterator
+    .map { case (name, gf) =>
+      s"${" " * indent}$name: ${gf.repr}"
+    }
+    .mkString(s"[${info.flags}]\n", "\n", "")
 
   def repr: String = repr(0)
 }
@@ -79,7 +79,8 @@ case class GenSealedParent[T](
   @composite info: GenCaseInfo[T],
   @checked @infer valueOf: ValueOf[T],
   @multi @adtCaseSealedParentMetadata sealedParents: List[GenSealedParent[?]],
-) extends GenCase[T] with GenStructure[T] {
+) extends GenCase[T]
+    with GenStructure[T] {
   def repr: String = valueOf.value.toString
 }
 

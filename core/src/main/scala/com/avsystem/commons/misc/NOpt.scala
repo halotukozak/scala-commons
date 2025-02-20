@@ -10,18 +10,18 @@ object NOpt {
   private object NullMarker extends Serializable
 
   /**
-   * Creates a [[NOpt]] out of given value. Works like `Option.apply`, i.e. `null` is translated into
-   * an empty [[NOpt]]. Note however that [[NOpt]] does have a representation of "present null" (which
-   * can be obtained using [[NOpt.some]]).
+   * Creates a [[NOpt]] out of given value. Works like `Option.apply`, i.e. `null` is translated into an empty [[NOpt]].
+   * Note however that [[NOpt]] does have a representation of "present null" (which can be obtained using
+   * [[NOpt.some]]).
    */
   def apply[A](value: A): NOpt[A] =
     if value == null then NOpt.Empty
     else new NOpt(value)
 
-  def unapply[A](opt: NOpt[A]): NOpt[A] = opt //name-based extractor
+  def unapply[A](opt: NOpt[A]): NOpt[A] = opt // name-based extractor
 
   def some[A](value: A): NOpt[A] =
-    new NOpt(if (value == null) then NullMarker else value)
+    new NOpt(if value == null then NullMarker else value)
 
   given opt2Iterable[A]: Conversion[NOpt[A], IIterable[A]] = _.toList
 
@@ -31,7 +31,7 @@ object NOpt {
 
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
-  final class WithFilter[+A] private[NOpt](self: NOpt[A], p: A => Boolean) {
+  final class WithFilter[+A] private[NOpt] (self: NOpt[A], p: A => Boolean) {
     def map[B](f: A => B): NOpt[B] = self.filter(p).map(f)
 
     def flatMap[B](f: A => NOpt[B]): NOpt[B] = self.filter(p).flatMap(f)
@@ -45,7 +45,7 @@ object NOpt {
 /**
  * Like [[Opt]] but does have a counterpart for `Some(null)`. In other words, [[NOpt]] is a "nullable [[Opt]]".
  */
-final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class NOpt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import NOpt.*
 
@@ -76,15 +76,16 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
     if isEmpty then Opt.Empty else Opt(value)
 
   /**
-   * Converts this `NOpt` into `OptRef`, changing the element type into boxed representation if
-   * necessary (e.g. `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`,
-   * `NOpt(null)` is translated to `OptRef.Empty`.
+   * Converts this `NOpt` into `OptRef`, changing the element type into boxed representation if necessary (e.g.
+   * `Boolean` into `java.lang.Boolean`). Because `OptRef` cannot hold `null`, `NOpt(null)` is translated to
+   * `OptRef.Empty`.
    */
   inline def toOptRef[B >: Null](using boxing: Boxing[A, B]): OptRef[B] =
     if isEmpty then OptRef.Empty else OptRef(boxing.fun(value))
 
   /**
-   * Converts this `NOpt` into `OptArg`. Because `OptArg` cannot hold `null`, `NOpt(null)` is translated to `OptArg.Empty`.
+   * Converts this `NOpt` into `OptArg`. Because `OptArg` cannot hold `null`, `NOpt(null)` is translated to
+   * `OptArg.Empty`.
    */
   inline def toOptArg: OptArg[A] =
     if isEmpty then OptArg.Empty else OptArg(value)
@@ -114,7 +115,7 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
     if isEmpty then NOpt.Empty else ev(value)
 
   inline def filter(p: A => Boolean): NOpt[A] =
-    if (isEmpty || p(value)) this else NOpt.Empty
+    if isEmpty || p(value) then this else NOpt.Empty
 
   def withFilter(p: A => Boolean): NOpt.WithFilter[A] =
     new NOpt.WithFilter[A](this, p)
@@ -161,9 +162,12 @@ final class NOpt[+A] private(private val rawValue: Any) extends AnyVal with OptB
   /**
    * Apply side effect only if NOpt is empty. It's a bit like foreach for NOpt.Empty
    *
-   * @param sideEffect - code to be executed if nopt is empty
-   * @return the same nopt
-   * @example {{{captionNOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+   * @param sideEffect
+   *   \- code to be executed if nopt is empty
+   * @return
+   *   the same nopt
+   * @example
+   *   {{{captionNOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
    */
   inline def forEmpty(sideEffect: => Unit): NOpt[A] = {
     if isEmpty then sideEffect

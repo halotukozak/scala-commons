@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 
 trait HyperLogLogApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("PFADD") {
     pfadd("key", Nil).assertEquals(true)

@@ -11,9 +11,9 @@ object CrossUtils {
 
   def unsetArrayValue: Any = null
 
-  def wrappedArray[A: ClassTag](elems: A*): MIndexedSeq[A] = Array(elems *)
+  def wrappedArray[A: ClassTag](elems: A*): MIndexedSeq[A] = Array(elems*)
 
   def arrayBuffer[A]: MIndexedSeq[A] & MBuffer[A] = new MArrayBuffer[A]
 
-  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = MHashMap[String, A](keyValues *)
+  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = MHashMap[String, A](keyValues*)
 }

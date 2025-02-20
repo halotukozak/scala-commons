@@ -4,8 +4,9 @@ package mongo
 import com.mongodb.{DuplicateKeyException, ErrorCategory, MongoException}
 
 /**
-  * @author MKej
-  */
+ * @author
+ *   MKej
+ */
 object DuplicateKey {
   def unapply(t: Throwable) = t match {
     case e: DuplicateKeyException => Some(e)

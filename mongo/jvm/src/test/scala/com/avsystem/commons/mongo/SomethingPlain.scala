@@ -15,7 +15,7 @@ case class SomethingPlain(
   double: Double,
   binary: Bytes,
   list: List[String],
-  map: Map[String, String]
+  map: Map[String, String],
 )
 object SomethingPlain extends HasGenCodec[SomethingPlain] {
   def sizedListOf[T](maxSize: Int, gen: => Gen[T]): Gen[List[T]] = {
@@ -39,17 +39,7 @@ object SomethingPlain extends HasGenCodec[SomethingPlain] {
     binary <- Gen.buildableOf[Array[Byte], Byte](arbitrary[Byte]).map(new Bytes(_))
     list <- stringListGen
     map <- Gen.mapOf(entryGen)
-  } yield SomethingPlain(
-    string,
-    boolean,
-    int,
-    long,
-    timestamp,
-    double,
-    binary,
-    list,
-    map
-  )
+  } yield SomethingPlain(string, boolean, int, long, timestamp, double, binary, list, map)
 }
 
 case class SomethingComplex(
@@ -57,7 +47,7 @@ case class SomethingComplex(
   complexList: List[SomethingPlain],
   nestedList: List[List[String]],
   nestedComplexList: List[List[SomethingPlain]],
-  option: Option[Int]
+  option: Option[Int],
 )
 object SomethingComplex extends HasGenCodec[SomethingComplex] {
   val sthListGen: Gen[List[SomethingPlain]] = SomethingPlain.sizedListOf(8, SomethingPlain.gen)
@@ -68,13 +58,7 @@ object SomethingComplex extends HasGenCodec[SomethingComplex] {
     nestedList <- SomethingPlain.sizedListOf(5, SomethingPlain.stringListGen)
     nestedComplexList <- SomethingPlain.sizedListOf(5, sthListGen)
     option <- arbitrary[Option[Int]]
-  } yield SomethingComplex(
-    embeddedObject,
-    complexList,
-    nestedList,
-    nestedComplexList,
-    option
-  )
+  } yield SomethingComplex(embeddedObject, complexList, nestedList, nestedComplexList, option)
 }
 
 case class SomethingLong(value: Long)

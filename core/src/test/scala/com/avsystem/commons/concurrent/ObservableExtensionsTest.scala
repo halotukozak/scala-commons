@@ -36,9 +36,12 @@ final class ObservableExtensionsTest
   }
 
   test("findOptL - null handling") {
-    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.some("abc")
+    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.some(
+      "abc",
+    )
     Observable.fromIterable(Seq(null, null)).findOptL(_ => true).runToFuture.futureValue shouldBe Opt.Empty
-    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_.startsWith("x")).runToFuture.futureValue shouldBe Opt.some("xyz")
+    Observable.fromIterable(Seq(null, "abc", "xyz")).findOptL(_.startsWith("x")).runToFuture.futureValue shouldBe Opt
+      .some("xyz")
   }
 
   test("distinct") {
@@ -52,7 +55,12 @@ final class ObservableExtensionsTest
       val f: Int => Int = _ % 256
 
       Observable.fromIterable(ints).distinctBy(f).toListL.runToFuture.futureValue shouldBe
-        ints.foldLeft(MLinkedHashMap.empty[Int, Int])((map, v) => f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v))).valuesIterator.toList
+        ints
+          .foldLeft(MLinkedHashMap.empty[Int, Int])((map, v) =>
+            f(v) |> (key => map.applyIf(!_.contains(key))(_ += key -> v)),
+          )
+          .valuesIterator
+          .toList
     }
   }
 

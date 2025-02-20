@@ -2,7 +2,7 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, Timestamp, TypedMap}
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import org.bson.types.ObjectId
 
 case class RecordId(id: String) extends AnyVal
@@ -29,8 +29,7 @@ case class InnerRecord(
   intMap: Map[String, Int],
 )
 object InnerRecord extends MongoDataCompanion[InnerRecord] {
-  final val Example = InnerRecord(
-    24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
+  final val Example = InnerRecord(24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
 }
 
 case class Props(map: Map[String, String]) extends AnyVal
@@ -56,10 +55,20 @@ case class RecordTestEntity(
 ) extends MongoEntity[String]
 object RecordTestEntity extends MongoEntityCompanion[RecordTestEntity] {
   final val Example = RecordTestEntity(
-    "rid", 42, "str", Timestamp.Zero, Opt("stropt"), Opt.Empty,
-    List(1, 2, 3), Map("one" -> 1, "two" -> 2), TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
-    InnerRecord.Example, Opt(InnerRecord.Example), List(InnerRecord.Example),
-    Map(InnerId("iid") -> InnerRecord.Example), Opt(Map(InnerId("iid") -> List(InnerRecord.Example))),
+    "rid",
+    42,
+    "str",
+    Timestamp.Zero,
+    Opt("stropt"),
+    Opt.Empty,
+    List(1, 2, 3),
+    Map("one" -> 1, "two" -> 2),
+    TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
+    InnerRecord.Example,
+    Opt(InnerRecord.Example),
+    List(InnerRecord.Example),
+    Map(InnerId("iid") -> InnerRecord.Example),
+    Opt(Map(InnerId("iid") -> List(InnerRecord.Example))),
     Props(Map.empty),
   )
 }
@@ -78,14 +87,8 @@ object UnionTestEntity extends MongoEntityCompanion[UnionTestEntity]
 case class TestAutoId(id: ObjectId) extends AnyVal
 object TestAutoId extends ObjectIdWrapperCompanion[TestAutoId]
 
-case class RecordTestAutoIdEntity(
-  str: String,
-  int: Int,
-) extends AutoIdMongoEntity[TestAutoId]
+case class RecordTestAutoIdEntity(str: String, int: Int) extends AutoIdMongoEntity[TestAutoId]
 object RecordTestAutoIdEntity extends MongoEntityCompanion[RecordTestAutoIdEntity]
 
-case class AutoObjectIdEntity(
-  str: String,
-  int: Int,
-) extends AutoIdMongoEntity[ObjectId]
+case class AutoObjectIdEntity(str: String, int: Int) extends AutoIdMongoEntity[ObjectId]
 object AutoObjectIdEntity extends MongoEntityCompanion[AutoObjectIdEntity]

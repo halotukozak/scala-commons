@@ -2,6 +2,7 @@ package com.avsystem.commons
 package misc
 
 object OptArg {
+
   /**
    * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
    */
@@ -16,7 +17,7 @@ object OptArg {
 
   def apply[A](value: A): OptArg[A] = new OptArg[A](if value != null then value else EmptyMarker)
 
-  def unapply[A](opt: OptArg[A]): OptArg[A] = opt //name-based extractor
+  def unapply[A](opt: OptArg[A]): OptArg[A] = opt // name-based extractor
 
   def some[A](value: A): OptArg[A] =
     if value != null then new OptArg[A](value)
@@ -29,8 +30,8 @@ object OptArg {
 
 /**
  * [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
- * parameters while at the same time avoiding having to explicitly wrap arguments when passing them
- * (thanks to the implicit conversion from `A` to `OptArg[A]`). For example:
+ * parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the
+ * implicit conversion from `A` to `OptArg[A]`). For example:
  *
  * {{{
  *   def takesMaybeString(str: OptArg[String] = OptArg.Empty) = ???
@@ -39,15 +40,15 @@ object OptArg {
  *   takesMaybeString("string") // no explicit wrapping into OptArg required
  * }}}
  *
- * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into `OptArg.Empty`.
- * <br/>
- * It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit conversion `A => OptArg[A]`
- * is intended to work. You should not use [[OptArg]] as a general-purpose "optional value" type - other types like
- * [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
- * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
- * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
+ * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into
+ * `OptArg.Empty`. <br/> It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit
+ * conversion `A => OptArg[A]` is intended to work. You should not use [[OptArg]] as a general-purpose "optional value"
+ * type - other types like [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately
+ * does not have any "transforming" methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that
+ * [[OptArg]] is converted to [[Opt]], [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption`
+ * methods).
  */
-final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class OptArg[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import OptArg.*
 
@@ -101,14 +102,14 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
     isEmpty || p(value)
 
   inline def foreach[U](f: A => U): Unit = {
-    if (!isEmpty) f(value)
+    if !isEmpty then f(value)
   }
 
   inline def iterator: Iterator[A] =
     if isEmpty then Iterator.empty else Iterator.single(value)
 
   inline def toList: List[A] =
-    if isEmpty then List() else new::(value, Nil)
+    if isEmpty then List() else new ::(value, Nil)
 
   inline def toRight[X](left: => X): Either[X, A] =
     if isEmpty then Left(left) else Right(value)
@@ -119,9 +120,12 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
   /**
    * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
    *
-   * @param sideEffect - code to be executed if optArg is empty
-   * @return the same optArg
-   * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+   * @param sideEffect
+   *   \- code to be executed if optArg is empty
+   * @return
+   *   the same optArg
+   * @example
+   *   {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
    */
   inline def forEmpty(sideEffect: => Unit): OptArg[A] = {
     if isEmpty then {

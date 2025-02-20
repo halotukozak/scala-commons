@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package macros.rpc
 
-
-
 //package com.avsystem.commons
 //package macros.rpc
 //

@@ -62,4 +62,3 @@ final class NOptTest extends AnyFunSuite:
     assert(NOpt.Empty.zip(NOpt(2)) == NOpt.Empty)
     assert(NOpt(3).zip(NOpt.Empty) == NOpt.Empty)
   }
-

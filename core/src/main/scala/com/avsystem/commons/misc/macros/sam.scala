@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package misc.macros
 
-
 import scala.languageFeature.experimental.macros
 import scala.quoted.*
 
@@ -11,7 +10,9 @@ def createSamImpl[Target: Type, Fun: Type](fun: Expr[Fun])(using quotes: Quotes)
 
   val byName = validateSamImpl[Target, Fun].valueOrAbort
   val targetTpe = TypeRepr.of[Target].dealias
-  val (m: Symbol, mDefDef: DefDef) = targetTpe.classSymbol.get.methodMembers.collectFirst { case m if m.flags.is(Flags.Deferred) => (m, m.tree) }.get: @unchecked
+  val (m: Symbol, mDefDef: DefDef) = targetTpe.classSymbol.get.methodMembers.collectFirst {
+    case m if m.flags.is(Flags.Deferred) => (m, m.tree)
+  }.get: @unchecked
 
   if byName then {
     val name: String = Symbol.freshName("$anon")
@@ -43,8 +44,6 @@ def createSamImpl[Target: Type, Fun: Type](fun: Expr[Fun])(using quotes: Quotes)
       ???
     }
   }
-
-
 
   //      '{ new Target { def ${m.name.toTermName} = $fun } }
   //      q"""
@@ -101,29 +100,31 @@ def createSamImpl[Target: Type, Fun: Type](fun: Expr[Fun])(using quotes: Quotes)
   //  }
 }
 
-def validateSamImpl[Target, Fun](using targetTpe: Type[Target], funTpe: Type[Fun])(using quotes: Quotes): Expr[Boolean] = {
+def validateSamImpl[Target: Type, Fun: Type](using quotes: Quotes): Expr[Boolean] = {
+  val macroUtils = new HasMacroUtils {}
+  import macroUtils.*
   import quotes.reflect.*
 
   val targetTpe = TypeRepr.of[Target].widen
   val funTpe = TypeRepr.of[Fun].widen
 
-  val targetSymbol = targetTpe.dealias.classSymbol getOrElse report.errorAndAbort(s"${targetTpe.show} is not a class or trait")
-
-  if !targetSymbol.flags.isAnyOf(Flags.Abstract, Flags.Trait) then report.errorAndAbort(s"${targetTpe.show} is not a trait or abstract class")
-  val excludeMethods = defn.ObjectClass.methodMembers.map(_.name) //todo: replace with a more precise filter
+  val targetSymbol =
+    targetTpe.dealias.classSymbol getOrElse report.errorAndAbort(s"${targetTpe.show} is not a class or trait")
+  if !targetSymbol.flags.isAnyOf(Flags.Abstract, Flags.Trait) then
+    report.errorAndAbort(s"${targetTpe.show} is not a trait or abstract class")
+  val excludeMethods = defn.ObjectClass.methodMembers.map(_.name) // todo: replace with a more precise filter
 
   val (m: Symbol, sig: DefDef) =
-    targetSymbol
-      .methodMembers
+    targetSymbol.methodMembers
       .filterNot(m => excludeMethods.contains(m.name))
       .filter(m => m.flags.is(Flags.Deferred))
       .map(m => (m, m.tree)) match
       case (m: Symbol, sig: DefDef) :: Nil
-        if m.flags.is(Flags.Method) &&
-          m.isPublic &&
-          !m.flags.is(Flags.FieldAccessor) &&
-          !m.flags.is(Flags.AbsOverride) &&
-          sig.paramss.collectFirst { case _: TypeParamClause => () }.isEmpty =>
+          if m.flags.is(Flags.Method) &&
+            m.isPublic &&
+            !m.flags.is(Flags.FieldAccessor) &&
+            !m.flags.is(Flags.AbsOverride) &&
+            sig.paramss.collectFirst { case _: TypeParamClause => () }.isEmpty =>
         (m, sig)
       case _ =>
         report.errorAndAbort("Target trait/class must have exactly one public, abstract, non-generic method")
@@ -141,7 +142,9 @@ def validateSamImpl[Target, Fun](using targetTpe: Type[Target], funTpe: Type[Fun
   val byName = emptyList && funTpe <:< finalResultType
   if !byName && !(funTpe <:< requiredFunTpe) then {
     val requiredMsg = s"${if emptyList then "" else s"${finalResultType.show} or "}${requiredFunTpe.show}"
-    report.errorAndAbort(s"${funTpe.show} does not match signature of $m in ${targetTpe.show}: expected $requiredMsg") //todo
+    report.errorAndAbort(
+      s"${funTpe.show} does not match signature of $m in ${targetTpe.show}: expected $requiredMsg",
+    ) // todo
   }
   Expr(byName)
 }

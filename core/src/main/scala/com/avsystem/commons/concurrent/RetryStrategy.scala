@@ -7,10 +7,11 @@ import scala.concurrent.duration.*
  * A `RetryStrategy` is conceptually a lazy sequence of delays, possibly infinite.
  */
 trait RetryStrategy { self =>
+
   /**
    * Determines a delay that will be waited before retrying some operation that failed (e.g. Redis connection attempt)
-   * and also returns next retry strategy that should be used if that retry itself also fails.
-   * If this method returns `Opt.Empty`, the operation will not be retried and failure should be reported.
+   * and also returns next retry strategy that should be used if that retry itself also fails. If this method returns
+   * `Opt.Empty`, the operation will not be retried and failure should be reported.
    */
   def nextRetry: Opt[(FiniteDuration, RetryStrategy)]
 
@@ -33,10 +34,9 @@ trait RetryStrategy { self =>
    * Limits the maximum total duration (sum of retry delays) to some specified duration.
    */
   def maxTotal(duration: FiniteDuration): RetryStrategy =
-    RetryStrategy(this.nextRetry.collect {
-      case (delay, nextStrat) =>
-        if delay <= duration then (delay, nextStrat.maxTotal(duration - delay))
-        else (duration, RetryStrategy.never)
+    RetryStrategy(this.nextRetry.collect { case (delay, nextStrat) =>
+      if delay <= duration then (delay, nextStrat.maxTotal(duration - delay))
+      else (duration, RetryStrategy.never)
     })
 
   /**
@@ -47,8 +47,8 @@ trait RetryStrategy { self =>
     else RetryStrategy(this.nextRetry.map { case (delay, nextStrat) => (delay, nextStrat.maxRetries(retries - 1)) })
 
   /**
-   * Randomizes delays. Each delay is multiplied by a factor which is randomly and uniformly choosen from
-   * specified segment `[minFactor, maxFactor)` (e.g. 0.9 to 1.1)
+   * Randomizes delays. Each delay is multiplied by a factor which is randomly and uniformly choosen from specified
+   * segment `[minFactor, maxFactor)` (e.g. 0.9 to 1.1)
    */
   def randomized(minFactor: Double, maxFactor: Double): RetryStrategy =
     RetryStrategy(this.nextRetry.flatMap { case (delay, nextStrat) =>
@@ -91,4 +91,3 @@ object RetryStrategy {
     Opt((firstDelay, nextStrat))
   }
 }
-

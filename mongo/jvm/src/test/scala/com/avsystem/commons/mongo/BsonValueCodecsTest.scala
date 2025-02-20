@@ -3,7 +3,7 @@ package mongo
 
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.{GenCodec, HasGenCodecWithDeps}
-import org.bson._
+import org.bson.*
 import org.bson.json.JsonReader
 import org.bson.types.{Decimal128, ObjectId}
 import org.scalactic.source.Position
@@ -21,16 +21,15 @@ case class AllTypesInABag(
   int64: BsonInt64,
   objectId: BsonObjectId,
   string: BsonString,
-  value: BsonValue
+  value: BsonValue,
 )
 object AllTypesInABag extends HasGenCodecWithDeps[BsonGenCodecs.type, AllTypesInABag]
 
 class BsonValueCodecsTest extends AnyFunSuite with BsonGenCodecs {
   test("codec roundtrip") {
-    val doc = new BsonDocument(JList(
-      new BsonElement("someInt64", new BsonInt64(64)),
-      new BsonElement("someString", new BsonString("some"))
-    ))
+    val doc = new BsonDocument(
+      JList(new BsonElement("someInt64", new BsonInt64(64)), new BsonElement("someString", new BsonString("some"))),
+    )
 
     val bag = AllTypesInABag(
       new BsonArray(JList(BsonBoolean.TRUE, new BsonInt32(131))),
@@ -44,7 +43,7 @@ class BsonValueCodecsTest extends AnyFunSuite with BsonGenCodecs {
       new BsonInt64(164),
       new BsonObjectId(new ObjectId("12345678901234567890ABCD")),
       new BsonString("sss"),
-      doc
+      doc,
     )
 
     var value: BsonValue = null

@@ -27,13 +27,11 @@ trait GuavaInterop {
     case gfut => ListenableFutureAsScala(gfut)
   }
 
-
   extension [T](gfut: ListenableFuture[T]) {
     inline def asScalaUnit: Future[Unit] = gfut.asScala.toUnit
   }
 
-  extension [T](gfut: SettableFuture[T])
-    def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
+  extension [T](gfut: SettableFuture[T]) def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
 
   extension [T](fut: Future[T]) {
     def asGuava: ListenableFuture[T] = fut match
@@ -56,32 +54,37 @@ trait GuavaInterop {
       }
       val executor = ec match
         case executor: Executor => executor
-        case _ => new Executor {
-          def execute(command: Runnable): Unit =
-            ec.execute(command)
-        }
+        case _ =>
+          new Executor {
+            def execute(command: Runnable): Unit =
+              ec.execute(command)
+          }
       Futures.addCallback(gfut, callback, executor)
     }
 
     def transform[S](f: Try[T] => Try[S])(using ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
-        p.complete(try f(r) catch case NonFatal(t) => Failure(t))
+        p.complete(
+          try f(r)
+          catch case NonFatal(t) => Failure(t),
+        )
       }
       p.future
     }
 
-
     def transformWith[S](f: Try[T] => Future[S])(using ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
-        try p.completeWith(f(r)) catch case NonFatal(t) => p.failure(t)
+        try p.completeWith(f(r))
+        catch case NonFatal(t) => p.failure(t)
       }
       p.future
     }
 
     private def unwrapFailures(expr: => T @uncheckedVariance): T =
-      try expr catch case ee: ExecutionException => throw ee.getCause
+      try expr
+      catch case ee: ExecutionException => throw ee.getCause
 
     def value: Option[Try[T]] = if gfut.isDone then Some(Try(unwrapFailures(gfut.get))) else None
 
@@ -90,11 +93,11 @@ trait GuavaInterop {
       if atMost.isFinite then unwrapFailures(gfut.get(atMost.length, atMost.unit))
       else unwrapFailures(gfut.get())
 
-
     @throws[InterruptedException]
     @throws[TimeoutException]
     def ready(atMost: Duration)(using CanAwait): this.type = {
-      try result(atMost) catch case NonFatal(_) => ()
+      try result(atMost)
+      catch case NonFatal(_) => ()
       this
     }
   }
@@ -104,13 +107,14 @@ trait GuavaInterop {
       listener.checkNotNull("listener is null")
       val ec = executor match
         case ec: ExecutionContext => ec
-        case _ => new ExecutionContext {
-          def reportFailure(cause: Throwable): Unit =
-            cause.printStackTrace()
+        case _ =>
+          new ExecutionContext {
+            def reportFailure(cause: Throwable): Unit =
+              cause.printStackTrace()
 
-          def execute(runnable: Runnable): Unit =
-            executor.execute(runnable)
-        }
+            def execute(runnable: Runnable): Unit =
+              executor.execute(runnable)
+          }
       fut.onComplete(_ => listener.run())(ec)
     }
 
@@ -118,7 +122,8 @@ trait GuavaInterop {
       false
 
     private def wrapFailures(expr: => T): T =
-      try expr catch case NonFatal(e) => throw new ExecutionException(e)
+      try expr
+      catch case NonFatal(e) => throw new ExecutionException(e)
 
     def get(): T =
       wrapFailures(Await.result(fut, Duration.Inf))
@@ -134,7 +139,8 @@ trait GuavaInterop {
   }
 
   private final class SettableFutureAsPromise[T](fut: SettableFuture[T])
-    extends ListenableFutureAsScala[T](fut) with Promise[T] {
+      extends ListenableFutureAsScala[T](fut)
+      with Promise[T] {
 
     def future: Future[T] = this
 
@@ -145,4 +151,3 @@ trait GuavaInterop {
 }
 
 object GuavaInterop extends GuavaInterop
-

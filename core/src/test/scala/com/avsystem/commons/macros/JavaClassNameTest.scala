@@ -18,7 +18,7 @@ object JavaClassNameTest {
 }
 
 final class JavaClassNameTest extends AnyFunSuite:
-  inline def test[T: ClassTag : JavaClassName : TypeString](using Position): Unit =
+  inline def test[T: ClassTag: JavaClassName: TypeString](using Position): Unit =
     test(TypeString.of[T])(assert(JavaClassName.of[T] == classTag[T].runtimeClass.getName))
 
   test[Any]

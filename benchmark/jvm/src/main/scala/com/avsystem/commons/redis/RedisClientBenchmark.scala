@@ -9,13 +9,13 @@ import java.util.concurrent.{ConcurrentHashMap, CountDownLatch, TimeUnit}
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.util.{ByteString, Timeout}
 import com.avsystem.commons.concurrent.RunNowEC
-import com.avsystem.commons.redis.RedisClientBenchmark._
+import com.avsystem.commons.redis.RedisClientBenchmark.*
 import com.avsystem.commons.redis.actor.RedisConnectionActor.DebugListener
 import com.avsystem.commons.redis.commands.SlotRange
-import com.avsystem.commons.redis.config._
-import com.typesafe.config._
+import com.avsystem.commons.redis.config.*
+import com.typesafe.config.*
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
-import org.openjdk.jmh.annotations._
+import org.openjdk.jmh.annotations.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -46,15 +46,15 @@ object OutgoingTraffictStats extends DebugListener {
 @State(Scope.Benchmark)
 abstract class RedisBenchmark(useTls: Boolean) {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   val Config: String =
     """
       |
     """.stripMargin
 
-  implicit val system: ActorSystem = ActorSystem("redis",
-    ConfigFactory.parseString(Config).withFallback(ConfigFactory.defaultReference()).resolve)
+  implicit val system: ActorSystem =
+    ActorSystem("redis", ConfigFactory.parseString(Config).withFallback(ConfigFactory.defaultReference()).resolve)
 
   lazy val sslContext: SSLContext = SSLContext.getInstance("TLSv1.2").setup { sslc =>
     val ks = KeyStore.getInstance("PKCS12")
@@ -70,27 +70,22 @@ abstract class RedisBenchmark(useTls: Boolean) {
   }
 
   val connectionConfig: ConnectionConfig = ConnectionConfig(
-    sslEngineCreator = if(useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
-    initCommands = clientSetname("benchmark")
+    sslEngineCreator = if useTls then OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
+    initCommands = clientSetname("benchmark"),
   )
 
   val monConnectionConfig: ConnectionConfig = ConnectionConfig(
-    sslEngineCreator = if(useTls) OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
-    initCommands = clientSetname("benchmarkMon")
+    sslEngineCreator = if useTls then OptArg(() => sslContext.createSSLEngine()) else OptArg.Empty,
+    initCommands = clientSetname("benchmarkMon"),
   )
 
   val address: NodeAddress =
-    if(useTls) NodeAddress(port = 7379) else NodeAddress.Default
+    if useTls then NodeAddress(port = 7379) else NodeAddress.Default
 
-  val nodeConfig: NodeConfig = NodeConfig(
-    poolSize = 4,
-    connectionConfigs = _ => connectionConfig
-  )
+  val nodeConfig: NodeConfig = NodeConfig(poolSize = 4, connectionConfigs = _ => connectionConfig)
 
-  val clusterConfig: ClusterConfig = ClusterConfig(
-    nodeConfigs = _ => nodeConfig,
-    monitoringConnectionConfigs = _ => monConnectionConfig
-  )
+  val clusterConfig: ClusterConfig =
+    ClusterConfig(nodeConfigs = _ => nodeConfig, monitoringConnectionConfigs = _ => monConnectionConfig)
 
   lazy val clusterClient: RedisClusterClient =
     Await.result(new RedisClusterClient(List(NodeAddress(port = 33333)), clusterConfig).initialized, Duration.Inf)
@@ -109,11 +104,13 @@ abstract class RedisBenchmark(useTls: Boolean) {
 
 object RedisClientBenchmark {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   val SlotKeys: Array[String] =
-    Source.fromInputStream(getClass.getResourceAsStream("/slotkeys.txt"))
-      .getLines().toArray
+    Source
+      .fromInputStream(getClass.getResourceAsStream("/slotkeys.txt"))
+      .getLines()
+      .toArray
 
   final val BatchSize = 50
   final val ConcurrentCommands = 20000
@@ -123,7 +120,8 @@ object RedisClientBenchmark {
   val KeyBase = "key"
   val Value = "value"
 
-  val Commands: Array[RedisBatch[Boolean]] = Iterator.range(0, ConcurrentCommands).map(i => set(s"$KeyBase$i", Value)).toArray
+  val Commands: Array[RedisBatch[Boolean]] =
+    Iterator.range(0, ConcurrentCommands).map(i => set(s"$KeyBase$i", Value)).toArray
 
   val OpSeqTL: ThreadLocal[Int] = new ThreadLocal[Int] {
     private val seq = new AtomicInteger(0)
@@ -132,10 +130,9 @@ object RedisClientBenchmark {
 }
 
 @OperationsPerInvocation(ConcurrentCommands)
-abstract class AbstractRedisClientBenchmark(useTls: Boolean)
-  extends RedisBenchmark(useTls) {
+abstract class AbstractRedisClientBenchmark(useTls: Boolean) extends RedisBenchmark(useTls) {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   implicit val timeout: Timeout = Timeout(5, TimeUnit.SECONDS)
 
@@ -213,10 +210,12 @@ abstract class AbstractRedisClientBenchmark(useTls: Boolean)
       }(RunNowEC)
     }
     ctl.await(60, TimeUnit.SECONDS)
-    if (!failures.isEmpty) {
+    if !failures.isEmpty then {
       val millis = (System.nanoTime() - start) / 1000000
-      val failuresRepr = failures.asScala.opt.filter(_.nonEmpty)
-        .map(_.iterator.map({ case (cause, count) => s"${count.get} x $cause" }).mkString(", failures:\n", "\n", "")).getOrElse("")
+      val failuresRepr = failures.asScala.opt
+        .filter(_.nonEmpty)
+        .map(_.iterator.map({ case (cause, count) => s"${count.get} x $cause" }).mkString(", failures:\n", "\n", ""))
+        .getOrElse("")
       println(s"Took $millis$failuresRepr")
     }
   }

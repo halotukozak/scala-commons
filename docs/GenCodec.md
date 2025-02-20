@@ -7,31 +7,31 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
 - [`GenCodec`](#gencodec)
-  - [The `GenCodec` typeclass](#the-gencodec-typeclass)
-    - [Formats supported by default](#formats-supported-by-default)
-    - [`GenKeyCodec`](#genkeycodec)
-    - [`GenObjectCodec`](#genobjectcodec)
-  - [Writing and reading](#writing-and-reading)
-  - [`GenCodec` instances available by default](#gencodec-instances-available-by-default)
-  - [Deriving codecs](#deriving-codecs)
-    - [Deriving codecs for generic types](#deriving-codecs-for-generic-types)
-    - [Depending on external implicits](#depending-on-external-implicits)
-  - [Serializing case classes](#serializing-case-classes)
-    - [Field name customization](#field-name-customization)
-    - [Default field values](#default-field-values)
-      - [Transient default field values](#transient-default-field-values)
-    - [Optional and nullable fields](#optional-and-nullable-fields)
-    - [Case class like types](#case-class-like-types)
-  - [Serializing sealed hierarchies](#serializing-sealed-hierarchies)
-    - [Nested sealed hierarchy format](#nested-sealed-hierarchy-format)
-    - [Flat sealed hierarchy format](#flat-sealed-hierarchy-format)
-      - [Sealed hierarchy default case](#sealed-hierarchy-default-case)
-    - [Case name customization](#case-name-customization)
-  - [Transparent wrappers](#transparent-wrappers)
-  - [Writing codecs for third party types](#writing-codecs-for-third-party-types)
-    - [Derive the codec from a "fake companion"](#derive-the-codec-from-a-fake-companion)
-    - [Transform the codec of another type](#transform-the-codec-of-another-type)
-    - [Implement the codec manually](#implement-the-codec-manually)
+    - [The `GenCodec` typeclass](#the-gencodec-typeclass)
+        - [Formats supported by default](#formats-supported-by-default)
+        - [`GenKeyCodec`](#genkeycodec)
+        - [`GenObjectCodec`](#genobjectcodec)
+    - [Writing and reading](#writing-and-reading)
+    - [`GenCodec` instances available by default](#gencodec-instances-available-by-default)
+    - [Deriving codecs](#deriving-codecs)
+        - [Deriving codecs for generic types](#deriving-codecs-for-generic-types)
+        - [Depending on external implicits](#depending-on-external-implicits)
+    - [Serializing case classes](#serializing-case-classes)
+        - [Field name customization](#field-name-customization)
+        - [Default field values](#default-field-values)
+            - [Transient default field values](#transient-default-field-values)
+        - [Optional and nullable fields](#optional-and-nullable-fields)
+        - [Case class like types](#case-class-like-types)
+    - [Serializing sealed hierarchies](#serializing-sealed-hierarchies)
+        - [Nested sealed hierarchy format](#nested-sealed-hierarchy-format)
+        - [Flat sealed hierarchy format](#flat-sealed-hierarchy-format)
+            - [Sealed hierarchy default case](#sealed-hierarchy-default-case)
+        - [Case name customization](#case-name-customization)
+    - [Transparent wrappers](#transparent-wrappers)
+    - [Writing codecs for third party types](#writing-codecs-for-third-party-types)
+        - [Derive the codec from a "fake companion"](#derive-the-codec-from-a-fake-companion)
+        - [Transform the codec of another type](#transform-the-codec-of-another-type)
+        - [Implement the codec manually](#implement-the-codec-manually)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -89,10 +89,11 @@ Within `scala-commons` you can find `Input` and `Output` implementations for the
     * using Java intermediate `BsonValue` representation - `BsonValueInput` & `BsonValueOutput`
     * using Java stream-like `BsonReader` and `BsonWriter` - `BsonReaderInput` & `BsonWriterOutput`
 * [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md) using
-  [Lightbend Config](https://github.com/lightbend/config) representation, available in `commons-hocon` module - 
+  [Lightbend Config](https://github.com/lightbend/config) representation, available in `commons-hocon` module -
   `HoconInput` & `HoconOutput`
 
-Also, in principle it should be relatively easy to implement `Input` and `Output` for various intermediate representations 
+Also, in principle it should be relatively easy to implement `Input` and `Output` for various intermediate
+representations
 found in third party libraries, e.g. JSON ASTs implemented by all the JSON serialization libraries.
 
 ### `GenKeyCodec`
@@ -312,7 +313,8 @@ deserialization (i.e. you don't want a language-level default value):
 case class Data(int: Int, @whenAbsent("default") string: String)
 ```
 
-Default field values allow you to evolve your case classes by adding fields, without breaking serialization compatibility.
+Default field values allow you to evolve your case classes by adding fields, without breaking serialization
+compatibility.
 
 #### Transient default field values
 
@@ -362,7 +364,8 @@ case class Data(int: Int, @transientDefault str: Option[String] = None)
 
 However, `@optionalParam` is the recommended, more "native" way to do this.
 
-When using `@optionalParam` with `Option`/`Opt`/`OptArg`, `null`-valued fields are treated equivalently to missing fields. If you
+When using `@optionalParam` with `Option`/`Opt`/`OptArg`, `null`-valued fields are treated equivalently to missing
+fields. If you
 need to distinguish between missing fields and `null`-valued fields, this can be achieved with the help of `NOpt` (a
 nullable `Opt`):
 
@@ -384,7 +387,7 @@ printJson(Data(42, NOpt(Some("foo")))) // {"int":42,"str":"foo"}
 
 The macro that materializes codecs for case classes does not strictly require a `case class`. It is enough if
 a class or trait _looks sufficiently like_ a case class. Strictly speaking, the class or trait must have a companion
-object with `apply` and `unapply` methods defined as if it were a case class (`unapplySeq` if repeated parameters are 
+object with `apply` and `unapply` methods defined as if it were a case class (`unapplySeq` if repeated parameters are
 in play). For a real `case class`, these methods are automatically synthesized by the compiler.
 
 ```scala

@@ -17,5 +17,5 @@ inline def specializedOptionAsJava[T]: AsJava[Option[T], ReturnOfOptionalAsJava[
 private val specializedOptionAsJavaInt: AsJava[Option[Int], JOptionalInt] = _.toJOptionalInt
 private val specializedOptionAsJavaLong: AsJava[Option[Long], JOptionalLong] = _.toJOptionalLong
 private val specializedOptionAsJavaDouble: AsJava[Option[Double], JOptionalDouble] = _.toJOptionalDouble
-private def specializedOptionAsJavaAny[T]: AsJava[Option[T], ReturnOfOptionalAsJava[T]] = _.toJOptional.asInstanceOf[ReturnOfOptionalAsJava[T]]
-
+private def specializedOptionAsJavaAny[T]: AsJava[Option[T], ReturnOfOptionalAsJava[T]] =
+  _.toJOptional.asInstanceOf[ReturnOfOptionalAsJava[T]]

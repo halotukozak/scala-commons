@@ -6,7 +6,7 @@ import scala.tools.nsc.Global
 
 class BasePackage(g: Global) extends AnalyzerRule(g, "basePackage") {
 
-  import global._
+  import global.*
 
   object SkipImports {
     @tailrec def unapply(stats: List[Tree]): Some[List[Tree]] = stats match {
@@ -15,7 +15,7 @@ class BasePackage(g: Global) extends AnalyzerRule(g, "basePackage") {
     }
   }
 
-  def analyze(unit: CompilationUnit): Unit = if (argument != null) {
+  def analyze(unit: CompilationUnit): Unit = if argument != null then {
     val requiredBasePackage = argument
 
     @tailrec def validate(tree: Tree): Unit = tree match {

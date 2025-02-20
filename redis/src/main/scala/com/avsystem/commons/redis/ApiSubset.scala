@@ -3,46 +3,46 @@ package redis
 
 import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.ApiSubset.{HeadOps, IterableTailOps, IteratorTailOps}
-import com.avsystem.commons.redis.commands._
+import com.avsystem.commons.redis.commands.*
 import com.avsystem.commons.redis.config.ExecutionConfig
 import com.avsystem.commons.redis.util.{HeadIterable, HeadIterator, SingletonSeq}
 import monix.eval.Task
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
-  * Encapsulates types that Redis commands may be parameterized with and provides serialization for these types.
-  */
+ * Encapsulates types that Redis commands may be parameterized with and provides serialization for these types.
+ */
 trait RedisSerialization {
+
   /**
-    * The type of Redis keys or key patterns used in methods representing Redis commands. For example, if `Key = String`
-    * then [[commands.StringsApi.get get]] returns `Result[Opt[String]]`. This type is used only for toplevel Redis keys,
-    * hash keys have their own type, [[Field]]
-    */
+   * The type of Redis keys or key patterns used in methods representing Redis commands. For example, if `Key = String`
+   * then [[commands.StringsApi.get get]] returns `Result[Opt[String]]`. This type is used only for toplevel Redis keys,
+   * hash keys have their own type, [[Field]]
+   */
   type Key
 
   /**
-    * The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on
-    * hashes ([[commands.HashesApi HashesApi]]).
-    */
+   * The type of Redis hash keys or hash key patterns used in methods representing Redis commands that work on hashes
+   * ([[commands.HashesApi HashesApi]]).
+   */
   type Field
 
   /**
-    * The type of Redis values used in methods representing Redis commands. "Value" is the data that might be
-    * stored directly under a Redis key (e.g. using [[commands.StringsApi.set set]]) but also a value of hash field,
-    * list element, set member, sorted set member, geo set member or element inserted into hyper-log-log structure.
-    * There are no separate types specified for every of those use cases because only one of them can be used in a
-    * single command (for example, there is no Redis command that works on both list elements and set members
-    * at the same time).
-    */
+   * The type of Redis values used in methods representing Redis commands. "Value" is the data that might be stored
+   * directly under a Redis key (e.g. using [[commands.StringsApi.set set]]) but also a value of hash field, list
+   * element, set member, sorted set member, geo set member or element inserted into hyper-log-log structure. There are
+   * no separate types specified for every of those use cases because only one of them can be used in a single command
+   * (for example, there is no Redis command that works on both list elements and set members at the same time).
+   */
   type Value
 
   /**
-    * Type used to represent key-value pair sequences, primarily entries in [[commands.StreamsApi StreamsApi]]
-    * but also hashes in [[commands.HashesApi HashesApi]]. `Record` might be a "raw" type like `Map[Key, Value]` or
-    * `Seq[(Key, Value)]` but normally `Record` is customized to be an ADT - a case class or sealed hierarchy.
-    */
+   * Type used to represent key-value pair sequences, primarily entries in [[commands.StreamsApi StreamsApi]] but also
+   * hashes in [[commands.HashesApi HashesApi]]. `Record` might be a "raw" type like `Map[Key, Value]` or `Seq[(Key,
+   * Value)]` but normally `Record` is customized to be an ADT - a case class or sealed hierarchy.
+   */
   type Record
 
   def keyCodec: RedisDataCodec[Key]
@@ -76,7 +76,7 @@ object RedisSerialization {
     val keyCodec: RedisDataCodec[K],
     val fieldCodec: RedisDataCodec[F],
     val valueCodec: RedisDataCodec[V],
-    val recordCodec: RedisRecordCodec[R]
+    val recordCodec: RedisRecordCodec[R],
   ) extends RedisSerialization {
     type Key = K
     type Field = F
@@ -104,9 +104,9 @@ trait ApiSubset { self =>
   protected implicit final def recordCodec: RedisRecordCodec[Record] = serialization.recordCodec
 
   /**
-    * The type constructor into which a result of each command is wrapped. For example if `Result` is
-    * `Future`, then [[commands.StringsApi.incr incr]] returns `Future[Long]`.
-    */
+   * The type constructor into which a result of each command is wrapped. For example if `Result` is `Future`, then
+   * [[commands.StringsApi.incr incr]] returns `Future[Long]`.
+   */
   type Result[A]
 
   def execute[A](command: RedisCommand[A]): Result[A]
@@ -170,45 +170,47 @@ trait RedisMonixApi extends RedisExecutedApi {
 trait RedisBlockingApi extends RedisExecutedApi {
   type Result[A] = A
   def execute[A](command: RedisCommand[A]): A =
-  // executeAsync should already handle timeouts, but just to be safe let's pass the standard timeout plus one second
+    // executeAsync should already handle timeouts, but just to be safe let's pass the standard timeout plus one second
     Await.result(executeAsync(command), execConfig.responseTimeout.duration + 1.second)
   def recoverWith[A](executed: => A)(fun: PartialFunction[Throwable, A]): A =
-    try executed catch fun
+    try executed
+    catch fun
 }
 
-trait RedisKeyedApi extends AnyRef
-  with KeyedKeysApi
-  with StringsApi
-  with KeyedClusterApi
-  with GeoApi
-  with KeyedScriptingApi
-  with HashesApi
-  with SortedSetsApi
-  with ListsApi
-  with SetsApi
-  with HyperLogLogApi
-  with StreamsApi
+trait RedisKeyedApi
+    extends AnyRef
+    with KeyedKeysApi
+    with StringsApi
+    with KeyedClusterApi
+    with GeoApi
+    with KeyedScriptingApi
+    with HashesApi
+    with SortedSetsApi
+    with ListsApi
+    with SetsApi
+    with HyperLogLogApi
+    with StreamsApi
 
-trait RedisRecoverableKeyedApi extends RedisKeyedApi
-  with RecoverableKeyedScriptingApi
+trait RedisRecoverableKeyedApi extends RedisKeyedApi with RecoverableKeyedScriptingApi
 
-trait RedisNodeApi extends RedisKeyedApi
-  with NodeKeysApi
-  with NodeServerApi
-  with NodeClusterApi
-  with NodeConnectionApi
-  with NodeScriptingApi
-  with SentinelApi
+trait RedisNodeApi
+    extends RedisKeyedApi
+    with NodeKeysApi
+    with NodeServerApi
+    with NodeClusterApi
+    with NodeConnectionApi
+    with NodeScriptingApi
+    with SentinelApi
 
 trait RedisRecoverableNodeApi extends RedisRecoverableKeyedApi with RedisNodeApi
 
-trait RedisOperationApi extends RedisNodeApi
-  with TransactionApi
+trait RedisOperationApi extends RedisNodeApi with TransactionApi
 
-trait RedisConnectionApi extends RedisOperationApi
-  with ConnectionClusterApi
-  with ConnectionConnectionApi
-  with ConnectionServerApi
-  with ConnectionScriptingApi
+trait RedisConnectionApi
+    extends RedisOperationApi
+    with ConnectionClusterApi
+    with ConnectionConnectionApi
+    with ConnectionServerApi
+    with ConnectionScriptingApi
 
 trait RedisRecoverableConnectionApi extends RedisRecoverableNodeApi with RedisConnectionApi

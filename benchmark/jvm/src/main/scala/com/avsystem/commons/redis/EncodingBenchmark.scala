@@ -2,8 +2,15 @@ package com.avsystem.commons
 package redis
 
 import org.apache.pekko.util.{ByteString, ByteStringBuilder}
-import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, IntegerMsg, NullBulkStringMsg, RedisMsg, SimpleStringMsg}
-import org.openjdk.jmh.annotations._
+import com.avsystem.commons.redis.protocol.{
+  ArrayMsg,
+  BulkStringMsg,
+  IntegerMsg,
+  NullBulkStringMsg,
+  RedisMsg,
+  SimpleStringMsg,
+}
+import org.openjdk.jmh.annotations.*
 
 @Warmup(iterations = 5)
 @Measurement(iterations = 20)
@@ -14,13 +21,15 @@ import org.openjdk.jmh.annotations._
 class EncodingBenchmark {
   private val bsb = new ByteStringBuilder
 
-  final val msg = ArrayMsg(IndexedSeq(
-    IntegerMsg(12345342323L),
-    IntegerMsg(1231),
+  final val msg = ArrayMsg(
+    IndexedSeq(
+      IntegerMsg(12345342323L),
+      IntegerMsg(1231),
 //    BulkStringMsg(ByteString("jkalsjdkflajsdkfhlkasd")),
 //    SimpleStringMsg(ByteString("sjakdlfjaksdhfjakshd")),
-    NullBulkStringMsg
-  ))
+      NullBulkStringMsg,
+    ),
+  )
 
   @Benchmark
   def encodeBenchmark() = {
@@ -33,7 +42,7 @@ class EncodingBenchmark {
 object EncodingBenchmark {
   def main(args: Array[String]): Unit = {
     val b = new EncodingBenchmark
-    while (true) {
+    while true do {
       b.encodeBenchmark()
     }
   }

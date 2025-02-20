@@ -19,7 +19,8 @@ object Commons extends ProjectGroup("commons") {
   // idea.managed property is set by IntelliJ when running SBT (shell or import), idea.runid is set only for IntelliJ's
   // SBT shell. In order for this technique to work, you MUST NOT set the "Use the sbt shell for build and import"
   // option in IntelliJ's SBT settings.
-  val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
+  val forIdeaImport: Boolean =
+    System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
   val guavaVersion = "33.4.0-jre"
   val jsr305Version = "3.0.2"
@@ -53,26 +54,21 @@ object Commons extends ProjectGroup("commons") {
     organizationName := "AVSystem",
     description := "AVSystem commons library for Scala",
     startYear := Some(2015),
-    licenses := Vector(
-      "The MIT License" -> url("https://opensource.org/licenses/MIT"),
+    licenses := Vector("The MIT License" -> url("https://opensource.org/licenses/MIT")),
+    scmInfo := Some(
+      ScmInfo(
+        browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
+        connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
+        devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
+      ),
     ),
-    scmInfo := Some(ScmInfo(
-      browseUrl = url("https://github.com/AVSystem/scala-commons.git"),
-      connection = "scm:git:git@github.com:AVSystem/scala-commons.git",
-      devConnection = Some("scm:git:git@github.com:AVSystem/scala-commons.git"),
-    )),
     developers := List(
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
     ),
-
     scalaVersion := "3.5.0",
     compileOrder := CompileOrder.Mixed,
-
     githubWorkflowTargetTags ++= Seq("v*"),
-
-    githubWorkflowEnv ++= Map(
-      "REDIS_VERSION" -> "6.2.12",
-    ),
+    githubWorkflowEnv ++= Map("REDIS_VERSION" -> "6.2.12"),
     githubWorkflowArtifactUpload := false,
     githubWorkflowJavaVersions := Seq(JavaSpec.temurin("17"), JavaSpec.temurin("21")),
     githubWorkflowBuildPreamble ++= Seq(
@@ -92,28 +88,22 @@ object Commons extends ProjectGroup("commons") {
       WorkflowStep.Use(
         UseRef.Public("supercharge", "mongodb-github-action", "1.10.0"),
         name = Some("Setup MongoDB"),
-        params = Map(
-          "mongodb-version" -> "7.0",
-          "mongodb-replica-set" -> "test-rs",
+        params = Map("mongodb-version" -> "7.0", "mongodb-replica-set" -> "test-rs"),
+      ),
+      WorkflowStep.Run(List("./install-redis.sh"), name = Some("Setup Redis")),
+    ),
+    githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
+    githubWorkflowPublish := Seq(
+      WorkflowStep.Sbt(
+        List("ci-release"),
+        env = Map(
+          "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
+          "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
+          "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
+          "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
         ),
       ),
-      WorkflowStep.Run(
-        List("./install-redis.sh"),
-        name = Some("Setup Redis"),
-      ),
     ),
-
-    githubWorkflowPublishTargetBranches := Seq(RefPredicate.StartsWith(Ref.Tag("v"))),
-
-    githubWorkflowPublish := Seq(WorkflowStep.Sbt(
-      List("ci-release"),
-      env = Map(
-        "PGP_PASSPHRASE" -> "${{ secrets.PGP_PASSPHRASE }}",
-        "PGP_SECRET" -> "${{ secrets.PGP_SECRET }}",
-        "SONATYPE_PASSWORD" -> "${{ secrets.SONATYPE_PASSWORD }}",
-        "SONATYPE_USERNAME" -> "${{ secrets.SONATYPE_USERNAME }}",
-      ),
-    )),
   )
 
   override def commonSettings: Seq[Def.Setting[_]] = Seq(
@@ -138,23 +128,16 @@ object Commons extends ProjectGroup("commons") {
       "-Xno-enrich-error-messages",
       "-explain-cyclic",
     ),
-
     Compile / scalacOptions ++= {
-      if (scalaBinaryVersion.value == "2.13") Seq(
-        "-Xnon-strict-patmat-analysis",
-        "-Xlint:-strict-unsealed-patmat",
-      ) else Seq.empty
+      if scalaBinaryVersion.value == "2.13" then Seq("-Xnon-strict-patmat-analysis", "-Xlint:-strict-unsealed-patmat")
+      else Seq.empty
     },
-
     Test / scalacOptions := (Compile / scalacOptions).value,
-
     Compile / doc / sources := Seq.empty, // relying on unidoc
     apiURL := Some(url("http://avsystem.github.io/scala-commons/api")),
     autoAPIMappings := true,
-
     sonatypeProfileName := "com.avsystem",
     pomIncludeRepository := { _ => false },
-
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % scalatestVersion % Test,
       "org.scalacheck" %%% "scalacheck" % scalacheckVersion % Test,
@@ -174,9 +157,9 @@ object Commons extends ProjectGroup("commons") {
     mimaPreviousArtifacts := previousCompatibleVersions.map { previousVersion =>
       organization.value % s"${name.value}_${scalaBinaryVersion.value}" % previousVersion
     },
-    Test / jsEnv := new NodeJSEnv(NodeJSEnv.Config().withEnv(Map(
-      "RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath),
-    )),
+    Test / jsEnv := new NodeJSEnv(
+      NodeJSEnv.Config().withEnv(Map("RESOURCES_DIR" -> (Test / resourceDirectory).value.absolutePath)),
+    ),
   )
 
   val jsCommonSettings = Seq(
@@ -189,26 +172,17 @@ object Commons extends ProjectGroup("commons") {
     Test / fork := false,
   )
 
-  val noPublishSettings = Seq(
-    publish / skip := true,
-    mimaPreviousArtifacts := Set.empty,
-  )
+  val noPublishSettings = Seq(publish / skip := true, mimaPreviousArtifacts := Set.empty)
 
   val aggregateProjectSettings =
-    noPublishSettings ++ Seq(
-      ideSkipProject := true,
-      ideExcludedDirectories := Seq(baseDirectory.value),
-    )
+    noPublishSettings ++ Seq(ideSkipProject := true, ideExcludedDirectories := Seq(baseDirectory.value))
 
   val CompileAndTest = "compile->compile;test->test"
   val OptionalCompileAndTest = "optional->compile;test->test"
 
   lazy val root = mkRootProject
     .enablePlugins(ScalaUnidocPlugin)
-    .aggregate(
-      jvm,
-      js,
-    )
+    .aggregate(jvm, js)
     .settings(
       noPublishSettings,
       name := "commons",
@@ -255,11 +229,8 @@ object Commons extends ProjectGroup("commons") {
   //      ),
   //    )
 
-  def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] = Seq(
-    base / "src" / conf / "scala",
-    base / "src" / conf / s"scala-$scalaBinary",
-    base / "src" / conf / "java",
-  )
+  def mkSourceDirs(base: File, scalaBinary: String, conf: String): Seq[File] =
+    Seq(base / "src" / conf / "scala", base / "src" / conf / s"scala-$scalaBinary", base / "src" / conf / "java")
 
   def sourceDirsSettings(baseMapper: File => File) = Seq(
     Compile / unmanagedSourceDirectories ++=
@@ -269,12 +240,10 @@ object Commons extends ProjectGroup("commons") {
   )
 
   def sameNameAs(proj: Project) =
-    if (forIdeaImport) Seq.empty
+    if forIdeaImport then Seq.empty
     else Seq(name := (proj / name).value)
 
-  lazy val macros = mkSubProject.settings(
-    jvmCommonSettings,
-  )
+  lazy val macros = mkSubProject.settings(jvmCommonSettings)
 
   lazy val core = mkSubProject
     .dependsOn(macros)
@@ -291,15 +260,13 @@ object Commons extends ProjectGroup("commons") {
   lazy val `core-js` = mkSubProject
     .in(core.base / "js")
     .enablePlugins(ScalaJSPlugin)
-    .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
+    .configure(p => if forIdeaImport then p.dependsOn(core) else p)
     .dependsOn(macros)
     .settings(
       jsCommonSettings,
       sameNameAs(core),
       sourceDirsSettings(_.getParentFile),
-      libraryDependencies ++= Seq(
-        "io.monix" %%% "monix" % monixVersion % Optional,
-      ),
+      libraryDependencies ++= Seq("io.monix" %%% "monix" % monixVersion % Optional),
     )
 
   //  lazy val mongo = mkSubProject

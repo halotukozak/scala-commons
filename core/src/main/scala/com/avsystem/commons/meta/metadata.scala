@@ -4,15 +4,15 @@ package meta
 import serialization.{HasGenCodec, transparent}
 
 /**
- * This trait must be extended by all method metadata classes and all parameter metadata classes.
- * For method metadata, type parameter `T` will be matched against each real method result type.
- * For parameter metadata, type parameter `T` will be matched against each real parameter type.
+ * This trait must be extended by all method metadata classes and all parameter metadata classes. For method metadata,
+ * type parameter `T` will be matched against each real method result type. For parameter metadata, type parameter `T`
+ * will be matched against each real parameter type.
  */
 trait TypedMetadata[T]
 
 /**
- * Captures case class parameter's default value. Used as type of ADT metadata parameter
- * annotated with [[reifyDefaultValue]].
+ * Captures case class parameter's default value. Used as type of ADT metadata parameter annotated with
+ * [[reifyDefaultValue]].
  */
 final class DefaultValue[T](dv: => T) {
   def value: T = dv
@@ -80,50 +80,37 @@ object ParamFlags extends HasGenCodec[ParamFlags] {
 /**
  * Information about real parameter position in its method. All indices start from 0.
  *
- * @param index       overall index of the parameter, among all parameter lists
- * @param indexOfList index of parameter list that this parameter belongs to
- * @param indexInList index of the parameter inside its parameter list
- * @param indexInRaw  index of the parameter in its corresponding `@multi` metadata parameter
- *                    (or zero if not `@multi`)
+ * @param index
+ *   overall index of the parameter, among all parameter lists
+ * @param indexOfList
+ *   index of parameter list that this parameter belongs to
+ * @param indexInList
+ *   index of the parameter inside its parameter list
+ * @param indexInRaw
+ *   index of the parameter in its corresponding `@multi` metadata parameter (or zero if not `@multi`)
  */
-final case class ParamPosition(
-  index: Int,
-  indexOfList: Int,
-  indexInList: Int,
-  indexInRaw: Int,
-)
+final case class ParamPosition(index: Int, indexOfList: Int, indexInList: Int, indexInRaw: Int)
 
 object ParamPosition extends HasGenCodec[ParamPosition]
 
 /**
- * Information about real method position in its containing API. Order of methods is determined
- * by declaration order and linearization order (inherited methods come after directly defined or overridden methods).
+ * Information about real method position in its containing API. Order of methods is determined by declaration order and
+ * linearization order (inherited methods come after directly defined or overridden methods).
  *
- * @param index      overall index of the method
- * @param indexInRaw index of the method in its corresponding `@multi` metadata parameter (or zero of not `@multi`)
+ * @param index
+ *   overall index of the method
+ * @param indexInRaw
+ *   index of the method in its corresponding `@multi` metadata parameter (or zero of not `@multi`)
  */
-final case class MethodPosition(
-  index: Int,
-  indexInRaw: Int,
-)
+final case class MethodPosition(index: Int, indexInRaw: Int)
 
 object MethodPosition extends HasGenCodec[MethodPosition]
 
-final case class SourceOffset(
-  offset: Int,
-  line: Int,
-  column: Int,
-)
+final case class SourceOffset(offset: Int, line: Int, column: Int)
 
 object SourceOffset extends HasGenCodec[SourceOffset]
 
-final case class SymbolSource(
-  filePath: String,
-  fileName: String,
-  start: SourceOffset,
-  end: SourceOffset,
-  text: String,
-)
+final case class SymbolSource(filePath: String, fileName: String, start: SourceOffset, end: SourceOffset, text: String)
 
 object SymbolSource extends HasGenCodec[SymbolSource]
 
@@ -223,9 +210,9 @@ final case class MethodFlags(rawFlags: Int) extends AnyVal {
   def isVar: Boolean = hasFlags(Var)
 
   def baseDecl: String = {
-    val finalRepr = if (isFinal) "final " else ""
-    val lazyRepr = if (isLazy) "lazy " else ""
-    val kw = if (isVal) "val" else if (isVar && !isSetter) "var" else "def"
+    val finalRepr = if isFinal then "final " else ""
+    val lazyRepr = if isLazy then "lazy " else ""
+    val kw = if isVal then "val" else if isVar && !isSetter then "var" else "def"
     s"$finalRepr$lazyRepr$kw"
   }
 

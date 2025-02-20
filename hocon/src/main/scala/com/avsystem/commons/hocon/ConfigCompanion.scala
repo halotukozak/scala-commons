@@ -27,30 +27,34 @@ object HoconGenCodecs {
         case v => throw new ReadFailure(s"expected a config OBJECT, got ${v.valueType}")
       },
     (output, value) =>
-      if (!output.writeCustom(ConfigValueMarker, value.root)) {
+      if !output.writeCustom(ConfigValueMarker, value.root) then {
         val renderOptions = ConfigRenderOptions.defaults().setOriginComments(false)
         output.writeSimple().writeString(value.root.render(renderOptions))
       },
   )
 
   implicit final val FiniteDurationCodec: GenCodec[FiniteDuration] = GenCodec.nullable(
-    input => input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
-    (output, value) => if (!output.writeCustom(DurationMarker, DurationConverters.toJava(value))) output.writeSimple().writeLong(value.toMillis),
+    input =>
+      input.readCustom(DurationMarker).map(DurationConverters.toScala).getOrElse(input.readSimple().readLong().millis),
+    (output, value) =>
+      if !output.writeCustom(DurationMarker, DurationConverters.toJava(value)) then
+        output.writeSimple().writeLong(value.toMillis),
   )
 
   implicit final val JavaDurationCodec: GenCodec[JDuration] = GenCodec.nullable(
     input => input.readCustom(DurationMarker).getOrElse(JDuration.ofMillis(input.readSimple().readLong())),
-    (output, value) => if (!output.writeCustom(DurationMarker, value)) output.writeSimple().writeLong(value.toMillis),
+    (output, value) => if !output.writeCustom(DurationMarker, value) then output.writeSimple().writeLong(value.toMillis),
   )
 
   implicit final val PeriodCodec: GenCodec[Period] = GenCodec.nullable(
     input => input.readCustom(PeriodMarker).getOrElse(Period.parse(input.readSimple().readString())),
-    (output, value) => if (!output.writeCustom(PeriodMarker, value)) output.writeSimple().writeString(value.toString),
+    (output, value) => if !output.writeCustom(PeriodMarker, value) then output.writeSimple().writeString(value.toString),
   )
 
   implicit final val SizeInBytesCodec: GenCodec[SizeInBytes] = GenCodec.nonNull(
     input => SizeInBytes(input.readCustom(SizeInBytesMarker).getOrElse(input.readSimple().readLong())),
-    (output, value) => if (!output.writeCustom(SizeInBytesMarker, value.bytes)) output.writeSimple().writeLong(value.bytes),
+    (output, value) =>
+      if !output.writeCustom(SizeInBytesMarker, value.bytes) then output.writeSimple().writeLong(value.bytes),
   )
 
   implicit final val ClassKeyCodec: GenKeyCodec[Class[?]] =
@@ -66,9 +70,8 @@ trait ConfigObjectCodec[T] {
   def objectCodec: GenObjectCodec[T]
 }
 
-abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
-  implicits: Implicits
-)(implicit instances: MacroInstances[Implicits, ConfigObjectCodec[T]]
+abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](implicits: Implicits)(implicit
+  instances: MacroInstances[Implicits, ConfigObjectCodec[T]],
 ) {
   implicit lazy val codec: GenCodec[T] = instances(implicits, this).objectCodec
 
@@ -76,12 +79,12 @@ abstract class AbstractConfigCompanion[Implicits <: HoconGenCodecs, T](
 }
 
 /**
-  * Base class for companion objects of configuration case classes and sealed traits
-  * (typically deserialized from HOCON files).
-  *
-  * [[DefaultConfigCompanion]] is equivalent to [[com.avsystem.commons.serialization.HasGenCodec HasGenCodec]]
-  * except that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used
-  * in configuration.
-  */
+ * Base class for companion objects of configuration case classes and sealed traits (typically deserialized from HOCON
+ * files).
+ *
+ * [[DefaultConfigCompanion]] is equivalent to [[com.avsystem.commons.serialization.HasGenCodec HasGenCodec]] except
+ * that it automatically imports codecs from [[HoconGenCodecs]] - codecs for third party types often used in
+ * configuration.
+ */
 abstract class DefaultConfigCompanion[T](implicit macroCodec: MacroInstances[HoconGenCodecs, ConfigObjectCodec[T]])
-  extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)
+    extends AbstractConfigCompanion[HoconGenCodecs, T](DefaultHoconGenCodecs)

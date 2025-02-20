@@ -4,11 +4,12 @@ package redis.commands
 import org.apache.pekko.util.ByteString
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.*
+import com.avsystem.commons.redis.commands.ReplyDecoders.*
 import com.avsystem.commons.redis.protocol.BulkStringMsg
 
 trait NodeServerApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/bgrewriteaof BGREWRITEAOF]] */
   def bgrewriteaof: Result[String] =
     execute(Bgrewriteaof)
@@ -191,7 +192,7 @@ trait NodeServerApi extends ApiSubset {
   private final class ClientKillFiltered(filters: Seq[ClientFilter]) extends RedisIntCommand with NodeCommand {
     val encoded: Encoded = {
       val enc = encoder("CLIENT", "KILL")
-      if (filters.nonEmpty) {
+      if filters.nonEmpty then {
         enc.add(filters)
       } else {
         // SKIPME is yes by default but is added solely to avoid syntax error when there are no filters
@@ -210,12 +211,14 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class ClientUnblock(clientId: ClientId, modifier: Opt[UnblockModifier])
-    extends RedisBooleanCommand with NodeCommand {
+      extends RedisBooleanCommand
+      with NodeCommand {
     val encoded: Encoded = encoder("CLIENT", "UNBLOCK").add(clientId.raw).optAdd(modifier).result
   }
 
   private abstract class AbstractCommandInfoCommand
-    extends AbstractRedisCommand[Seq[CommandInfo]](multiBulkAsSeq(multiBulkAsCommandInfo)) with NodeCommand
+      extends AbstractRedisCommand[Seq[CommandInfo]](multiBulkAsSeq(multiBulkAsCommandInfo))
+      with NodeCommand
 
   private object Command extends AbstractCommandInfoCommand {
     val encoded: Encoded = encoder("COMMAND").result
@@ -225,7 +228,9 @@ trait NodeServerApi extends ApiSubset {
     val encoded: Encoded = encoder("COMMAND", "COUNT").result
   }
 
-  private final class CommandGetkeys(command: IterableOnce[ByteString]) extends RedisDataSeqCommand[Key] with NodeCommand {
+  private final class CommandGetkeys(command: IterableOnce[ByteString])
+      extends RedisDataSeqCommand[Key]
+      with NodeCommand {
     val encoded: Encoded = encoder("COMMAND", "GETKEYS").add(command).result
   }
 
@@ -234,7 +239,8 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class ConfigGet(parameter: String)
-    extends AbstractRedisCommand[Seq[(String, String)]](flatMultiBulkAsPairSeq(bulkAsUTF8, bulkAsUTF8)) with NodeCommand {
+      extends AbstractRedisCommand[Seq[(String, String)]](flatMultiBulkAsPairSeq(bulkAsUTF8, bulkAsUTF8))
+      with NodeCommand {
     val encoded: Encoded = encoder("CONFIG", "GET").add(parameter).result
   }
 
@@ -267,8 +273,10 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class Info[T >: FullRedisInfo <: RedisInfo](section: RedisInfoSection[T], implicitDefault: Boolean)
-    extends AbstractRedisCommand[T](bulk(bs => new FullRedisInfo(bs.utf8String))) with NodeCommand {
-    val encoded: Encoded = encoder("INFO").setup(e => if (!implicitDefault || section != DefaultRedisInfo) e.add(section.name)).result
+      extends AbstractRedisCommand[T](bulk(bs => new FullRedisInfo(bs.utf8String)))
+      with NodeCommand {
+    val encoded: Encoded =
+      encoder("INFO").setup(e => if !implicitDefault || section != DefaultRedisInfo then e.add(section.name)).result
   }
 
   private object Lastsave extends RedisLongCommand with NodeCommand {
@@ -310,7 +318,8 @@ trait NodeServerApi extends ApiSubset {
   }
 
   private final class SlowlogGet(count: Opt[Int])
-    extends RedisSeqCommand[SlowlogEntry](multiBulkAsSlowlogEntry) with NodeCommand {
+      extends RedisSeqCommand[SlowlogEntry](multiBulkAsSlowlogEntry)
+      with NodeCommand {
     val encoded: Encoded = encoder("SLOWLOG", "GET").optAdd(count).result
   }
 
@@ -328,6 +337,7 @@ trait NodeServerApi extends ApiSubset {
 }
 
 trait ConnectionServerApi extends NodeServerApi {
+
   /** Executes [[http://redis.io/commands/client-getname CLIENT GETNAME]] */
   def clientGetname: Result[Opt[String]] =
     execute(ClientGetname)
@@ -378,13 +388,13 @@ object ClientFilter {
     case (ce, id: ClientId) => ce.add("ID").add(id.toString)
     case (ce, addr: ClientAddress) => ce.add("ADDR").add(addr.toString)
     case (ce, ct: ClientType) => ce.add("TYPE").add(ct.name)
-    case (ce, Skipme(value)) => ce.add("SKIPME").add(if (value) "yes" else "no")
+    case (ce, Skipme(value)) => ce.add("SKIPME").add(if value then "yes" else "no")
   }
 }
 
 class ClientFlags(val raw: Int) extends AnyVal {
 
-  import ClientFlags._
+  import ClientFlags.*
 
   def |(other: ClientFlags) = new ClientFlags(raw | other.raw)
   def &(other: ClientFlags) = new ClientFlags(raw & other.raw)
@@ -405,10 +415,11 @@ class ClientFlags(val raw: Int) extends AnyVal {
   def closingASAP: Boolean = (this & A) != NoFlags
 
   override def toString: String =
-    if (this == NoFlags) "N"
-    else reprValuePairs.iterator.collect {
-      case (ch, f) if (this & f) != NoFlags => ch
-    }.mkString
+    if this == NoFlags then "N"
+    else
+      reprValuePairs.iterator.collect {
+        case (ch, f) if (this & f) != NoFlags => ch
+      }.mkString
 }
 object ClientFlags {
   val NoFlags = new ClientFlags(0)
@@ -437,18 +448,18 @@ object ClientFlags {
     'u' -> u,
     'U' -> U,
     'r' -> r,
-    'A' -> A
+    'A' -> A,
   )
 
   def apply(str: String): ClientFlags =
-    reprValuePairs.foldLeft(NoFlags) {
-      case (acc, (ch, ev)) => if (str.contains(ch)) acc | ev else acc
+    reprValuePairs.foldLeft(NoFlags) { case (acc, (ch, ev)) =>
+      if str.contains(ch) then acc | ev else acc
     }
 }
 
 class ClientEvents(val raw: Int) extends AnyVal {
 
-  import ClientEvents._
+  import ClientEvents.*
 
   def |(other: ClientEvents) = new ClientEvents(raw | other.raw)
   def &(other: ClientEvents) = new ClientEvents(raw & other.raw)
@@ -468,14 +479,11 @@ object ClientEvents {
   val r = new ClientEvents(1 << 0)
   val w = new ClientEvents(1 << 1)
 
-  private val reprValuePairs = Seq(
-    'r' -> r,
-    'w' -> w
-  )
+  private val reprValuePairs = Seq('r' -> r, 'w' -> w)
 
   def apply(str: String): ClientEvents =
-    reprValuePairs.foldLeft(NoEvents) {
-      case (acc, (ch, ev)) => if (str.contains(ch)) acc | ev else acc
+    reprValuePairs.foldLeft(NoEvents) { case (acc, (ch, ev)) =>
+      if str.contains(ch) then acc | ev else acc
     }
 }
 
@@ -521,13 +529,13 @@ case class CommandInfo(
   flags: CommandFlags,
   firstKey: Int,
   lastKey: Int,
-  stepCount: Int
+  stepCount: Int,
 )
 case class CommandArity(arity: Int, more: Boolean)
 
 class CommandFlags(val raw: Int) extends AnyVal {
 
-  import CommandFlags._
+  import CommandFlags.*
 
   def |(other: CommandFlags) = new CommandFlags(raw | other.raw)
   def &(other: CommandFlags) = new CommandFlags(raw & other.raw)
@@ -550,7 +558,9 @@ class CommandFlags(val raw: Int) extends AnyVal {
   def movablekeys: Boolean = (this & Movablekeys) != NoFlags
 
   override def toString: String =
-    byRepr.iterator.collect({ case (repr, flag) if (this & flag) != NoFlags => repr }).mkString("CommandFlags(", ",", ")")
+    byRepr.iterator
+      .collect({ case (repr, flag) if (this & flag) != NoFlags => repr })
+      .mkString("CommandFlags(", ",", ")")
 }
 object CommandFlags {
   val NoFlags = new CommandFlags(0)
@@ -583,7 +593,7 @@ object CommandFlags {
     "skip_monitor" -> SkipMonitor,
     "asking" -> Asking,
     "fast" -> Fast,
-    "movablekeys" -> Movablekeys
+    "movablekeys" -> Movablekeys,
   )
 }
 
@@ -612,7 +622,13 @@ object ShutdownModifier extends NamedEnumCompanion[ShutdownModifier] {
   val values: List[ShutdownModifier] = caseObjects
 }
 
-case class SlowlogEntry(id: Long, timestamp: Long, duration: Long, command: Seq[ByteString],
-  clientAddress: Opt[ClientAddress] = Opt.Empty, clientName: Opt[String] = Opt.Empty)
+case class SlowlogEntry(
+  id: Long,
+  timestamp: Long,
+  duration: Long,
+  command: Seq[ByteString],
+  clientAddress: Opt[ClientAddress] = Opt.Empty,
+  clientName: Opt[String] = Opt.Empty,
+)
 
 case class RedisTimestamp(seconds: Long, useconds: Long)

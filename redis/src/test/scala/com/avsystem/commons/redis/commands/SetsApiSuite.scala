@@ -1,12 +1,11 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
-
+import com.avsystem.commons.redis.*
 
 trait SetsApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("SADD") {
     sadd("key", Nil).assertEquals(0)
@@ -22,39 +21,23 @@ trait SetsApiSuite extends CommandsSuite {
   }
 
   apiTest("SDIFF") {
-    setup(
-      sadd("{key}1", "a", "b", "c"),
-      sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "d")
-    )
+    setup(sadd("{key}1", "a", "b", "c"), sadd("{key}2", "b", "d"), sadd("{key}3", "c", "d"))
     sdiff("{key}1", "{key}2", "{key}3").assertEquals(Set("a"))
   }
 
   apiTest("SDIFFSTORE") {
-    setup(
-      sadd("{key}1", "a", "b", "c"),
-      sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "d")
-    )
+    setup(sadd("{key}1", "a", "b", "c"), sadd("{key}2", "b", "d"), sadd("{key}3", "c", "d"))
     sdiffstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(1)
     smembers("{key}d").assertEquals(Set("a"))
   }
 
   apiTest("SINTER") {
-    setup(
-      sadd("{key}1", "a", "b", "c"),
-      sadd("{key}2", "b", "a"),
-      sadd("{key}3", "c", "a")
-    )
+    setup(sadd("{key}1", "a", "b", "c"), sadd("{key}2", "b", "a"), sadd("{key}3", "c", "a"))
     sinter("{key}1", "{key}2", "{key}3").assertEquals(Set("a"))
   }
 
   apiTest("SINTERSTORE") {
-    setup(
-      sadd("{key}1", "a", "b", "c"),
-      sadd("{key}2", "b", "a"),
-      sadd("{key}3", "c", "a")
-    )
+    setup(sadd("{key}1", "a", "b", "c"), sadd("{key}2", "b", "a"), sadd("{key}3", "c", "a"))
     sinterstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(1)
     smembers("{key}d").assertEquals(Set("a"))
   }
@@ -81,10 +64,7 @@ trait SetsApiSuite extends CommandsSuite {
   }
 
   apiTest("SMOVE") {
-    setup(
-      sadd("{key}1", "a", "b"),
-      sadd("{key}2", "c", "d")
-    )
+    setup(sadd("{key}1", "a", "b"), sadd("{key}2", "c", "d"))
     smove("{key}1", "{key}2", "?").assertEquals(false)
     smove("{key}1", "{key}2", "a").assertEquals(true)
     smembers("{key}1").assertEquals(Set("b"))
@@ -129,21 +109,13 @@ trait SetsApiSuite extends CommandsSuite {
   }
 
   apiTest("SUNION") {
-    setup(
-      sadd("{key}1", "a", "b", "c"),
-      sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "e")
-    )
+    setup(sadd("{key}1", "a", "b", "c"), sadd("{key}2", "b", "d"), sadd("{key}3", "c", "e"))
     sunion(Nil).assertEquals(Set.empty)
     sunion("{key}1", "{key}2", "{key}3").assertEquals(Set("a", "b", "c", "d", "e"))
   }
 
   apiTest("SUNIONSTORE") {
-    setup(
-      sadd("{key}1", "a", "b", "c"),
-      sadd("{key}2", "b", "d"),
-      sadd("{key}3", "c", "e")
-    )
+    setup(sadd("{key}1", "a", "b", "c"), sadd("{key}2", "b", "d"), sadd("{key}3", "c", "e"))
     sunionstore("{key}d", "{key}1", "{key}2", "{key}3").assertEquals(5)
     smembers("{key}d").assertEquals(Set("a", "b", "c", "d", "e"))
   }

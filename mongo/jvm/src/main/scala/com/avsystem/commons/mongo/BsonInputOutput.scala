@@ -2,7 +2,13 @@ package com.avsystem.commons
 package mongo
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization.{FieldInput, InputAndSimpleInput, InputMetadata, OutputAndSimpleOutput, TypeMarker}
+import com.avsystem.commons.serialization.{
+  FieldInput,
+  InputAndSimpleInput,
+  InputMetadata,
+  OutputAndSimpleOutput,
+  TypeMarker,
+}
 import org.bson.types.{Decimal128, ObjectId}
 import org.bson.{BsonInvalidOperationException, BsonType, BsonValue}
 
@@ -22,7 +28,8 @@ trait BsonInput extends Any with InputAndSimpleInput {
   protected def bsonType: BsonType
 
   protected def handleFailures[T](expr: => T): T =
-    try expr catch {
+    try expr
+    catch {
       case e: BsonInvalidOperationException => throw new ReadFailure(e.getMessage, e)
     }
 
@@ -30,7 +37,7 @@ trait BsonInput extends Any with InputAndSimpleInput {
     throw new ReadFailure(s"Encountered BsonValue of type $bsonType, expected ${expected.mkString(" or ")}")
 
   protected def expect[T](tpe: BsonType, value: => T): T =
-    if (bsonType == tpe) handleFailures(value)
+    if bsonType == tpe then handleFailures(value)
     else wrongType(tpe)
 
   override def readBigInt(): BigInt = handleFailures {
@@ -97,11 +104,12 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
   def writeBsonValue(bsonValue: BsonValue): Unit
 
   override def writeBigInt(bigInt: BigInt): Unit =
-    if (bigInt.isValidLong) writeLong(bigInt.longValue)
-    else Decimal128Utils.fromBigDecimal(BigDecimal(bigInt)) match {
-      case Opt(dec128) => writeDecimal128(dec128)
-      case Opt.Empty => writeBinary(bigInt.toByteArray)
-    }
+    if bigInt.isValidLong then writeLong(bigInt.longValue)
+    else
+      Decimal128Utils.fromBigDecimal(BigDecimal(bigInt)) match {
+        case Opt(dec128) => writeDecimal128(dec128)
+        case Opt.Empty => writeBinary(bigInt.toByteArray)
+      }
 
   override def writeBigDecimal(bigDecimal: BigDecimal): Unit =
     Decimal128Utils.fromBigDecimal(bigDecimal) match {
@@ -109,7 +117,7 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
       case Opt.Empty => writeBinary(BsonOutput.bigDecimalBytes(bigDecimal))
     }
 
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean =
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean =
     BsonTypeMetadata == metadata
 
   override def writeCustom[T](typeMarker: TypeMarker[T], value: T): Boolean =
@@ -124,7 +132,10 @@ trait BsonOutput extends Any with OutputAndSimpleOutput {
 object BsonOutput {
   def bigDecimalBytes(bigDecimal: BigDecimal): Array[Byte] = {
     val unscaledBytes = bigDecimal.bigDecimal.unscaledValue.toByteArray
-    ByteBuffer.allocate(unscaledBytes.length + Integer.BYTES)
-      .put(unscaledBytes).putInt(bigDecimal.scale).array
+    ByteBuffer
+      .allocate(unscaledBytes.length + Integer.BYTES)
+      .put(unscaledBytes)
+      .putInt(bigDecimal.scale)
+      .array
   }
 }

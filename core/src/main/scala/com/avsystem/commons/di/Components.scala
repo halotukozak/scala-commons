@@ -30,9 +30,9 @@ trait Components extends ComponentsLowPrio {
   protected def componentInfo(sourceInfo: SourceInfo): ComponentInfo = ComponentInfo(componentNamePrefix, sourceInfo)
 
   /**
-   * Creates a [[Component]] based on a definition (i.e. a constructor invocation). The definition may refer to
-   * other components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies
-   * in a way that allows them to be initialized in parallel, before initializing the current component itself.
+   * Creates a [[Component]] based on a definition (i.e. a constructor invocation). The definition may refer to other
+   * components as dependencies using `.ref`. This macro will transform the definition by extracting dependencies in a
+   * way that allows them to be initialized in parallel, before initializing the current component itself.
    */
   //  protected inline def component[T](definition: => T)(using si: SourceInfo): Component[T] = ${ ComponentMacros.component[T]('{ definition }, '{ componentInfo(si) }, '{ Option(singletonsCache) }) }
   protected inline def component[T](inline definition: => T)(using si: SourceInfo): Component[T] =
@@ -41,23 +41,29 @@ trait Components extends ComponentsLowPrio {
   /**
    * Asynchronous version of [[component]] macro.
    */
-  protected inline def asyncComponent[T](definition: ExecutionContext => Future[T])(using si: SourceInfo): Component[T] = ???
+  protected inline def asyncComponent[T](definition: ExecutionContext => Future[T])(using
+    si: SourceInfo,
+  ): Component[T] = ???
   //  ${ ComponentMacros.asyncComponent[T]('{ definition }, '{ componentInfo(si) }) }
 
   /**
    * This is the same as [[component]] except that the created [[Component]] is cached inside an outer instance that
-   * implements [[Components]]. This way you can implement your components using `def`s rather than `val`s
-   * (`val`s can be problematic in traits) but caching will make sure that your `def` always returns the same,
-   * cached [[Component]] instance. The cache key is based on source position so overriding a method that returns
-   * `singleton` will create separate [[Component]] with different cache key.
+   * implements [[Components]]. This way you can implement your components using `def`s rather than `val`s (`val`s can
+   * be problematic in traits) but caching will make sure that your `def` always returns the same, cached [[Component]]
+   * instance. The cache key is based on source position so overriding a method that returns `singleton` will create
+   * separate [[Component]] with different cache key.
    */
   protected inline def singleton[T](inline definition: => T)(using si: SourceInfo): Component[T] =
-    ${ ComponentMacros.mkComponent[T]('{ definition }, '{ componentInfo(si) }, '{ Some(singletonsCache) }, async = false) }
+    ${
+      ComponentMacros.mkComponent[T]('{ definition }, '{ componentInfo(si) }, '{ Some(singletonsCache) }, async = false)
+    }
 
   /**
    * Asynchronous version of [[singleton]] macro.
    */
-  protected inline def asyncSingleton[T](definition: ExecutionContext => Future[T])(using si: SourceInfo): Component[T] = ???
+  protected inline def asyncSingleton[T](definition: ExecutionContext => Future[T])(using
+    si: SourceInfo,
+  ): Component[T] = ???
   //  ${ ComponentMacros.asyncSingleton[T]('{ definition }, '{ componentInfo(si) }) }
 
   //  protected def reifyAllSingletons: List[Component[?]] = ComponentMacros.reifyAllSingletons

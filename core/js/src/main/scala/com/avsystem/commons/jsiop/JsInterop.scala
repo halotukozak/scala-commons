@@ -13,8 +13,7 @@ trait JsInterop {
     inline def toJDate: JDate = new JDate(jsDate.getTime().toLong)
   }
 
-  extension [A](value: UndefOr[A])
-    inline def toOpt: Opt[A] = if value.isDefined then Opt(value.get) else Opt.Empty
+  extension [A](value: UndefOr[A]) inline def toOpt: Opt[A] = if value.isDefined then Opt(value.get) else Opt.Empty
 
   extension [A](raw: A)
     inline def orUndefined: UndefOr[A] = Opt(raw) match
@@ -22,4 +21,4 @@ trait JsInterop {
       case Opt(value) => js.defined(value)
 }
 
-object JsInterop extends JsInterop 
+object JsInterop extends JsInterop

@@ -4,7 +4,7 @@
 //import scala.deriving.Mirror
 //
 //final class KnownSubtypesTest[A, B <: AnyRef, C <: Ordered[C]] {
-//  
+//
 //
 //  sealed trait Base
 //

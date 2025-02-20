@@ -28,4 +28,3 @@ final class OptArgTest extends AnyFunSuite with Matchers:
     takeMaybeString() shouldEqual Opt.Empty
     takeMaybeString("stringzor") shouldEqual "stringzor".opt
   }
-

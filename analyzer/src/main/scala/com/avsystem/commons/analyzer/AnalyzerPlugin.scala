@@ -9,12 +9,14 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
 
   override def init(options: List[String], error: String => Unit): Boolean = {
     options.foreach { option =>
-      if (option.startsWith("requireJDK=")) {
+      if option.startsWith("requireJDK=") then {
         val jdkVersionRegex = option.substring(option.indexOf('=') + 1)
         val javaVersion = System.getProperty("java.version", "")
-        if (!javaVersion.matches(jdkVersionRegex)) {
-          global.reporter.error(NoPosition,
-            s"This project must be compiled on JDK version that matches $jdkVersionRegex but got $javaVersion")
+        if !javaVersion.matches(jdkVersionRegex) then {
+          global.reporter.error(
+            NoPosition,
+            s"This project must be compiled on JDK version that matches $jdkVersionRegex but got $javaVersion",
+          )
         }
       } else {
         val level = option.charAt(0) match {
@@ -23,8 +25,8 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
           case '+' => Level.Error
           case _ => Level.Warn
         }
-        val nameArg = if (level != Level.Warn) option.drop(1) else option
-        if (nameArg == "_") {
+        val nameArg = if level != Level.Warn then option.drop(1) else option
+        if nameArg == "_" then {
           rules.foreach(_.level = level)
         } else {
           val (name, arg) = nameArg.split(":", 2) match {
@@ -73,11 +75,13 @@ final class AnalyzerPlugin(val global: Global) extends Plugin { plugin =>
     override val runsBefore = List("patmat")
     val phaseName = "avsAnalyze"
 
-    import global._
+    import global.*
 
     def newPhase(prev: Phase): StdPhase = new StdPhase(prev) {
       def apply(unit: CompilationUnit): Unit =
-        rules.foreach(rule => if (rule.level != Level.Off) rule.analyze(unit.asInstanceOf[rule.global.CompilationUnit]))
+        rules.foreach(rule =>
+          if rule.level != Level.Off then rule.analyze(unit.asInstanceOf[rule.global.CompilationUnit]),
+        )
     }
   }
 

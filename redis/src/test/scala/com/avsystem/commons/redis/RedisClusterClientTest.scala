@@ -3,19 +3,28 @@ package redis
 
 import com.avsystem.commons.redis.commands.{FailoverOption, ShutdownModifier}
 import com.avsystem.commons.redis.config.{ClusterConfig, ConnectionConfig, ExecutionConfig, NodeConfig}
-import com.avsystem.commons.redis.exception.{ClusterInitializationException, CrossSlotException, ForbiddenCommandException, NoKeysException}
+import com.avsystem.commons.redis.exception.{
+  ClusterInitializationException,
+  CrossSlotException,
+  ForbiddenCommandException,
+  NoKeysException,
+}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
-class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer {
+class RedisClusterClientNonClusteredInitTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesRedisServer {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   override def password: Opt[String] = "pass".opt
 
@@ -25,7 +34,7 @@ class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
     val config = ClusterConfig(
       nodeConfigs = _ => nodeConfig,
       monitoringConnectionConfigs = _ => connConfig,
-      fallbackToSingleNode = fallbackToSingleNode
+      fallbackToSingleNode = fallbackToSingleNode,
     )
     new RedisClusterClient(List(NodeAddress(port = port)), config)
   }
@@ -55,10 +64,14 @@ class RedisClusterClientNonClusteredInitTest extends AnyFunSuite
   }
 }
 
-class RedisClusterClientInitTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
+class RedisClusterClientInitTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesPreconfiguredCluster {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   def createClient(ports: Int*): RedisClusterClient =
     new RedisClusterClient(ports.map(p => NodeAddress(port = p)))
@@ -76,10 +89,14 @@ class RedisClusterClientInitTest extends AnyFunSuite
   }
 }
 
-class RedisClusterClientInitDuringFailureTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredCluster {
+class RedisClusterClientInitDuringFailureTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesPreconfiguredCluster {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   override implicit def patienceConfig: PatienceConfig = PatienceConfig(Span(120, Seconds), Span(1, Seconds))
 
@@ -97,7 +114,7 @@ class RedisClusterClientInitDuringFailureTest extends AnyFunSuite
 
 class RedisClusterClientTest extends RedisClusterCommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   test("simple get") {
     get("key").assertEquals(Opt.Empty)
@@ -132,7 +149,7 @@ class RedisClusterClientTest extends RedisClusterCommandsSuite {
 
 class ClusterSlotMigrationTest extends RedisClusterCommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   test("empty slot migration") {
     migrateSlot(0, 7000).futureValue
@@ -151,7 +168,7 @@ class ClusterSlotMigrationTest extends RedisClusterCommandsSuite {
 
 class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   // don't refresh cluster state
   override def clusterConfig: ClusterConfig =
@@ -220,7 +237,7 @@ class ClusterRedirectionHandlingTest extends RedisClusterCommandsSuite {
 
 class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   // don't refresh cluster state
   override def clusterConfig: ClusterConfig = super.clusterConfig.copy(minRefreshInterval = Int.MaxValue.seconds)
@@ -231,12 +248,13 @@ class ClusterFailoverHandlingTest extends RedisClusterCommandsSuite {
     def failover(delay: FiniteDuration = Duration.Zero): Future[Unit] = for {
       master <- slaveClient.executeBatch(clusterNodes.map(_.find(_.flags.myself).exists(_.flags.master)))
       _ <- {
-        if (master) Future.successful(())
-        else for {
-          _ <- wait(delay)
-          _ <- slaveClient.executeBatch(clusterFailover(FailoverOption.Force).ignoreFailures)
-          _ <- failover(1.seconds)
-        } yield ()
+        if master then Future.successful(())
+        else
+          for {
+            _ <- wait(delay)
+            _ <- slaveClient.executeBatch(clusterFailover(FailoverOption.Force).ignoreFailures)
+            _ <- failover(1.seconds)
+          } yield ()
       }
     } yield ()
     Await.result(redisClient.initialized.flatMapNow(_ => failover()), 2.minutes)

@@ -8,18 +8,20 @@ import scala.util.control.NonFatal
 
 abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: Level = Level.Warn) {
 
-  import global._
+  import global.*
 
   var level: Level = defaultLevel
   var argument: String = _
 
   protected def classType(fullName: String): Type =
-    try rootMirror.staticClass(fullName).asType.toType.erasure catch {
+    try rootMirror.staticClass(fullName).asType.toType.erasure
+    catch {
       case _: ScalaReflectionException => NoType
     }
 
   protected def analyzeTree(fun: PartialFunction[Tree, Unit])(tree: Tree): Unit =
-    try fun.applyOrElse(tree, (_: Tree) => ()) catch {
+    try fun.applyOrElse(tree, (_: Tree) => ())
+    catch {
       case NonFatal(t) =>
         val sw = new StringWriter
         t.printStackTrace(new PrintWriter(sw))
@@ -32,7 +34,7 @@ abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: 
     pos: Position,
     message: String,
     category: WarningCategory = WarningCategory.Lint,
-    site: Symbol = NoSymbol
+    site: Symbol = NoSymbol,
   ): Unit =
     level match {
       case Level.Off =>

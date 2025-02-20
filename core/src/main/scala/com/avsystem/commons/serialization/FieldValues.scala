@@ -13,7 +13,9 @@ object FieldValues {
 }
 
 final class FieldValues(
-  private val fieldNames: Array[String], codecs: Array[GenCodec[?]], ofWhat: OptArg[String] = OptArg.Empty,
+  private val fieldNames: Array[String],
+  codecs: Array[GenCodec[?]],
+  ofWhat: OptArg[String] = OptArg.Empty,
 ) {
 
   @tailrec private def fieldIndex(fieldName: String, idx: Int): Int =
@@ -30,10 +32,13 @@ final class FieldValues(
   def tryReadField(input: FieldInput): Boolean = fieldIndex(input.fieldName, 0) match
     case -1 => false
     case idx =>
-      val value = try codecs(idx).read(input) catch
-        case NonFatal(e) => ofWhat match
-          case OptArg(typeRepr) => throw FieldReadFailed(typeRepr, input.fieldName, e)
-          case OptArg.Empty => throw new ReadFailure(s"Failed to read field ${input.fieldName}", e)
+      val value =
+        try codecs(idx).read(input)
+        catch
+          case NonFatal(e) =>
+            ofWhat match
+              case OptArg(typeRepr) => throw FieldReadFailed(typeRepr, input.fieldName, e)
+              case OptArg.Empty => throw new ReadFailure(s"Failed to read field ${input.fieldName}", e)
       values(idx) = if value == null then NullMarker else value
       true
 
@@ -53,12 +58,13 @@ final class FieldValues(
 
   def rewriteFrom(other: FieldValues): Unit = {
     var oi = 0
-    while (oi < other.fieldNames.length) {
+    while oi < other.fieldNames.length do {
       other.values(oi) match
         case null =>
-        case value => fieldIndex(other.fieldNames(oi), 0) match
-          case -1 =>
-          case i => values(i) = value
+        case value =>
+          fieldIndex(other.fieldNames(oi), 0) match
+            case -1 =>
+            case i => values(i) = value
       oi += 1
     }
   }

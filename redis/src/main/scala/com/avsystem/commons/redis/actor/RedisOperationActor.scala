@@ -11,13 +11,11 @@ import com.avsystem.commons.redis.util.ActorLazyLogging
 import com.avsystem.commons.redis.{RedisBatch, RedisOp}
 
 /**
-  * Implements execution of [[RedisOp]] (sequence of redis operations).
-  * Separate [[RedisOperationActor]] is spawned of every [[RedisOp]] and lives only to
-  * execute that single [[RedisOp]].
-  *
-  * Author: ghik
-  * Created: 11/04/16.
-  */
+ * Implements execution of [[RedisOp]] (sequence of redis operations). Separate [[RedisOperationActor]] is spawned of
+ * every [[RedisOp]] and lives only to execute that single [[RedisOp]].
+ *
+ * Author: ghik Created: 11/04/16.
+ */
 final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLazyLogging {
 
   context.watch(connection)
@@ -27,7 +25,7 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
   def handleOperation(op: RedisOp[Any], reserving: Boolean = false): Unit = {
     def handle[A, B](batch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]]) = {
       val packs = batch.rawCommandPacks.requireLevel(Level.Operation, "RedisOperation")
-      connection ! (if (reserving) Reserving(packs) else packs)
+      connection ! (if reserving then Reserving(packs) else packs)
       context.become(waitingForResponse(batch, nextStep))
     }
     op match {
@@ -36,21 +34,24 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
     }
   }
 
-  def waitingForResponse[A, B](prevBatch: RedisBatch[A], nextStep: Opt[A => RedisOp[B]], reserving: Boolean = false): Receive = {
-    case pr: RedisConnectionActor.PacksResult =>
-      try {
-        val a = prevBatch.decodeReplies(pr)
-        nextStep match {
-          case Opt.Empty => respond(OpSuccess(a))
-          case Opt(fun) => handleOperation(fun(a))
-        }
-      } catch {
-        case NonFatal(t) => respond(OpFailure(t))
+  def waitingForResponse[A, B](
+    prevBatch: RedisBatch[A],
+    nextStep: Opt[A => RedisOp[B]],
+    reserving: Boolean = false,
+  ): Receive = { case pr: RedisConnectionActor.PacksResult =>
+    try {
+      val a = prevBatch.decodeReplies(pr)
+      nextStep match {
+        case Opt.Empty => respond(OpSuccess(a))
+        case Opt(fun) => handleOperation(fun(a))
       }
+    } catch {
+      case NonFatal(t) => respond(OpFailure(t))
+    }
   }
 
   def respond(msg: Any): Unit =
-    if (listener != null) {
+    if listener != null then {
       log.debug(s"Responding with final result: $msg")
       listener ! msg
       listener = null
@@ -61,7 +62,8 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
   def receive = {
     case op: RedisOp[Any] if listener == null =>
       listener = sender()
-      try handleOperation(op, reserving = true) catch {
+      try handleOperation(op, reserving = true)
+      catch {
         case NonFatal(t) => respond(OpFailure(t))
       }
   }
@@ -70,7 +72,7 @@ final class RedisOperationActor(connection: ActorRef) extends Actor with ActorLa
     connection ! Release
 
   override def postStop(): Unit =
-    if (listener != null) {
+    if listener != null then {
       // nullguard redundant, but avoids unnecessary exception creation
       respond(OpFailure(new RedisException("Operation killed before finishing")))
     }

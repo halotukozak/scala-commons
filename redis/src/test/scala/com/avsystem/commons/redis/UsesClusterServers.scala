@@ -7,12 +7,11 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfterAll, Suite}
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
-  * Author: ghik
-  * Created: 27/06/16.
-  */
+ * Author: ghik Created: 27/06/16.
+ */
 trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this: Suite =>
 
   val clusterPath: String = "cluster/" + System.currentTimeMillis()
@@ -30,17 +29,31 @@ trait UsesClusterServers extends BeforeAndAfterAll with RedisProcessUtils { this
   override protected def beforeAll(): Unit = {
     super.beforeAll()
     prepareDirectory()
-    redisProcesses = Await.result(Future.traverse(ports)(port => launchRedis(
-      "--port", port.toString,
-      "--daemonize", "no",
-      "--pidfile", "redis.pid",
-      "--dbfilename", "dump.rdb",
-      "--dir", s"$clusterPath/$port",
-      "--appendonly", "yes",
-      "--appendfilename", "appendonly.aof",
-      "--cluster-enabled", "yes",
-      "--cluster-config-file", "nodes.conf"
-    )), 10.seconds)
+    redisProcesses = Await.result(
+      Future.traverse(ports)(port =>
+        launchRedis(
+          "--port",
+          port.toString,
+          "--daemonize",
+          "no",
+          "--pidfile",
+          "redis.pid",
+          "--dbfilename",
+          "dump.rdb",
+          "--dir",
+          s"$clusterPath/$port",
+          "--appendonly",
+          "yes",
+          "--appendfilename",
+          "appendonly.aof",
+          "--cluster-enabled",
+          "yes",
+          "--cluster-config-file",
+          "nodes.conf",
+        ),
+      ),
+      10.seconds,
+    )
   }
 
   override protected def afterAll(): Unit = {

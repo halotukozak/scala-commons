@@ -117,14 +117,14 @@ final class SharedExtensionsTest extends AnyFunSuite with Matchers:
   }
 
   test("uncheckedMatch") {
-    val res = Option(42) uncheckedMatch {
-      case Some(int) => int
+    val res = Option(42) uncheckedMatch { case Some(int) =>
+      int
     }
     assert(res == 42)
 
     assertThrows[MatchError] {
-      Option.empty[Int] uncheckedMatch {
-        case Some(int) => int
+      Option.empty[Int] uncheckedMatch { case Some(int) =>
+        int
       }
     }
   }
@@ -181,7 +181,7 @@ final class SharedExtensionsTest extends AnyFunSuite with Matchers:
   test("flatCollect") {
     val it = Iterator(69, 42)
     val fc = it.flatCollect { case i if i % 2 == 0 => Iterator(-i, i) }
-    assert(it.hasNext) //flatCollect should not consume eagerly
+    assert(it.hasNext) // flatCollect should not consume eagerly
     assert(fc.hasNext)
     assert(!it.hasNext)
     fc.toSeq should contain theSameElementsInOrderAs Seq(-42, 42)
@@ -202,9 +202,10 @@ final class SharedExtensionsTest extends AnyFunSuite with Matchers:
         |    abc
         |   abc""".stripMargin
 
-    assert(str.stripCommonIndent ==
-      """abc
+    assert(
+      str.stripCommonIndent ==
+        """abc
         |  abc
-        | abc""".stripMargin)
+        | abc""".stripMargin,
+    )
   }
-

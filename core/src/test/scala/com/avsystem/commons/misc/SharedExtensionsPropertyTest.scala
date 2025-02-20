@@ -42,4 +42,3 @@ final class SharedExtensionsPropertyTest extends AnyFunSuite with Matchers with 
       elemList.indexWhere(_ == element) shouldEqual elemList.indexWhereOpt(_ == element).getOrElse(-1)
     }
   }
-

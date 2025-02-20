@@ -2,9 +2,9 @@ package com.avsystem.commons
 package ser
 
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.*
+import io.circe.parser.*
+import io.circe.syntax.*
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Warmup}
 
 @Warmup(iterations = 5, time = 1)
@@ -176,7 +176,7 @@ class JsonReadingBenchmark extends JsonSerializationBenchmark {
 
 object JsonSerializationBenchmark {
   def main(args: Array[String]): Unit = {
-    while (true) {
+    while true do {
       JsonStringOutput.write[List[SealedStuff]](SealedStuff.ExampleList)
     }
   }

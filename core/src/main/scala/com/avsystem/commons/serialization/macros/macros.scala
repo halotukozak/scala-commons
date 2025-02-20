@@ -1,9 +1,8 @@
 package com.avsystem.commons
 package serialization
 
-package object macros extends MacroUtils {
+package object macros {
   export scala.quoted.Expr
   export scala.quoted.Type
   export scala.quoted.Quotes
 }
-

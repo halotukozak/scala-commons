@@ -19,7 +19,6 @@ object IsoInstant {
       val parsed = js.Date.parse(string)
       if parsed.isNaN then fail()
       else parsed.toLong
-    }
-    else fail()
+    } else fail()
   }
 }

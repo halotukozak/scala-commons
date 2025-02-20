@@ -1,11 +1,11 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 
 trait SortedSetsApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("ZADD") {
     zadd("key", Nil).assertEquals(0)
@@ -43,7 +43,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
     setup(
       zadd("{key}1", "lol" -> 1.0, "fuu" -> 2.0, "oof" -> 3.0),
       zadd("{key}2", "lol" -> 1.0, "fag" -> 2.0),
-      zadd("{key}3", "fuu" -> 1.0, "fag" -> 2.0)
+      zadd("{key}3", "fuu" -> 1.0, "fag" -> 2.0),
     )
     zdiff("{key}1", "{key}2").assertEquals(Seq("fuu", "oof"))
     zdiff("{key}1", "{key}2", "{key}3").assertEquals(Seq("oof"))
@@ -63,10 +63,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZINTER") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     zinter("{key}1", "{key}2").assertEquals(Seq("bar"))
     zinterWithscores("{key}1", "{key}2").assertEquals(Seq("bar" -> 5.0))
     zinterWithscores(Seq("{key}1", "{key}2"), Aggregation.Sum).assertEquals(Seq("bar" -> 5.0))
@@ -75,19 +72,13 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZINTER with WEIGHTS") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     zinterWeights("{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(Seq("bar"))
     zinterWeightsWithscores("{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(Seq("bar" -> 8.0))
   }
 
   apiTest("ZINTERSTORE") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     zinterstore("key", "{key}1", "{key}?").assertEquals(0)
     zinterstore("key", "{key}1", "{key}2").assertEquals(1)
     zrangeWithscores("key").assertEquals(Seq("bar" -> 5.0))
@@ -100,10 +91,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZINTERSTORE with WEIGHTS") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     zinterstoreWeights("key", "{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(1)
     zrangeWithscores("key").assertEquals(Seq("bar" -> 8.0))
   }
@@ -258,7 +246,8 @@ trait SortedSetsApiSuite extends CommandsSuite {
     zrevrangebyscoreWithscores("???").assertEquals(Seq.empty)
     zrevrangebyscoreWithscores("key").assertEquals(Seq("d" -> 4.0, "c" -> 3.0, "b" -> 2.0, "a" -> 1.0))
     zrevrangebyscoreWithscores("key", limit = Limit(1, 2)).assertEquals(Seq("c" -> 3.0, "b" -> 2.0))
-    zrevrangebyscoreWithscores("key", ScoreLimit.excl(3.0), ScoreLimit.incl(1.0)).assertEquals(Seq("b" -> 2.0, "a" -> 1.0))
+    zrevrangebyscoreWithscores("key", ScoreLimit.excl(3.0), ScoreLimit.incl(1.0))
+      .assertEquals(Seq("b" -> 2.0, "a" -> 1.0))
   }
 
   apiTest("ZREVRANK") {
@@ -288,10 +277,7 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZUNION") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 6.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 6.0))
     zunion("{key}1", "{key}2").assertEquals(Seq("foo", "bar", "lol"))
     zunionWithscores("{key}1", "{key}2")
       .assertEquals(Seq("foo" -> 1.0, "bar" -> 5.0, "lol" -> 6.0))
@@ -304,20 +290,14 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZUNION with WEIGHTS") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 5.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 5.0))
     zunionWeights("{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(Seq("foo", "bar", "lol"))
     zunionWeightsWithscores("{key}1" -> 1.0, "{key}2" -> 2.0)
       .assertEquals(Seq("foo" -> 1.0, "bar" -> 8.0, "lol" -> 10.0))
   }
 
   apiTest("ZUNIONSTORE") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     zunionstore("key", "{key}1", "{key}?").assertEquals(2)
     zunionstore("key", "{key}1", "{key}2").assertEquals(3)
     zrangeWithscores("key").assertEquals(Seq("foo" -> 1.0, "lol" -> 4.0, "bar" -> 5.0))
@@ -330,28 +310,19 @@ trait SortedSetsApiSuite extends CommandsSuite {
   }
 
   apiTest("ZUNIONSTORE with WEIGHTS") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     zunionstoreWeights("key", "{key}1" -> 1.0, "{key}2" -> 2.0).assertEquals(3)
     zrangeWithscores("key").assertEquals(Seq("foo" -> 1.0, "bar" -> 8.0, "lol" -> 8.0))
   }
 
   apiTest("BZPOPMAX") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     bzpopmax("???", 1).assertEquals(Opt.Empty)
     bzpopmax(List("{key}0", "{key}1", "{key}2"), 1).assertEquals(Opt("{key}1", "bar", 2.0))
   }
 
   apiTest("BZPOPMIN") {
-    setup(
-      zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0),
-      zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0)
-    )
+    setup(zadd("{key}1", "foo" -> 1.0, "bar" -> 2.0), zadd("{key}2", "bar" -> 3.0, "lol" -> 4.0))
     bzpopmin("???", 1).assertEquals(Opt.Empty)
     bzpopmin(List("{key}0", "{key}1", "{key}2"), 1).assertEquals(Opt("{key}1", "foo", 1.0))
   }

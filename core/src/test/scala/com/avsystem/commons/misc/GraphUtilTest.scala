@@ -28,10 +28,9 @@ final class GraphUtilTest extends AnyFunSuite {
     )
 
     val exp =
-
-
-      assert(log.result() ==
-        """onEnter 1
+      assert(
+        log.result() ==
+          """onEnter 1
           |onEnter 2
           |onEnter 3
           |onEnter 5
@@ -47,6 +46,7 @@ final class GraphUtilTest extends AnyFunSuite {
           |onExit 4
           |onExit 2
           |onExit 1
-          |""".stripMargin)
+          |""".stripMargin,
+      )
   }
 }

@@ -3,7 +3,7 @@ package serialization
 
 sealed trait RawRef {
 
-  import RawRef._
+  import RawRef.*
 
   def normalize: Iterator[SimpleRawRef] = this match
     case Identity => Iterator.empty
@@ -36,7 +36,7 @@ object SimpleRawRef {
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {
   def apply(s: S): T = fun(s)
 
-  def andThen[T0](other: GenRef[T, T0]): GenRef[S, T0] =
+  infix def andThen[T0](other: GenRef[T, T0]): GenRef[S, T0] =
     GenRef(fun andThen other.fun, RawRef.Composite(rawRef, other.rawRef))
 
   def compose[S0](other: GenRef[S0, S]): GenRef[S0, T] =
@@ -51,7 +51,7 @@ object GenRef {
   trait Creator[S] {
     type Ref[T] = GenRef[S, T]
 
-    def ref[T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
+    def ref[T](fun: S => T): GenRef[S, T] = ???
   }
 
   trait Implicits {

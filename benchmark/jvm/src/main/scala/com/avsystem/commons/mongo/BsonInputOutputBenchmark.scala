@@ -7,7 +7,16 @@ import java.io.StringWriter
 import java.nio.ByteBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.json.{JsonReader, JsonWriter}
-import org.bson.{BsonBinaryReader, BsonBinaryWriter, BsonDocument, BsonDocumentReader, BsonDocumentWriter, BsonReader, BsonValue, BsonWriter}
+import org.bson.{
+  BsonBinaryReader,
+  BsonBinaryWriter,
+  BsonDocument,
+  BsonDocumentReader,
+  BsonDocumentWriter,
+  BsonReader,
+  BsonValue,
+  BsonWriter,
+}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, State, Warmup}
 
 @Warmup(iterations = 10)

@@ -5,11 +5,11 @@ import scala.tools.nsc.Global
 
 class ShowAst(g: Global) extends AnalyzerRule(g, "showAst", Level.Error) {
 
-  import global._
+  import global.*
 
   lazy val showAstAnnotType: Type = classType("com.avsystem.commons.annotation.showAst")
 
-  def analyze(unit: CompilationUnit) = if (showAstAnnotType != NoType) {
+  def analyze(unit: CompilationUnit) = if showAstAnnotType != NoType then {
     def analyzeTree(tree: Tree): Unit = analyzer.macroExpandee(tree) match {
       case `tree` | EmptyTree =>
         tree match {

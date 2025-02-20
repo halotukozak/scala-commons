@@ -26,8 +26,8 @@ object Applier {
 }
 
 /**
- * Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns
- * untyped sequence of values.
+ * Typeclass which captures case class `unapply`/`unapplySeq` method in a raw form that returns untyped sequence of
+ * values.
  */
 @implicitNotFound("cannot materialize Unapplier: ${T} is not a case class or case class like type")
 trait Unapplier[T] {
@@ -49,19 +49,20 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
 
 object ApplierUnapplier {
-  given materialize[T <: scala.Product](using mirror: Mirror.ProductOf[T]): ApplierUnapplier[T] = new ProductApplierUnapplier[T] {
-    override def apply(rawValues: Seq[Any]): T = {
-      val values = rawValues.toArray
-      mirror.fromProduct(new Product {
-        override def productArity: Int = values.length
+  given materialize[T <: scala.Product](using mirror: Mirror.ProductOf[T]): ApplierUnapplier[T] =
+    new ProductApplierUnapplier[T] {
+      override def apply(rawValues: Seq[Any]): T = {
+        val values = rawValues.toArray
+        mirror.fromProduct(new Product {
+          override def productArity: Int = values.length
 
-        override def productElement(n: Int): Any = values(n)
+          override def productElement(n: Int): Any = values(n)
 
-        override def canEqual(that: Any): Boolean = that.isInstanceOf[T] || ???
-      })
+          override def canEqual(that: Any): Boolean = that.isInstanceOf[T] || ???
+        })
+      }
+
+      override def unapply(value: T): Seq[Any] =
+        mirror.fromProductTyped(value).productIterator.toSeq
     }
-
-    override def unapply(value: T): Seq[Any] =
-      mirror.fromProductTyped(value).productIterator.toSeq
-  }
 }

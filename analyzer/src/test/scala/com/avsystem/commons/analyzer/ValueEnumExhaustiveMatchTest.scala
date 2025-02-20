@@ -23,62 +23,48 @@ class ValueEnumExhaustiveMatchTest extends AnyFunSuite with AnalyzerTest {
       """.stripMargin
 
   test("should report two unmatched enum values") {
-    assertErrors(source(
-      """
+    assertErrors(source("""
         |case Enumz.One =>
         |case null =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 
   test("should report one unmatched enum value") {
-    assertErrors(source(
-      """
+    assertErrors(source("""
         |case Enumz.One =>
         |case Enumz.Two =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 
   test("should report one unmatched by alternative enum value") {
-    assertErrors(source(
-      """
+    assertErrors(source("""
         |case One | Two =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 
   test("should not report unmatched values on wildcard") {
-    assertNoErrors(source(
-      """
+    assertNoErrors(source("""
         |case _ =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 
   test("should not report unmatched values with guard") {
-    assertNoErrors(source(
-      """
+    assertNoErrors(source("""
         |case x if x.ordinal > 1 =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 
   test("should not report no unmatched values in alternative") {
-    assertNoErrors(source(
-      """
+    assertNoErrors(source("""
         |case One | Two | Three =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 
   test("should not report no unmatched values") {
-    assertNoErrors(source(
-      """
+    assertNoErrors(source("""
         |case Enumz.One =>
         |case Enumz.Two =>
         |case Three =>
-      """.stripMargin
-    ))
+      """.stripMargin))
   }
 }

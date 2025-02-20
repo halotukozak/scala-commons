@@ -5,28 +5,40 @@ import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis.commands.`package`.ReplyDecoder
 import com.avsystem.commons.redis.commands.{RedisScript, ReplyDecoders}
 import com.avsystem.commons.redis.config.{ConnectionConfig, NodeConfig}
-import com.avsystem.commons.redis.exception.{ConnectionFailedException, ConnectionInitializationFailure, NodeInitializationFailure, TooManyConnectionsException}
+import com.avsystem.commons.redis.exception.{
+  ConnectionFailedException,
+  ConnectionInitializationFailure,
+  NodeInitializationFailure,
+  TooManyConnectionsException,
+}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 /**
-  * Author: ghik
-  * Created: 27/06/16.
-  */
-class RedisNodeClientTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
+ * Author: ghik Created: 27/06/16.
+ */
+class RedisNodeClientTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesRedisServer
+    with ByteStringInterpolation {
 
   def createClient(connInitCommands: RedisBatch[Any], initOp: RedisOp[Any]) =
-    new RedisNodeClient(address, config = NodeConfig(
-      initOp = initOp,
-      maxBlockingPoolSize = 100,
-      connectionConfigs = _ => ConnectionConfig(connInitCommands),
-      blockingConnectionConfigs = _ => ConnectionConfig(connInitCommands)
-    ))
+    new RedisNodeClient(
+      address,
+      config = NodeConfig(
+        initOp = initOp,
+        maxBlockingPoolSize = 100,
+        connectionConfigs = _ => ConnectionConfig(connInitCommands),
+        blockingConnectionConfigs = _ => ConnectionConfig(connInitCommands),
+      ),
+    )
 
   test("client initialization test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = createClient(select(0) *> ping, ping.operation)
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))
@@ -57,7 +69,7 @@ class RedisNodeClientTest extends AnyFunSuite
   }
 
   test("client connection failure test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = new RedisConnectionClient(NodeAddress(port = 63498))
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))
@@ -69,7 +81,7 @@ class RedisNodeClientTest extends AnyFunSuite
   }
 
   test("connection initialization failure test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = createClient(clusterInfo, RedisOp.unit)
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))
@@ -81,7 +93,7 @@ class RedisNodeClientTest extends AnyFunSuite
   }
 
   test("client initialization failure test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = createClient(RedisBatch.unit, clusterInfo.operation)
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))

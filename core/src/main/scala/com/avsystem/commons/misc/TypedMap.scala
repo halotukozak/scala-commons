@@ -8,12 +8,11 @@ import serialization.*
 import scala.collection.IterableOps
 
 /**
- * A map whose keys are parameterized with value type.
- * This makes it possible to associate different value type with each key, in a type-safe way.
+ * A map whose keys are parameterized with value type. This makes it possible to associate different value type with
+ * each key, in a type-safe way.
  *
- * [[TypedMap[K]]] has a [[GenCodec]] instance as long as there is a `GenCodec[K[_]]` instance for the key
- * type and a [[GenCodecMapping[K]]] instance that determines the codec for the value type associated with given
- * key.
+ * [[TypedMap[K]]] has a [[GenCodec]] instance as long as there is a `GenCodec[K[_]]` instance for the key type and a
+ * [[GenCodecMapping[K]]] instance that determines the codec for the value type associated with given key.
  *
  * Example:
  * {{{
@@ -33,8 +32,7 @@ import scala.collection.IterableOps
  *   )
  * }}}
  *
- * Note that since all keys and value types are known statically,
- * the map above is somewhat equivalent to a case class:
+ * Note that since all keys and value types are known statically, the map above is somewhat equivalent to a case class:
  *
  * {{{
  *   case class Attributes(
@@ -44,8 +42,8 @@ import scala.collection.IterableOps
  * }}}
  *
  * [[TypedMap]] might be a good choice if there is a lot of attribute keys, they aren't statically known or some
- * collection-like behaviour is necessary (e.g. computing the size, iterating over all elements). A [[TypedMap]]
- * is also easier to evolve than a case class (e.g. because of binary compatibility issues).
+ * collection-like behaviour is necessary (e.g. computing the size, iterating over all elements). A [[TypedMap]] is also
+ * easier to evolve than a case class (e.g. because of binary compatibility issues).
  */
 
 class TypedMap[K[_]](val raw: Map[KWrapper[K, ?], Any]) extends AnyVal {
@@ -81,7 +79,10 @@ class TypedMap[K[_]](val raw: Map[KWrapper[K, ?], Any]) extends AnyVal {
 object TypedMap {
   implicit final class KWrapper[K[_], T](val value: K[T] & Any) extends AnyVal
 
-  given [K[_]]: Conversion[Map[K[Any] & Any, Any], Map[KWrapper[K, ?], Any]] = _.map[KWrapper[K, ?], Any] { case (k: (K[?] & Any), v) => (k, v) }
+  given [K[_]]: Conversion[Map[K[Any] & Any, Any], Map[KWrapper[K, ?], Any]] = _.map[KWrapper[K, ?], Any] {
+    case (k: (K[?] & Any), v) =>
+      (k, v)
+  }
 
   final case class Entry[K[_], T](pair: (KWrapper[K, T], T)) extends AnyVal
 
@@ -113,7 +114,7 @@ object TypedMap {
           case -1 =>
           case size => rawBuilder.sizeHint(size)
         }
-        while (input.hasNext) {
+        while input.hasNext do {
           val fieldInput = input.nextField()
           val key = keyCodec.read(fieldInput.fieldName)
           rawBuilder += ((key, codecMapping.valueCodec(key.asInstanceOf[K[Nothing]]).read(fieldInput)))
@@ -132,9 +133,8 @@ object TypedMap {
 }
 
 /**
- * Base class for key types of [[TypedMap]] (typically enums parameterized by value type).
- * Provides an instance of [[GenCodecMapping]] which is necessary for [[GenCodec]] instance for [[TypedMap]] that
- * uses this key type.
+ * Base class for key types of [[TypedMap]] (typically enums parameterized by value type). Provides an instance of
+ * [[GenCodecMapping]] which is necessary for [[GenCodec]] instance for [[TypedMap]] that uses this key type.
  */
 trait TypedKey[T]:
   def valueCodec: GenCodec[T]

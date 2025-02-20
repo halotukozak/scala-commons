@@ -3,13 +3,12 @@ package mongo
 
 import com.avsystem.commons.serialization.{ListInput, ObjectInput}
 import com.google.common.collect.AbstractIterator
-import org.bson._
+import org.bson.*
 import org.bson.types.{Decimal128, ObjectId}
 
 import _root_.scala.annotation.tailrec
 
-class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false)
-  extends BsonInput {
+class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean = false) extends BsonInput {
 
   override def readNull(): Boolean =
     bsonType == BsonType.NULL && {
@@ -77,14 +76,15 @@ class BsonReaderInput(br: BsonReader, override val legacyOptionEncoding: Boolean
 }
 
 final class BsonReaderFieldInput(name: String, br: BsonReader, legacyOptionEncoding: Boolean)
-  extends BsonReaderInput(br, legacyOptionEncoding) with BsonFieldInput {
+    extends BsonReaderInput(br, legacyOptionEncoding)
+    with BsonFieldInput {
   override def fieldName: String = name
 }
 
 final class BsonReaderIterator[T](br: BsonReader, endCallback: BsonReader => Unit, readElement: BsonReader => T)
-  extends AbstractIterator[T] {
+    extends AbstractIterator[T] {
   override def computeNext(): T = {
-    if (br.readBsonType() == BsonType.END_OF_DOCUMENT) {
+    if br.readBsonType() == BsonType.END_OF_DOCUMENT then {
       endCallback(br)
       endOfData()
     } else {
@@ -99,12 +99,10 @@ final class BsonReaderListInput(it: BsonReaderIterator[BsonReaderInput]) extends
 }
 
 final class BsonReaderObjectInput(br: BsonReader, legacyOptionEncoding: Boolean) extends ObjectInput {
-  private[this] val it = new BsonReaderIterator(br, _.readEndDocument(),
-    br => new BsonReaderFieldInput(
-      KeyEscaper.unescape(br.readName()),
-      br,
-      legacyOptionEncoding
-    )
+  private[this] val it = new BsonReaderIterator(
+    br,
+    _.readEndDocument(),
+    br => new BsonReaderFieldInput(KeyEscaper.unescape(br.readName()), br, legacyOptionEncoding),
   )
 
   private[this] var peekMark: BsonReaderMark = br.getMark
@@ -122,19 +120,21 @@ final class BsonReaderObjectInput(br: BsonReader, legacyOptionEncoding: Boolean)
           peekMark.reset()
 
           @tailrec def loop(): Opt[BsonValue] =
-            if (br.readBsonType() == BsonType.END_OF_DOCUMENT) Opt.Empty
-            else KeyEscaper.unescape(br.readName()) match {
-              case `name` => BsonValueUtils.decode(br).opt
-              case otherName =>
-                if (peekedFields eq null) {
-                  peekedFields = new MHashMap
-                }
-                peekedFields(otherName) = BsonValueUtils.decode(br)
-                peekMark = br.getMark
-                loop()
-            }
+            if br.readBsonType() == BsonType.END_OF_DOCUMENT then Opt.Empty
+            else
+              KeyEscaper.unescape(br.readName()) match {
+                case `name` => BsonValueUtils.decode(br).opt
+                case otherName =>
+                  if peekedFields eq null then {
+                    peekedFields = new MHashMap
+                  }
+                  peekedFields(otherName) = BsonValueUtils.decode(br)
+                  peekMark = br.getMark
+                  loop()
+              }
 
-          try loop() finally savedMark.reset()
+          try loop()
+          finally savedMark.reset()
         }
 
         peekedValue.map(new BsonValueFieldInput(name, _, legacyOptionEncoding))

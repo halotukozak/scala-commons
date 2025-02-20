@@ -3,7 +3,6 @@ package serialization
 
 import org.scalatest.funsuite.AnyFunSuite
 
-
 final class whenAbsentTest extends AnyFunSuite:
   @whenAbsent("default")
   val str: String = whenAbsent.value

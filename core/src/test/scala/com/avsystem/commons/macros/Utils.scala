@@ -19,10 +19,12 @@ import scala.quoted.{Expr, Quotes, Type}
 //
 //  '{ assert(TypeRepr.of[R] =:= computedResultType) }
 //}
+object Utils {
+  inline def assertEquals[T, R]: Unit = ${ assertEqualsImpl[T, R] }
 
-inline def assertEquals[T, R]: Unit = ${ assertEqualsImpl[T, R] }
-def assertEqualsImpl[T: Type, R: Type](using quotes: Quotes): Expr[Unit] = {
-  import quotes.reflect.*
-  val result = Expr(TypeRepr.of[T] =:= TypeRepr.of[R])
-  '{ assert($result) }
+  def assertEqualsImpl[T: Type, R: Type](using quotes: Quotes): Expr[Unit] = {
+    import quotes.reflect.*
+    val result = Expr(TypeRepr.of[T] =:= TypeRepr.of[R])
+    '{ assert($result) }
+  }
 }

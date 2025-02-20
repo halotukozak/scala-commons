@@ -17,7 +17,7 @@ object KeyEscaper {
   private def escapeSpecials(str: String, start: Int, sb: JStringBuilder): Unit = {
     var i = start
     val len = str.length
-    while (i < len) {
+    while i < len do {
       str.charAt(i) match {
         case Dot => sb.append(DotRepl)
         case Esc => sb.append(EscRepl)
@@ -28,28 +28,28 @@ object KeyEscaper {
   }
 
   def escape(key: String): String = {
-    if (key.isEmpty) {
+    if key.isEmpty then {
       key
     } else {
       var i = 0
       var specials = 0
-      while (i < key.length) {
+      while i < key.length do {
         val c = key.charAt(i)
-        if (c == Dot || c == Esc) specials += 1
+        if c == Dot || c == Esc then specials += 1
         i += 1
       }
 
-      if (key.charAt(0) == Dollar) {
+      if key.charAt(0) == Dollar then {
         val sb = new JStringBuilder(key.length + 1 + specials)
         sb.append(DollarRepl)
-        if (specials > 0) {
+        if specials > 0 then {
           escapeSpecials(key, 1, sb)
         } else {
           sb.append(key, 1, key.length)
         }
         sb.toString
       } else {
-        if (specials > 0) {
+        if specials > 0 then {
           val sb = new JStringBuilder(key.length + specials)
           escapeSpecials(key, 0, sb)
           sb.toString
@@ -62,7 +62,7 @@ object KeyEscaper {
 
   private def unescapeSpecials(str: String, sb: JStringBuilder): Unit = {
     var i = 0
-    while (i < str.length) {
+    while i < str.length do {
       str.charAt(i) match {
         case Esc =>
           str.charAt(i + 1) match {
@@ -82,9 +82,9 @@ object KeyEscaper {
     var specials = 0
     var i = 0
 
-    while (i < key.length) {
+    while i < key.length do {
       val c = key.charAt(i)
-      if (c == Esc) {
+      if c == Esc then {
         specials += 1
         i += 2
       } else {
@@ -92,7 +92,7 @@ object KeyEscaper {
       }
     }
 
-    if (specials > 0) {
+    if specials > 0 then {
       val sb = new JStringBuilder(key.length - specials)
       unescapeSpecials(key, sb)
       sb.toString

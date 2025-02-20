@@ -9,17 +9,21 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 /**
-  * Author: ghik
-  * Created: 27/06/16.
-  */
-class RedisConnectionClientTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesRedisServer with ByteStringInterpolation {
+ * Author: ghik Created: 27/06/16.
+ */
+class RedisConnectionClientTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesRedisServer
+    with ByteStringInterpolation {
 
   def createClient(initCommands: RedisBatch[Any]): RedisConnectionClient =
     new RedisConnectionClient(address, config = ConnectionConfig(initCommands))
 
   test("client initialization test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = createClient(select(0) *> clientSetname("name") *> ping)
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))
@@ -33,7 +37,7 @@ class RedisConnectionClientTest extends AnyFunSuite
   }
 
   test("client connection failure test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = new RedisConnectionClient(NodeAddress(port = 63498))
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))
@@ -45,7 +49,7 @@ class RedisConnectionClientTest extends AnyFunSuite
   }
 
   test("client initialization failure test") {
-    import RedisApi.Batches.StringTyped._
+    import RedisApi.Batches.StringTyped.*
     val client = createClient(clusterInfo)
 
     val f1 = client.executeBatch(echo(ByteString("LOL1")))

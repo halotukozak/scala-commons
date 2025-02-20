@@ -2,16 +2,14 @@ package com.avsystem.commons
 package redis.commands
 
 import com.avsystem.commons.redis.ClusterUtils.keyWithSameSlotAs
-import com.avsystem.commons.redis._
-
+import com.avsystem.commons.redis.*
 
 /**
-  * Author: ghik
-  * Created: 14/04/16.
-  */
+ * Author: ghik Created: 14/04/16.
+ */
 trait KeyedKeysApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("COPY") {
     setup(set("{key}1", "value"))
@@ -95,10 +93,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   }
 
   apiTest("PTTL") {
-    setup(
-      set("key", "value"),
-      setex("exkey", Int.MaxValue, "value")
-    )
+    setup(set("key", "value"), setex("exkey", Int.MaxValue, "value"))
     pttl("???").assertEquals(Opt.Empty)
     pttl("key").assertEquals(Opt(Opt.Empty))
     pttl("exkey").assert(_.exists(_.nonEmpty))
@@ -121,8 +116,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   }
 
   apiTest("SORT") {
-    sort("somelist",
-      SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
+    sort("somelist", SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
   }
 
   apiTest("SORT with STORE") {
@@ -138,10 +132,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
   }
 
   apiTest("TTL") {
-    setup(
-      set("key", "value"),
-      setex("exkey", Int.MaxValue, "value")
-    )
+    setup(set("key", "value"), setex("exkey", Int.MaxValue, "value"))
     ttl("???").assertEquals(Opt.Empty)
     ttl("key").assertEquals(Opt(Opt.Empty))
     ttl("exkey").assert(_.exists(_.nonEmpty))
@@ -163,7 +154,7 @@ trait KeyedKeysApiSuite extends CommandsSuite {
 
 trait NodeKeysApiSuite extends KeyedKeysApiSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   private val scanKeys = (0 until 256).map(i => s"toscan$i")
 
@@ -188,8 +179,8 @@ trait NodeKeysApiSuite extends KeyedKeysApiSuite {
   }
 
   apiTest("SORT with GET") {
-    sortGet("somelist", Seq(FieldPattern("hash", "*")),
-      SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true).assert(_.isEmpty)
+    sortGet("somelist", Seq(FieldPattern("hash", "*")), SelfPattern, SortLimit(0, 1), SortOrder.Desc, alpha = true)
+      .assert(_.isEmpty)
   }
 
   apiTest("SORT with BY") {

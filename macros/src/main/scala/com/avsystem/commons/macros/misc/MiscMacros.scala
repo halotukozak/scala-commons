@@ -3,7 +3,6 @@ package macros.misc
 
 import scala.quoted.*
 
-
 //
 //import com.avsystem.commons.macros.AbstractMacroCommons
 //
@@ -39,7 +38,6 @@ import scala.quoted.*
 //    }
 //
 
-
 //
 //  def crossImpl(forJvm: Tree, forJs: Tree): Tree =
 //    if (isScalaJs) forJs else forJvm
@@ -62,7 +60,6 @@ import scala.quoted.*
 //
 //  case class NonConcreteTypeException(tpe: Type) extends RuntimeException with NoStackTrace
 //
-
 
 //
 //  private val allowedSymbols: mutable.Set[Symbol] = new mutable.HashSet
@@ -470,18 +467,7 @@ import scala.quoted.*
 //
 //  lazy val WhenAbsentAT: Type = staticType(tq"$CommonsPkg.serialization.whenAbsent[_]")
 //
-//  def whenAbsentValue: Tree = {
-//    val param = c.internal.enclosingOwner match {
-//      case DefaultValueMethod(p) => p
-//      case p => p
-//    }
-//    findAnnotation(param, WhenAbsentAT).map(_.tree).map {
-//      case Apply(_, List(MaybeTyped(arg, _))) => arg
-//      case t => abort(s"unexpected tree for @whenAbsent annotation: $t")
-//    } getOrElse {
-//      abort(s"no @whenAbsent annotation found on $param of ${param.owner}")
-//    }
-//  }
+
 //
 //  def inferValue: Tree = {
 //    val param = c.internal.enclosingOwner match {

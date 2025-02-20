@@ -10,7 +10,9 @@ private[macros] object scalaJStreamOps {
   inline def mkScalaJsStreamSpecialized[T](stream: ScalaJStream[T]): SpecializedScalaJStream[T] =
     ${ mkScalaJsStreamSpecializedImpl[T]('{ stream }) }
 
-  private def mkScalaJsStreamSpecializedImpl[T: Type](stream: Expr[ScalaJStream[T]])(using Quotes): Expr[SpecializedScalaJStream[T]] = {
+  private def mkScalaJsStreamSpecializedImpl[T: Type](
+    stream: Expr[ScalaJStream[T]],
+  )(using Quotes): Expr[SpecializedScalaJStream[T]] = {
     Type.of[T] match
       case '[Int] => '{ $stream.asIntStream(using summonInline[T =:= Int]) }
       case '[Long] => '{ $stream.asLongStream(using summonInline[T =:= Long]) }

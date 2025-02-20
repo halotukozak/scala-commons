@@ -8,7 +8,8 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.collection.mutable.ListBuffer
 import scala.quoted.*
 
-object ComponentMacros extends MacroUtils {
+object ComponentMacros {
+
   type SingletonCache = ConcurrentHashMap[ComponentInfo, AtomicReference[Future[?]]]
 
   //  def component[T: Type](definition: Expr[T], componentInfo: Expr[ComponentInfo], singletonCache: Expr[Option[SingletonCache]])(using Quotes): Expr[Component[T]] =
@@ -51,8 +52,16 @@ object ComponentMacros extends MacroUtils {
   //         """
   //  }
 
-  def mkComponent[T: Type](definition: Expr[T], componentInfo: Expr[ComponentInfo], singletonsCache: Expr[Option[SingletonCache]], async: Boolean)(using quotes: Quotes): Expr[Component[T]] = {
+  def mkComponent[T: Type](
+    definition: Expr[T],
+    componentInfo: Expr[ComponentInfo],
+    singletonsCache: Expr[Option[SingletonCache]],
+    async: Boolean,
+  )(using quotes: Quotes): Expr[Component[T]] = {
+    val macroUtils = new HasMacroUtils {}
+    import macroUtils.*
     import quotes.reflect.*
+
     object ComponentRef {
       lazy val ComponentRefSym: Symbol = TypeRepr.of[Component].classSymbol.get.singleMethodMember("ref")
       lazy val InjectSym: Symbol = TypeRepr.of[Components].classSymbol.get.fieldMember("inject")
@@ -73,7 +82,7 @@ object ComponentMacros extends MacroUtils {
 
       override def traverseTree(tree: Tree)(owner: Symbol): Unit = tree match
         case ComponentRef(_) => // stop
-        case t@(_: Definition | Lambda(_) | _: Bind) if t.symbol != Symbol.noSymbol =>
+        case t @ (_: Definition | Lambda(_) | _: Bind) if t.symbol != Symbol.noSymbol =>
           symsBuilder += t.symbol
           super.traverseTree(tree)(owner)
         case _ =>
@@ -85,33 +94,46 @@ object ComponentMacros extends MacroUtils {
 
     object DependencyValidator extends TreeTraverser:
       override def traverseTree(tree: Tree)(owner: Symbol): Unit = tree match
-        case t@ComponentRef(_) =>
-          report.errorAndAbort(s"illegal nested component reference inside expression representing component dependency", t.pos)
+        case t @ ComponentRef(_) =>
+          report.errorAndAbort(
+            s"illegal nested component reference inside expression representing component dependency",
+            t.pos,
+          )
         case t if t.symbol != Symbol.noSymbol && componentDefLocals.contains(t.symbol) =>
-          report.errorAndAbort(s"illegal local value or method reference inside expression representing component dependency", t.pos)
+          report.errorAndAbort(
+            s"illegal local value or method reference inside expression representing component dependency",
+            t.pos,
+          )
         case _ =>
 
     DependencyValidator.traverseTree(definition.asTerm)(Symbol.noSymbol)
-    final class DependencyExtractor(depArray: Expr[IndexedSeq[Any]])(depsBuf: Expr[ListBuffer[Component[?]]]) extends TreeMap {
+    final class DependencyExtractor(depArray: Expr[IndexedSeq[Any]])(depsBuf: Expr[ListBuffer[Component[?]]])
+        extends TreeMap {
       lazy val ComponentInfoSym: Symbol = TypeRepr.of[ComponentInfo.type].classSymbol.get.fieldMember("info")
 
       override def transformTerm(term: Term)(owner: Symbol): Term = term match
         case ComponentRef((component, componentTpe)) =>
           DependencyValidator.traverseTree(component)(component.symbol.owner)
           componentTpe.asType match
-            case '[t] => '{
-              val dep = ${ component.asExprOf[Component[?]] }
-              $depsBuf += dep
-              $depArray($depsBuf.size - 1).asInstanceOf[t]
-            }.asTerm
+            case '[t] =>
+              '{
+                val dep = ${ component.asExprOf[Component[?]] }
+                $depsBuf += dep
+                $depArray($depsBuf.size - 1).asInstanceOf[t]
+              }.asTerm
         case t if t.symbol == ComponentInfoSym =>
           componentInfo.asTerm
         case _ =>
           super.transformTerm(term)(owner)
     }
 
-    def asyncDefinition(depArray: Expr[IndexedSeq[Any]])(depsBuf: Expr[ListBuffer[Component[?]]])(using Quotes): Expr[ExecutionContext => Future[T]] = {
-      val transformedDefinition = DependencyExtractor(depArray)(depsBuf).transformTree(definition.asTerm)(depArray.asTerm.symbol.owner).asExprOf[T]
+    def asyncDefinition(
+      depArray: Expr[IndexedSeq[Any]],
+    )(depsBuf: Expr[ListBuffer[Component[?]]])(using Quotes): Expr[ExecutionContext => Future[T]] = {
+      val transformedDefinition =
+        DependencyExtractor(depArray)(depsBuf)
+          .transformTree(definition.asTerm)(depArray.asTerm.symbol.owner)
+          .asExprOf[T]
       if async then '{ _ => Future.successful($transformedDefinition) }
       else '{ Component.async($transformedDefinition) }
     }
@@ -121,22 +143,23 @@ object ComponentMacros extends MacroUtils {
 
       new Component[T](
         $componentInfo,
-        IndexedSeq(depsBuf.result() *),
+        IndexedSeq(depsBuf.result()*),
         (depArray: IndexedSeq[Any]) => ${ asyncDefinition('{ depArray })('{ depsBuf }) },
       )
     }
 
     singletonsCache match
       case '{ None } => result
-      case _ => '{
-        val res = $result
-        $singletonsCache match
-          case Some(singletonsCache) =>
-            val cacheStorage = singletonsCache
-              .computeIfAbsent($componentInfo, _ => new AtomicReference)
-              .asInstanceOf[AtomicReference[Future[T]]]
-            res.cached(cacheStorage, $componentInfo)
-          case _ => res
-      }
+      case _ =>
+        '{
+          val res = $result
+          $singletonsCache match
+            case Some(singletonsCache) =>
+              val cacheStorage = singletonsCache
+                .computeIfAbsent($componentInfo, _ => new AtomicReference)
+                .asInstanceOf[AtomicReference[Future[T]]]
+              res.cached(cacheStorage, $componentInfo)
+            case _ => res
+        }
   }
 }

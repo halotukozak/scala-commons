@@ -2,15 +2,15 @@ package com.avsystem.commons
 package redis.examples
 
 import org.apache.pekko.actor.ActorSystem
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 
 // Global execution context is used for the sake of simplicity of this example,
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
-  * Examples showing how to create and execute batches made of multiple Redis commands.
-  */
+ * Examples showing how to create and execute batches made of multiple Redis commands.
+ */
 object PipeliningExample extends App {
   implicit val actorSystem: ActorSystem = ActorSystem()
 
@@ -39,12 +39,12 @@ object PipeliningExample extends App {
   // When merging two batches with each other, you can discard result of one of them by using *> or <* operator
   // In this case we're not interested in result of SET command, only INCR
   val singleResultBatch: RedisBatch[Long] =
-  api.set("key", "value") *> api.incr("otherKey")
+    api.set("key", "value") *> api.incr("otherKey")
 
   // `sequence` works not only on tuples but also on collections
   // In this case we're sending 100 INCR commands in a single batch and get the result in a collection
   val collectionBatch: RedisBatch[Seq[Long]] =
-  (0 until 100).map(i => api.incr(s"key$i")).sequence
+    (0 until 100).map(i => api.incr(s"key$i")).sequence
 
   // You can have both tuples and collections in a single batch, arbitrarily nested:
   val compositeBatch: RedisBatch[(Opt[String], Seq[Long])] =
@@ -53,5 +53,7 @@ object PipeliningExample extends App {
   // NOTE: when using `executeBatch`, the type system does not protect you from sending commands not supported by
   // particular client type. For example, the code below will compile, but execution will fail with
   // `ForbiddenCommandException`
-  executor.executeBatch(api.clientSetname("name")) // ForbiddedCommandException, can't execute CLIENT SETNAME using RedisNodeClient
+  executor.executeBatch(
+    api.clientSetname("name"),
+  ) // ForbiddedCommandException, can't execute CLIENT SETNAME using RedisNodeClient
 }

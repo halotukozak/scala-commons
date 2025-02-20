@@ -4,7 +4,7 @@ package serialization
 import serialization.GenCodec.ReadFailure
 
 final class DefaultCaseObjectInput(firstField: FieldInput, actualInput: ObjectInput, caseFieldName: String)
-  extends ObjectInput {
+    extends ObjectInput {
 
   private var atFirstField = true
 

@@ -9,7 +9,6 @@ def aggregatedAnnots(using quotes: Quotes): Expr[List[StaticAnnotation]] = '{
   ???
 }
 
-
 //{
 //  import quotes.utils.*
 //

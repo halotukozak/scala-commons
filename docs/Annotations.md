@@ -70,7 +70,7 @@ It is possible to create your own annotations which group - or aggregate - multi
 This way you can reduce boilerplate associated with annotations.
 
 In order to do that, you must create an annotation class that extends `AnnotationAggregate` and
-implement its `aggregated` method as `final def`, using `reifyAggregated` macro as its body. 
+implement its `aggregated` method as `final def`, using `reifyAggregated` macro as its body.
 You can then put your aggregated annotations on that method itself, e.g.
 
 ```scala

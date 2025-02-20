@@ -6,8 +6,8 @@ import scala.annotation.nowarn
 import scala.annotation.unchecked.uncheckedVariance
 
 /**
- * Abstraction over simple `Iterator` that allows one to close the resources associated with iterator without
- * iterating through the whole result set.
+ * Abstraction over simple `Iterator` that allows one to close the resources associated with iterator without iterating
+ * through the whole result set.
  *
  * Note: This is both Java and Scala `Iterator`.
  */

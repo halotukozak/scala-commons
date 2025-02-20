@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package serialization
 
-
 import annotation.explicitGenerics
 import derivation.{AllowImplicitMacro, DeferredInstance}
 import jiop.JFactory
@@ -15,16 +14,18 @@ import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.Factory
 
 /**
- * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized
- * from [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
- * objects, without being bound to particular format like JSON. The actual format is determined by implementation
- * of [[Input]] and [[Output]].
+ * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized from
+ * [[Input]] (format-agnostic "input stream"). `GenCodec` is supposed to capture generic structure of serialized
+ * objects, without being bound to particular format like JSON. The actual format is determined by implementation of
+ * [[Input]] and [[Output]].
  *
- * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and `materializeRecursively`).
- * However, [[GenCodec]] instances still need to be explicitly declared and won't be derived "automagically".
+ * There are convenient macros for automatic derivation of [[GenCodec]] instances (`materialize` and
+ * `materializeRecursively`). However, [[GenCodec]] instances still need to be explicitly declared and won't be derived
+ * "automagically".
  */
 @implicitNotFound("No GenCodec found for ${T}")
 trait GenCodec[T] {
+
   /**
    * Deserializes a value of type `T` from an [[Input]].
    */
@@ -36,8 +37,8 @@ trait GenCodec[T] {
   def write(output: Output, value: T): Unit
 
   /**
-   * Transforms this codec into a codec of other type using a bidirectional conversion
-   * between the original and new type.
+   * Transforms this codec into a codec of other type using a bidirectional conversion between the original and new
+   * type.
    */
   final def transform[U](onWrite: U => T, onRead: T => U): GenCodec[U] =
     new GenCodec.Transformed[U, T](this, onWrite, onRead)
@@ -47,29 +48,23 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   def apply[T](using codec: GenCodec[T]): GenCodec[T] = codec
 
   /**
-   * Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of:
-   * <ul>
-   * <li>singleton type, e.g. an `object`</li>
-   * <li>case class whose every field type has its own [[GenCodec]]</li>
-   * <li>(generalization of case classes) class or trait whose companion object has a pair of case-class-like `apply`
-   * and `unapply` methods and every parameter type of `apply` method has its own [[GenCodec]]
-   * </li>
-   * <li>sealed hierarchy in which every non-abstract subclass either has its own [[GenCodec]] or it can be
-   * automatically materialized with the same mechanism</li>
-   * </ul>
-   * Note that automatic materialization does NOT descend into types that `T` is made of (e.g. types of case class
-   * fields must have their own codecs independently declared). If you want recursive materialization, use
-   * `materializeRecursively`.
+   * Macro that automatically materializes a [[GenCodec]] for some type `T`, which must be one of: <ul> <li>singleton
+   * type, e.g. an `object`</li> <li>case class whose every field type has its own [[GenCodec]]</li> <li>(generalization
+   * of case classes) class or trait whose companion object has a pair of case-class-like `apply` and `unapply` methods
+   * and every parameter type of `apply` method has its own [[GenCodec]] </li> <li>sealed hierarchy in which every
+   * non-abstract subclass either has its own [[GenCodec]] or it can be automatically materialized with the same
+   * mechanism</li> </ul> Note that automatic materialization does NOT descend into types that `T` is made of (e.g.
+   * types of case class fields must have their own codecs independently declared). If you want recursive
+   * materialization, use `materializeRecursively`.
    */
   inline def materialize[T]: GenCodec[T] = ${ materializeImpl[T] }
 
   /**
-   * Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on
-   * passed `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class
-   * and `applyUnapplyProvider` was its companion object.
-   * This is useful for easy derivation of [[GenCodec]] for third party classes which don't have their own companion
-   * objects with `apply` and `unapply`. So essentially the `applyUnapplyProvider` is a "fake companion object"
-   * of type `T`.
+   * Materializes a [[GenCodec]] for type `T` using `apply` and `unapply`/`unapplySeq` methods available on passed
+   * `applyUnapplyProvider` object. The signatures of `apply` and `unapply` must be as if `T` was a case class and
+   * `applyUnapplyProvider` was its companion object. This is useful for easy derivation of [[GenCodec]] for third party
+   * classes which don't have their own companion objects with `apply` and `unapply`. So essentially the
+   * `applyUnapplyProvider` is a "fake companion object" of type `T`.
    *
    * Example:
    * {{{
@@ -90,12 +85,14 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   /**
    * Materializes a [[GenCodec]] for a POJO that has a fluent builder. The fluent builder must have setters
-   * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent).
-   * The builder is assumed to have default value for each field. These values are considered "transient", i.e.
-   * the codec will omit them during serialization, similarly to [[transientDefault]] annotation in case classes.
+   * corresponding to the POJO's getters. Each setter must return the builder itself (because it's fluent). The builder
+   * is assumed to have default value for each field. These values are considered "transient", i.e. the codec will omit
+   * them during serialization, similarly to [[transientDefault]] annotation in case classes.
    *
-   * @param newBuilder an expression that creates a fresh builder
-   * @param build      a function that builds the final value (typically `_.build()` or `_.get()`)
+   * @param newBuilder
+   *   an expression that creates a fresh builder
+   * @param build
+   *   a function that builds the final value (typically `_.build()` or `_.get()`)
    */
   def fromJavaBuilder[T, B](newBuilder: => B)(build: B => T): GenCodec[T] = ???
 
@@ -176,12 +173,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     createList(readFun, writeFun, allowNull = false)
 
   /**
-   * Helper method to manually implement a `GenCodec` that writes an object. NOTE: in most cases the easiest way to
-   * have a custom object codec is to manually implement `apply` and `unapply`/`unapplySeq` methods in companion object
-   * of your type or use [[fromApplyUnapplyProvider]] if the type comes from a third party code and you can't
-   * modify its companion object.
+   * Helper method to manually implement a `GenCodec` that writes an object. NOTE: in most cases the easiest way to have
+   * a custom object codec is to manually implement `apply` and `unapply`/`unapplySeq` methods in companion object of
+   * your type or use [[fromApplyUnapplyProvider]] if the type comes from a third party code and you can't modify its
+   * companion object.
    */
-  def createObject[T](readFun: ObjectInput => T, writeFun: (ObjectOutput, T) => Any, allowNull: Boolean): GenObjectCodec[T] =
+  def createObject[T](
+    readFun: ObjectInput => T,
+    writeFun: (ObjectOutput, T) => Any,
+    allowNull: Boolean,
+  ): GenObjectCodec[T] =
     new ObjectCodec[T] {
       def nullable: Boolean = allowNull
 
@@ -210,32 +211,34 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   final case class MissingField(typeRepr: String, fieldName: String)
-    extends ReadFailure(s"Cannot read $typeRepr, field $fieldName is missing in decoded data")
+      extends ReadFailure(s"Cannot read $typeRepr, field $fieldName is missing in decoded data")
 
   final case class UnknownCase(typeRepr: String, caseName: String)
-    extends ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
+      extends ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
 
   final case class MissingCase(typeRepr: String, caseFieldName: String, fieldToRead: Opt[String])
-    extends ReadFailure(fieldToRead match
-      case Opt(fr) => s"Cannot read field $fr of $typeRepr before $caseFieldName field is read"
-      case Opt.Empty => s"Cannot read $typeRepr, $caseFieldName field is missing",
-    )
+      extends ReadFailure(fieldToRead match
+        case Opt(fr) => s"Cannot read field $fr of $typeRepr before $caseFieldName field is read"
+        case Opt.Empty => s"Cannot read $typeRepr, $caseFieldName field is missing",
+      )
 
   final case class NotSingleField(typeRepr: String, empty: Boolean)
-    extends ReadFailure(s"Cannot read $typeRepr, expected object with exactly one field but got " +
-      (if empty then "empty object" else "more than one"))
+      extends ReadFailure(
+        s"Cannot read $typeRepr, expected object with exactly one field but got " +
+          (if empty then "empty object" else "more than one"),
+      )
 
   final case class CaseReadFailed(typeRepr: String, caseName: String, cause: Throwable)
-    extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
+      extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
 
   final case class FieldReadFailed(typeRepr: String, fieldName: String, cause: Throwable)
-    extends ReadFailure(s"Failed to read field $fieldName of $typeRepr", cause)
+      extends ReadFailure(s"Failed to read field $fieldName of $typeRepr", cause)
 
   final case class ListElementReadFailed(idx: Int, cause: Throwable)
-    extends ReadFailure(s"Failed to read list element at index $idx", cause)
+      extends ReadFailure(s"Failed to read list element at index $idx", cause)
 
   final case class MapFieldReadFailed(fieldName: String, cause: Throwable)
-    extends ReadFailure(s"Failed to read map field $fieldName", cause)
+      extends ReadFailure(s"Failed to read map field $fieldName", cause)
 
   open class WriteFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
@@ -244,22 +247,22 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   final case class UnknownWrittenCase[T](typeRepr: String, value: T)
-    extends WriteFailure(s"Failed to write $typeRepr: value $value does not match any of known subtypes")
+      extends WriteFailure(s"Failed to write $typeRepr: value $value does not match any of known subtypes")
 
   final case class UnapplyFailed(typeRepr: String)
-    extends WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
+      extends WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
 
   final case class CaseWriteFailed(typeRepr: String, caseName: String, cause: Throwable)
-    extends WriteFailure(s"Failed to write case $caseName of $typeRepr", cause)
+      extends WriteFailure(s"Failed to write case $caseName of $typeRepr", cause)
 
   final case class FieldWriteFailed(typeRepr: String, fieldName: String, cause: Throwable)
-    extends WriteFailure(s"Failed to write field $fieldName of $typeRepr", cause)
+      extends WriteFailure(s"Failed to write field $fieldName of $typeRepr", cause)
 
   final case class ListElementWriteFailed(idx: Int, cause: Throwable)
-    extends WriteFailure(s"Failed to write list element at index $idx", cause)
+      extends WriteFailure(s"Failed to write list element at index $idx", cause)
 
   final case class MapFieldWriteFailed(fieldName: String, cause: Throwable)
-    extends WriteFailure(s"Failed to write map field $fieldName", cause)
+      extends WriteFailure(s"Failed to write map field $fieldName", cause)
 
   final class Deferred[T] extends DeferredInstance[GenCodec[T]] with GenCodec[T] {
     def read(input: Input): T = underlying.read(input)
@@ -275,13 +278,11 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     def writeNonNull(output: Output, value: T): Unit
 
     final override def write(output: Output, value: T): Unit =
-      if value == null then
-        if nullable then output.writeNull() else throw new WriteFailure("null")
+      if value == null then if nullable then output.writeNull() else throw new WriteFailure("null")
       else writeNonNull(output, value)
 
     final override def read(input: Input): T =
-      if input.readNull() then
-        if nullable then null.asInstanceOf[T] else throw new ReadFailure("null")
+      if input.readNull() then if nullable then null.asInstanceOf[T] else throw new ReadFailure("null")
       else readNonNull(input)
   }
 
@@ -317,9 +318,9 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   /**
-   * Convenience base class for `GenCodec`s that serialize values as objects.
-   * NOTE: if you need to implement a custom `GenCodec` that writes an object, the best way to do it is to have
-   * manually implemented `apply` and `unapply` in companion object or by using [[GenCodec.fromApplyUnapplyProvider]].
+   * Convenience base class for `GenCodec`s that serialize values as objects. NOTE: if you need to implement a custom
+   * `GenCodec` that writes an object, the best way to do it is to have manually implemented `apply` and `unapply` in
+   * companion object or by using [[GenCodec.fromApplyUnapplyProvider]].
    */
   trait ObjectCodec[T] extends GenObjectCodec[T] with NullSafeCodec[T] {
     def readObject(input: ObjectInput): T
@@ -363,7 +364,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   object OOOFieldsObjectCodec {
     // this was introduced so that transparent wrapper cases are possible in flat sealed hierarchies
-    final class Transformed[A, B](val wrapped: OOOFieldsObjectCodec[B], onWrite: A => B, onRead: B => A) extends OOOFieldsObjectCodec[A] {
+    final class Transformed[A, B](val wrapped: OOOFieldsObjectCodec[B], onWrite: A => B, onRead: B => A)
+        extends OOOFieldsObjectCodec[A] {
       def size(value: A): Int =
         wrapped.size(onWrite(value))
 
@@ -376,32 +378,38 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       def nullable: Boolean = wrapped.nullable
     }
 
-    implicit def fromTransparentWrapping[R, T](implicit tw: TransparentWrapping[R, T], wrapped: OOOFieldsObjectCodec[R]): OOOFieldsObjectCodec[T] =
+    implicit def fromTransparentWrapping[R, T](implicit
+      tw: TransparentWrapping[R, T],
+      wrapped: OOOFieldsObjectCodec[R],
+    ): OOOFieldsObjectCodec[T] =
       new Transformed(wrapped, tw.unwrap, tw.wrap)
   }
 
   final class Transformed[A, B](val wrapped: GenCodec[B], onWrite: A => B, onRead: B => A) extends GenCodec[A] {
     def read(input: Input): A = {
       val wrappedValue = wrapped.read(input)
-      try onRead(wrappedValue) catch case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
+      try onRead(wrappedValue)
+      catch case NonFatal(cause) => throw new ReadFailure(s"onRead conversion failed", cause)
     }
 
     def write(output: Output, value: A): Unit = {
-      val wrappedValue = try onWrite(value) catch case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
-      wrapped.write(output, wrappedValue)
+      val wrappedValue =
+        try onWrite(value)
+        catch
+          case NonFatal(cause) =>
+            throw new WriteFailure(s"onWrite conversion failed", cause)
+            wrapped.write(output, wrappedValue)
     }
   }
 
   def underlyingCodec(codec: GenCodec[?]): GenCodec[?] = codec match
-    case tc: Transformed[_, _] => underlyingCodec(tc.wrapped)
+    case tc: Transformed[?, ?] => underlyingCodec(tc.wrapped)
     case _ => codec
 
-
-  class SubclassCodec[T: ClassTag, S >: T : GenCodec](val nullable: Boolean) extends NullSafeCodec[T] {
+  class SubclassCodec[T: ClassTag, S >: T: GenCodec](val nullable: Boolean) extends NullSafeCodec[T] {
     override def readNonNull(input: Input): T = GenCodec.read[S](input) match
       case sub: T => sub
       case v => throw new ReadFailure(s"$v is not an instance of ${classTag[T].runtimeClass}")
-
 
     override def writeNonNull(output: Output, value: T): Unit = GenCodec.write[S](output, value)
   }
@@ -414,13 +422,13 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     create[Nothing](_ => throw new ReadFailure("read Nothing"), (_, _) => throw new WriteFailure("write Nothing"))
 
   given NullCodec: GenCodec[Null] =
-    create[Null](i => if (i.readNull()) null else notNull, (o, _) => o.writeNull())
+    create[Null](i => if i.readNull() then null else notNull, (o, _) => o.writeNull())
 
   given UnitCodec: GenCodec[Unit] =
-    create[Unit](i => if (i.readNull()) () else notNull, (o, _) => o.writeNull())
+    create[Unit](i => if i.readNull() then () else notNull, (o, _) => o.writeNull())
 
   given VoidCodec: GenCodec[Void] =
-    create[Void](i => if (i.readNull()) null else notNull, (o, _) => o.writeNull())
+    create[Void](i => if i.readNull() then null else notNull, (o, _) => o.writeNull())
 
   given BooleanCodec: GenCodec[Boolean] = nonNullSimple(_.readBoolean(), _ writeBoolean _)
 
@@ -488,7 +496,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   extension [A](coll: BIterable[A]) {
     private def writeToList(lo: ListOutput)(using writer: GenCodec[A]): Unit = {
       lo.declareSizeOf(coll)
-      coll.foreach(new(A => Unit) {
+      coll.foreach(new (A => Unit) {
         private var idx = 0
 
         def apply(a: A): Unit = {
@@ -497,7 +505,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
           idx += 1
         }
       })
-    }}
+    }
+  }
 
   extension [A, B](coll: BIterable[(A, B)]) {
 
@@ -519,14 +528,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         case -1 =>
         case size => b.sizeHint(size)
       var idx = 0
-      while (li.hasNext) {
-        val a = try read[A](li.nextElement()) catch case NonFatal(e) => throw ListElementReadFailed(idx, e)
+      while li.hasNext do {
+        val a =
+          try read[A](li.nextElement())
+          catch case NonFatal(e) => throw ListElementReadFailed(idx, e)
         b += a
         idx += 1
       }
       b.result()
-    }}
-
+    }
+  }
 
   extension (oi: ObjectInput) {
 
@@ -535,32 +546,40 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
       oi.knownSize match
         case -1 =>
         case size => b.sizeHint(size)
-      while (oi.hasNext) {
+      while oi.hasNext do {
         val fi = oi.nextField()
-        val entry = try (GenKeyCodec.read[K](fi.fieldName), read[V](fi)) catch case NonFatal(e) => throw MapFieldReadFailed(fi.fieldName, e)
+        val entry =
+          try (GenKeyCodec.read[K](fi.fieldName), read[V](fi))
+          catch case NonFatal(e) => throw MapFieldReadFailed(fi.fieldName, e)
         b += entry
       }
       b.result()
-    }}
+    }
+  }
 
-  given arrayCodec[T: ClassTag : GenCodec]: GenCodec[Array[T]] =
-    nullableList[Array[T]](_.iterator(read[T]).toArray[T], (lo, arr) => {
-      lo.declareSize(arr.length)
+  given arrayCodec[T: ClassTag: GenCodec]: GenCodec[Array[T]] =
+    nullableList[Array[T]](
+      _.iterator(read[T]).toArray[T],
+      (lo, arr) => {
+        lo.declareSize(arr.length)
 
-      @tailrec def loop(idx: Int): Unit =
-        if idx < arr.length then {
-          GenCodec.write(lo.writeElement(), arr(idx))
-          loop(idx + 1)
-        }
+        @tailrec def loop(idx: Int): Unit =
+          if idx < arr.length then {
+            GenCodec.write(lo.writeElement(), arr(idx))
+            loop(idx + 1)
+          }
 
-      loop(0)
-    })
+        loop(0)
+      },
+    )
 
   // these are covered by the generic `seqCodec` and `setCodec` but making them explicit may be easier
   // for the compiler and also make IntelliJ less confused
-  given bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] = seqCodec[BSeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
+  given bseqCodec[T: GenCodec]: GenCodec[BSeq[T]] =
+    seqCodec[BSeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
 
-  given iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] = seqCodec[ISeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
+  given iseqCodec[T: GenCodec]: GenCodec[ISeq[T]] =
+    seqCodec[ISeq, T](using GenCodec[T], implicitly[Factory[T, List[T]]])
 
   given mseqCodec[T: GenCodec]: GenCodec[MSeq[T]] = seqCodec[MSeq, T]
 
@@ -584,36 +603,24 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 
   given mhashSetCodec[T: GenCodec]: GenCodec[MHashSet[T]] = setCodec[MHashSet, T]
 
-  implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](
-    implicit fac: Factory[T, C[T]],
-  ): GenCodec[C[T]] =
+  implicit def seqCodec[C[X] <: BSeq[X], T: GenCodec](implicit fac: Factory[T, C[T]]): GenCodec[C[T]] =
     nullableList[C[T] & BSeq[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
-  implicit def setCodec[C[X] <: BSet[X], T: GenCodec](
-    implicit fac: Factory[T, C[T]],
-  ): GenCodec[C[T]] =
+  implicit def setCodec[C[X] <: BSet[X], T: GenCodec](implicit fac: Factory[T, C[T]]): GenCodec[C[T]] =
     nullableList[C[T] & BSet[T]](_.collectTo[T, C[T]], (lo, c) => c.writeToList(lo))
 
-  implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](
-    implicit cbf: JFactory[T, C[T]],
-  ): GenCodec[C[T]] =
+  implicit def jCollectionCodec[C[X] <: JCollection[X], T: GenCodec](implicit cbf: JFactory[T, C[T]]): GenCodec[C[T]] =
     nullableList[C[T]](_.collectTo[T, C[T]], (lo, c) => c.asScala.writeToList(lo))
 
-  implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit fac: Factory[(K, V), M[K, V]],
+  implicit def mapCodec[M[X, Y] <: BMap[X, Y], K: GenKeyCodec, V: GenCodec](implicit
+    fac: Factory[(K, V), M[K, V]],
   ): GenObjectCodec[M[K, V]] =
-    nullableObject[M[K, V]](
-      _.collectTo[K, V, M[K, V]],
-      (oo, value) => value.writeToObject(oo),
-    )
+    nullableObject[M[K, V]](_.collectTo[K, V, M[K, V]], (oo, value) => value.writeToObject(oo))
 
-  implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](
-    implicit cbf: JFactory[(K, V), M[K, V]],
+  implicit def jMapCodec[M[X, Y] <: JMap[X, Y], K: GenKeyCodec, V: GenCodec](implicit
+    cbf: JFactory[(K, V), M[K, V]],
   ): GenObjectCodec[M[K, V]] =
-    nullableObject[M[K, V]](
-      _.collectTo[K, V, M[K, V]],
-      (oo, value) => value.asScala.writeToObject(oo),
-    )
+    nullableObject[M[K, V]](_.collectTo[K, V, M[K, V]], (oo, value) => value.asScala.writeToObject(oo))
 
   given optionCodec[T: GenCodec]: GenCodec[Option[T]] = create[Option[T]](
     input =>
@@ -622,18 +629,17 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
         val res = if li.hasNext then Some(read[T](li.nextElement())) else None
         li.skipRemaining()
         res
-      }
-      else if input.readNull() then None
+      } else if input.readNull() then None
       else Some(read[T](input)),
-
     (output, valueOption) =>
       if output.legacyOptionEncoding then {
         val lo = output.writeList()
         valueOption.foreach(v => write[T](lo.writeElement(), v))
         lo.finish()
-      } else valueOption match
-        case Some(v) => write[T](output, v)
-        case None => output.writeNull(),
+      } else
+        valueOption match
+          case Some(v) => write[T](output, v)
+          case None => output.writeNull(),
   )
 
   given nOptCodec[T: GenCodec]: GenCodec[NOpt[T]] =
@@ -642,15 +648,16 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   given optCodec[T: GenCodec]: GenCodec[Opt[T]] =
     create[Opt[T]](
       i => if i.readNull() then Opt.Empty else Opt(read[T](i)),
-      (o, vo) => vo match
-        case Opt(v) => write[T](o, v)
-        case Opt.Empty => o.writeNull(),
+      (o, vo) =>
+        vo match
+          case Opt(v) => write[T](o, v)
+          case Opt.Empty => o.writeNull(),
     )
 
   given optArgCodec[T: GenCodec]: GenCodec[OptArg[T]] =
     new Transformed[OptArg[T], Opt[T]](optCodec[T], _.toOpt, _.toOptArg)
 
-  given optRefCodec[T >: Null : GenCodec]: GenCodec[OptRef[T]] =
+  given optRefCodec[T >: Null: GenCodec]: GenCodec[OptRef[T]] =
     new Transformed[OptRef[T], Opt[T]](optCodec[T], _.toOpt, _.toOptRef)
 
   given eitherCodec[A: GenCodec, B: GenCodec]: GenCodec[Either[A, B]] = nullableObject(
@@ -669,14 +676,15 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     },
   )
 
-  given jEnumCodec[E <: Enum[E] : ClassTag]: GenCodec[E] = nullableSimple(
+  given jEnumCodec[E <: Enum[E]: ClassTag]: GenCodec[E] = nullableSimple(
     in => Enum.valueOf(classTag[E].runtimeClass.asInstanceOf[Class[E]], in.readString()),
     (out, value) => out.writeString(value.name),
   )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)
   implicit def fromTransparentWrapping[R, T](using
-    tw: TransparentWrapping[R, T], wrappedCodec: GenCodec[R],
+    tw: TransparentWrapping[R, T],
+    wrappedCodec: GenCodec[R],
   ): GenCodec[T] =
     new Transformed(wrappedCodec, tw.unwrap, tw.wrap)
 
@@ -685,6 +693,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
 }
 
 trait RecursiveAutoCodecs { this: GenCodec.type =>
+
   /**
    * Like `materialize`, but descends into types that `T` is made of (e.g. case class field types).
    */

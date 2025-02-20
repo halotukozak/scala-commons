@@ -18,11 +18,12 @@ final class SentinelsMonitoringActor(
   onInitFailure: Throwable => Unit,
   onMasterChange: RedisNodeClient => Unit,
   stateObserver: OptArg[SentinelStateObserver] = OptArg.Empty,
-) extends Actor with ActorLazyLogging {
+) extends Actor
+    with ActorLazyLogging {
 
-  import RedisApi.Batches.StringTyped._
-  import SentinelsMonitoringActor._
-  import context._
+  import RedisApi.Batches.StringTyped.*
+  import SentinelsMonitoringActor.*
+  import context.*
 
   private val sentinels = new MHashMap[NodeAddress, ActorRef]
   private val seedFailures = new MArrayBuffer[Throwable]
@@ -57,7 +58,7 @@ final class SentinelsMonitoringActor(
   }
 
   private def updateMaster(masterAddr: NodeAddress): Unit =
-    if (master.forall(_.address != masterAddr)) {
+    if master.forall(_.address != masterAddr) then {
       log.info(s"Master node for $masterName changed to $masterAddr")
       val newMaster = new RedisNodeClient(masterAddr, config.masterConfig(masterAddr))
       onMasterChange(newMaster)
@@ -66,35 +67,36 @@ final class SentinelsMonitoringActor(
     }
 
   def receive: Receive = {
-    case pr: PacksResult => Try(FetchState.decodeReplies(pr)) match {
-      case Success((masterAddr, otherSentinels)) =>
-        val thisSentinel = sender()
-        updateMaster(masterAddr)
+    case pr: PacksResult =>
+      Try(FetchState.decodeReplies(pr)) match {
+        case Success((masterAddr, otherSentinels)) =>
+          val thisSentinel = sender()
+          updateMaster(masterAddr)
 
-        otherSentinels.foreach(getConnection(_, seed = false))
-        sentinels.foreach { case (addr, conn) =>
-          if (conn != thisSentinel && !otherSentinels.contains(addr)) {
-            context.stop(conn)
-            sentinels.remove(addr)
+          otherSentinels.foreach(getConnection(_, seed = false))
+          sentinels.foreach { case (addr, conn) =>
+            if conn != thisSentinel && !otherSentinels.contains(addr) then {
+              context.stop(conn)
+              sentinels.remove(addr)
+            }
           }
-        }
 
-      case Failure(cause) =>
-        log.error(s"Failed to fetch master node for $masterName from a sentinel", cause)
-        if (master.isEmpty) {
-          seedFailures += cause
-          if (seedFailures.size == seedSentinels.size) {
-            val failure = new MasterSlaveInitializationException(masterName, seedSentinels)
-            seedFailures.foreach(failure.addSuppressed)
-            onInitFailure(failure)
+        case Failure(cause) =>
+          log.error(s"Failed to fetch master node for $masterName from a sentinel", cause)
+          if master.isEmpty then {
+            seedFailures += cause
+            if seedFailures.size == seedSentinels.size then {
+              val failure = new MasterSlaveInitializationException(masterName, seedSentinels)
+              seedFailures.foreach(failure.addSuppressed)
+              onInitFailure(failure)
+            }
           }
-        }
-    }
+      }
 
     case PubSubEvent.Message(SwitchMasterChannel, BulkStringMsg(newMasterInfo)) =>
       // <master-name> <old-ip> <old-port> <new-ip> <new-port>
       val parts = newMasterInfo.utf8String.split(" ")
-      if (parts(0) == masterName) {
+      if parts(0) == masterName then {
         val masterAddr = NodeAddress(parts(3), parts(4).toInt)
         updateMaster(masterAddr)
       }
@@ -102,7 +104,7 @@ final class SentinelsMonitoringActor(
     case PubSubEvent.Message(NewSentinelChannel, BulkStringMsg(string)) =>
       // sentinel <id> <ip> <port> @ <master-name> <master-ip> <master-port>
       val parts = string.utf8String.split(" ")
-      if (parts(0) == "sentinel" && parts(5) == masterName) {
+      if parts(0) == "sentinel" && parts(5) == masterName then {
         val newSentinelAddr = NodeAddress(parts(2), parts(3).toInt)
         getConnection(newSentinelAddr, seed = false)
       }

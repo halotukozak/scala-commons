@@ -23,7 +23,12 @@ final case class GenParamInfo[T](
 ) extends GenInfo[T] {
 
   @bincompat private[commons] def this(
-    sourceName: String, annotName: Opt[name], hasWhenAbsent: Boolean, transientDefault: Boolean, outOfOrder: Boolean, flags: ParamFlags,
+    sourceName: String,
+    annotName: Opt[name],
+    hasWhenAbsent: Boolean,
+    transientDefault: Boolean,
+    outOfOrder: Boolean,
+    flags: ParamFlags,
   ) = this(sourceName, annotName, optional = false, hasWhenAbsent, transientDefault, outOfOrder, flags)
 }
 

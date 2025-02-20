@@ -6,12 +6,11 @@ import java.io.File
 import org.scalatest.Suite
 
 import scala.concurrent.Await
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
-  * Author: ghik
-  * Created: 27/06/16.
-  */
+ * Author: ghik Created: 27/06/16.
+ */
 trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers { this: Suite =>
 
   def ports: Range = 8000 to 8005
@@ -41,8 +40,8 @@ trait UsesFreshCluster extends UsesActorSystem with UsesClusterServers { this: S
       _ <- Future.traverse(commands.tail)(_.clusterMeet(addresses.head))
       _ <- Future.traverse(commands)(c => waitUntil(c.clusterInfo.map(_.knownNodes >= addresses.size), 500.millis))
       nodeIds <- commands.head.clusterNodes.map(_.sortBy(_.address.port).map(_.id))
-      _ <- Future.traverse(commands.zipWithIndex) {
-        case (c, i) => masterOf(i) match {
+      _ <- Future.traverse(commands.zipWithIndex) { case (c, i) =>
+        masterOf(i) match {
           case `i` => c.clusterAddslots(slotRanges(i))
           case mi => c.clusterReplicate(nodeIds(mi))
         }

@@ -15,14 +15,14 @@ final class SizedArraySeqBuilder[A](val expectedSize: Int) extends CrossBuilder[
   }
 
   def result(): IArraySeq[A] = {
-    if (!complete) {
+    if !complete then {
       throw new IllegalStateException(s"exactly $expectedSize elements were expected but only $idx were added")
     }
     IArraySeq.unsafeWrapArray(array)
   }
 
   def addOne(elem: A): this.type = {
-    if (complete) {
+    if complete then {
       throw new IllegalStateException(s"exactly $expectedSize elements were expected but more were added")
     }
     array(idx) = elem
@@ -31,7 +31,7 @@ final class SizedArraySeqBuilder[A](val expectedSize: Int) extends CrossBuilder[
   }
 
   override def sizeHint(sh: Int): Unit =
-    if (sh != expectedSize) {
+    if sh != expectedSize then {
       throw new IllegalArgumentException(s"required exactly $expectedSize elements but got size hint $sh")
     }
 }

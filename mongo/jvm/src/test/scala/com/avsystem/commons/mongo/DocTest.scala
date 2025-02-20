@@ -5,11 +5,12 @@ import org.bson.BsonString
 import org.scalatest.funsuite.AnyFunSuite
 
 /**
-  * @author MKej
-  */
+ * @author
+ *   MKej
+ */
 class DocTest extends AnyFunSuite {
 
-  import DocTest._
+  import DocTest.*
 
   test("get variance") {
     val doc = Doc()

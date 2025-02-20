@@ -17,7 +17,7 @@ def singleValueForImpl[T: Type](using quotes: Quotes): Expr[ValueOf[T]] = {
     case Some(expr: Expr[ValueOf[T]]) => expr
     case None if tpe.isSingleton =>
       tpe match
-        case t@ThisType(tref) =>
+        case t @ ThisType(tref) =>
           val singleton = This(t.typeSymbol).asExprOf[T]
           '{ scala.ValueOf($singleton) }
         case _ =>

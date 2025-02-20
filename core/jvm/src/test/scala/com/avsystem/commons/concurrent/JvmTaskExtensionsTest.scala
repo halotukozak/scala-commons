@@ -11,7 +11,11 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.concurrent.TimeoutException
 import scala.concurrent.duration.*
 
-final class JvmTaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures:
+final class JvmTaskExtensionsTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks
+    with ScalaFutures:
 
   import com.avsystem.commons.concurrent.TaskExtensions.*
 
@@ -23,4 +27,3 @@ final class JvmTaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCh
     result shouldBe a[TimeoutException]
     result.getMessage shouldBe "Lazy timeout"
   }
-

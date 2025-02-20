@@ -1,8 +1,6 @@
 package com.avsystem.commons
 package macros.misc
 
-
-
 //package com.avsystem.commons
 //package macros.misc
 //

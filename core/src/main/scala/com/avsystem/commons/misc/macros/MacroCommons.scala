@@ -6,10 +6,13 @@ import misc.macros.MacroCommons.positionCache
 import serialization.optionalParam
 
 import scala.collection.mutable
+import scala.compiletime.summonFrom
+import scala.deriving.Mirror
 import scala.quoted.*
 import scala.reflect.classTag
 
-trait MacroCommons {
+trait MacroCommons[Q <: Quotes](using protected val quotes: Q) {
+
   extension (using quotes: Quotes)(flags: quotes.reflect.Flags) {
     def isAnyOf(other: quotes.reflect.Flags*): Boolean = other.foldLeft(false)(_ || flags.is(_))
   }
@@ -27,39 +30,51 @@ trait MacroCommons {
       !symbol.flags.isAnyOf(Flags.Private, Flags.PrivateLocal, Flags.Protected)
     }
 
+    def isSynthetic: Boolean = {
+      import quotes.reflect.*
+      symbol.flags.is(Flags.Synthetic)
+    }
+
+    def isAbstract: Boolean = {
+      import quotes.reflect.*
+      symbol.flags.is(Flags.Abstract)
+    }
+
     def isOptionalParam: Boolean = {
       import quotes.reflect.*
       symbol.hasAnnotation(TypeRepr.of[optionalParam].typeSymbol)
       //        || inferImplicitValue(getType(tq"$AutoOptionalParamCls[$tpe]")) != EmptyTree
     }
 
-    def isRepeatedParam: Boolean = symbol == defn.RepeatedParamClass
+    def isRepeatedParam: Boolean = {
+      import quotes.reflect.*
+      symbol == defn.RepeatedParamClass
+    }
 
-    //    def actualParamType: Type = {
-    //      import q.reflect.*
-    //      symbol.typeRef match
-    //        case TypeRef(_, s, List(arg)) if s == defn.RepeatedParamClass || s == defn.JavaRepeatedParamClass =>
-    //          getType(tq"$ScalaPkg.Seq[$arg]")
-    //        case TypeRef(_, s, List(arg)) if s == defn.ByNameParamClass =>
-    //          arg
-    //        case _ => tpe
-    //    }
-
+    def actualParamType: quotes.reflect.TypeRepr = {
+      import quotes.reflect.*
+      symbol.typeRef match
+        case AppliedType(s, List(arg)) if s == defn.RepeatedParamClass =>
+          AppliedType(TypeRepr.of[Seq], List(arg))
+        case ByNameType(arg) => arg
+        case tpe => tpe
+    }
 
     def rawAnnotations: List[quotes.reflect.Term] = {
       import quotes.reflect.*
       // for vals or vars, fetch annotations from underlying field
-      if s.isDefDef && s.flags.is(Flags.FieldAccessor) then {
-        val accessors = Select(s.tree.asInstanceOf[Term], s)
-        s.annotations ++ accessors.qualifier.tpe.termSymbol.annotations
-      }
-      else s.annotations
+      if symbol.isDefDef && symbol.flags.is(Flags.FieldAccessor) then {
+        val accessors = Select(symbol.tree.asInstanceOf[Term], symbol)
+        symbol.annotations ++ accessors.qualifier.tpe.termSymbol.annotations
+      } else symbol.annotations
     }
 
-    def containsInaccessibleThises: Boolean =
+    def containsInaccessibleThises: Boolean = {
+      import quotes.reflect.*
       symbol.children.exists:
-        case t@This(_) if !t.symbol.isPackageDef /*&& !enclosingClasses.contains(t.symbol)*/ => true
+        case t @ This(_) if !t.symbol.isPackageDef /*&& !enclosingClasses.contains(t.symbol)*/ => true
         case _ => false
+    }
   }
 
   //  final lazy val MapSym = TypeRepr.of[scala.collection.immutable.Map[?, ?]].typeSymbol
@@ -162,8 +177,7 @@ trait MacroCommons {
   //    silent: Boolean = false,
   //    withImplicitViewsDisabled: Boolean = false,
   //    withMacrosDisabled: Boolean = false,
-  //  ): Tree = measure("typecheck")(c.typecheck(tree, mode, pt, silent, withImplicitViewsDisabled, withMacrosDisabled))
-  /
+  //  ): Tree = measure("typecheck")(c.typecheck(tree, mode, pt, silent, withImplicitViewsDisabled, withMacrosDisabled)) /
 
   //
   //  def indent(str: String, indent: String): String =
@@ -458,190 +472,190 @@ trait MacroCommons {
   //    case class App(prefix: ImplicitTrace, args: List[ImplicitTrace]) extends ImplicitTrace
   //  }
   //
-//  class ErrorCtx(using quotes: Quotes)(clue: String, pos: quotes.reflect.Position)
-//
-//  sealed abstract class CachedImplicit {
-//    def actualType: Type
-//
-//    def reference(allImplicitArgs: List[Tree]): Tree
-//
-//    def castTo(tpe: Type): CachedImplicit =
-//      if (actualType <:< tpe) this else CastImplicit(this, tpe)
-//  }
-//
-//  case class RegisteredImplicit(name: TermName, actualType: Type) extends CachedImplicit {
-//    def reference(allImplicitArgs: List[Tree]): Tree = q"$name"
-//  }
-//
-//  case class ImplicitDep(idx: Int, name: TermName, tpe: Type) {
-//    def mkImplicitParam: ValDef =
-//      ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), name, tq"$tpe", EmptyTree)
-//  }
-//
-//  case class InferredImplicit(
-//    name: TermName,
-//    tparams: List[Symbol],
-//    implicits: List[ImplicitDep],
-//    tpe: Type,
-//    body: Tree,
-//    // stable=true means that implicit is a stable path (objects, vals, lazy vals) and needs no caching in lazy val
-//    stable: Boolean,
-//  ) extends CachedImplicit {
-//
-//    def actualType: Type = Option(body.tpe).getOrElse(NoType) orElse tpe
-//
-//    def reference(allImplicitArgs: List[Tree]): Tree = {
-//      def collectArgs(idx: Int, deps: List[ImplicitDep], allArgs: List[Tree]): List[Tree] =
-//        (deps, allArgs) match {
-//          case (Nil, _) => Nil
-//          case (ImplicitDep(`idx`, _, _) :: depsRest, arg :: argsRest) =>
-//            arg :: collectArgs(idx + 1, depsRest, argsRest)
-//          case (_, _ :: argsRest) => collectArgs(idx + 1, deps, argsRest)
-//          case (_, Nil) => abort("too few arguments to satisfy implicit dependencies")
-//        }
-//
-//      val implicitArgs = collectArgs(0, implicits, allImplicitArgs)
-//      val implicitArgss = if (implicitArgs.isEmpty) Nil else List(implicitArgs)
-//      q"$name[..${tparams.map(_.name)}](...$implicitArgss)"
-//    }
-//
-//    def recreateDef(mods: Modifiers): Tree = {
-//      val typeDefs = tparams.map(typeSymbolToTypeDef(_, forMethod = true))
-//      val implicitDepDefs = List(implicits.map(_.mkImplicitParam)).filter(_.nonEmpty)
-//      stripTparamRefs(tparams) {
-//        q"$mods def $name[..$typeDefs](...$implicitDepDefs) = $ImplicitsObj.infer[$tpe]"
-//      }
-//    }
-//
-//    def reusableBody: Boolean =
-//      tparams.isEmpty && implicits.isEmpty && body != EmptyTree && !body.exists(_.isDef)
-//  }
-//
-//    case class CastImplicit(cast: CachedImplicit, tpe: Type) extends CachedImplicit {
-//      def actualType: Type = tpe
-//
-//      def reference(allImplicitArgs: List[Tree]): Tree =
-//        q"${cast.reference(allImplicitArgs)}.asInstanceOf[$tpe]"
-//    }
-//
-//    private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[CachedImplicit]]
-//    private val implicitsByTrace = new mutable.HashMap[ImplicitTrace, CachedImplicit]
-//    private val implicitsToDeclare = new mutable.ListBuffer[InferredImplicit]
-//
-//    def tryInferCachedImplicit(
-//      tpe: Type,
-//      typeParams: List[Symbol] = Nil,
-//      availableImplicits: List[Type] = Nil,
-//      expandMacros: Boolean = false,
-//    ): Option[CachedImplicit] = {
-//
-//      def computeAsDef(): Option[CachedImplicit] = {
-//        val name = c.freshName(TermName("cachedImplicit"))
-//        val implicitDeps = availableImplicits.zipWithIndex.map {
-//          case (t, idx) => ImplicitDep(idx, c.freshName(TermName("dep")), t)
-//        }
-//        val ci = InferredImplicit(name, typeParams, implicitDeps, tpe, EmptyTree, stable = false)
-//        val resolved = c.typecheck(ci.recreateDef(NoMods), silent = true)
-//        Option(resolved).collect { case dd: DefDef =>
-//          val actuallyUsedImplicitDeps =
-//            dd.vparamss.flatten.zip(implicitDeps).flatMap { case (vd, id) =>
-//              val used = dd.rhs.exists {
-//                case Ident(n) => n == vd.name
-//                case _ => false
-//              }
-//              if (used) Some(id) else None
-//            }
-//
-//          val ciOptimized = ci.copy(implicits = actuallyUsedImplicitDeps, body = dd)
-//          ImplicitTrace(dd.rhs).flatMap { tr =>
-//            implicitsByTrace.get(tr).filter(_.actualType =:= ciOptimized.body.tpe)
-//          }.getOrElse {
-//            implicitsToDeclare += ciOptimized
-//            ciOptimized
-//          }
-//        }
-//      }
-//
-//      def computeSingle(): Option[CachedImplicit] =
-//        Option(inferImplicitValue(tpe, expandMacros = expandMacros)).filter(_ != EmptyTree).map { found =>
-//          def newCachedImplicit(stable: Boolean): CachedImplicit = {
-//            val name = c.freshName(TermName("cachedImplicit"))
-//            val ci = InferredImplicit(name, Nil, Nil, tpe, found, stable)
-//            implicitsToDeclare += ci
-//            ci
-//          }
-//
-//          ImplicitTrace(found).fold(newCachedImplicit(stable = false)) { tr =>
-//            implicitsByTrace.get(tr).map(_.castTo(found.tpe)).getOrElse {
-//              val ci = newCachedImplicit(tr.stable)
-//              implicitsByTrace(tr) = ci
-//              ci
-//            }
-//          }
-//        }
-//
-//      implicitSearchCache.getOrElseUpdate(TypeKey(tpe), {
-//        if (typeParams.isEmpty && availableImplicits.isEmpty) computeSingle()
-//        else computeAsDef()
-//      })
-//    }
-//
-//    def inferCachedImplicit(
-//      tpe: Type,
-//      errorCtx: ErrorCtx,
-//      typeParams: List[Symbol] = Nil,
-//      availableImplicits: List[Type] = Nil,
-//      expandMacros: Boolean = false,
-//    ): CachedImplicit =
-//      tryInferCachedImplicit(tpe, typeParams, availableImplicits, expandMacros).getOrElse {
-//        val rhsThatWillFail = q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorCtx.clue, errorCtx.pos)})"
-//        val ci = InferredImplicit(c.freshName(TermName("")), Nil, Nil, tpe, rhsThatWillFail, stable = true)
-//        implicitSearchCache(TypeKey(tpe)) = Some(ci)
-//        implicitsToDeclare += ci
-//        inferCachedImplicit(tpe, errorCtx, typeParams, availableImplicits, expandMacros)
-//      }
-//
-//    def registerImplicit(tpe: Type, name: TermName): Unit = {
-//      implicitSearchCache(TypeKey(tpe)) = Some(RegisteredImplicit(name, tpe))
-//    }
-//
-//    def cachedImplicitDeclarations: List[Tree] =
-//      cachedImplicitDeclarations(mkPrivateLazyValOrDef)
-//
-//    def cachedImplicitDeclarations(mkDecl: InferredImplicit => Tree): List[Tree] =
-//      implicitsToDeclare.map(mkDecl).result()
-//
-//    def mkPrivateLazyValOrDef(cachedImplicit: InferredImplicit): Tree =
-//      if (cachedImplicit.stable)
-//        q"private def ${cachedImplicit.name} = ${cachedImplicit.body}"
-//      else if (cachedImplicit.reusableBody)
-//        q"private lazy val ${cachedImplicit.name} = ${cachedImplicit.body}"
-//      else
-//        cachedImplicit.recreateDef(Modifiers(Flag.PRIVATE))
+  class ErrorCtx(using quotes: Quotes)(clue: String, pos: quotes.reflect.Position)
+  //
+  //  sealed abstract class CachedImplicit {
+  //    def actualType: Type
+  //
+  //    def reference(allImplicitArgs: List[Tree]): Tree
+  //
+  //    def castTo(tpe: Type): CachedImplicit =
+  //      if (actualType <:< tpe) this else CastImplicit(this, tpe)
+  //  }
+  //
+  //  case class RegisteredImplicit(name: TermName, actualType: Type) extends CachedImplicit {
+  //    def reference(allImplicitArgs: List[Tree]): Tree = q"$name"
+  //  }
+  //
+  //  case class ImplicitDep(idx: Int, name: TermName, tpe: Type) {
+  //    def mkImplicitParam: ValDef =
+  //      ValDef(Modifiers(Flag.PARAM | Flag.IMPLICIT), name, tq"$tpe", EmptyTree)
+  //  }
+  //
+  //  case class InferredImplicit(
+  //    name: TermName,
+  //    tparams: List[Symbol],
+  //    implicits: List[ImplicitDep],
+  //    tpe: Type,
+  //    body: Tree,
+  //    // stable=true means that implicit is a stable path (objects, vals, lazy vals) and needs no caching in lazy val
+  //    stable: Boolean,
+  //  ) extends CachedImplicit {
+  //
+  //    def actualType: Type = Option(body.tpe).getOrElse(NoType) orElse tpe
+  //
+  //    def reference(allImplicitArgs: List[Tree]): Tree = {
+  //      def collectArgs(idx: Int, deps: List[ImplicitDep], allArgs: List[Tree]): List[Tree] =
+  //        (deps, allArgs) match {
+  //          case (Nil, _) => Nil
+  //          case (ImplicitDep(`idx`, _, _) :: depsRest, arg :: argsRest) =>
+  //            arg :: collectArgs(idx + 1, depsRest, argsRest)
+  //          case (_, _ :: argsRest) => collectArgs(idx + 1, deps, argsRest)
+  //          case (_, Nil) => abort("too few arguments to satisfy implicit dependencies")
+  //        }
+  //
+  //      val implicitArgs = collectArgs(0, implicits, allImplicitArgs)
+  //      val implicitArgss = if (implicitArgs.isEmpty) Nil else List(implicitArgs)
+  //      q"$name[..${tparams.map(_.name)}](...$implicitArgss)"
+  //    }
+  //
+  //    def recreateDef(mods: Modifiers): Tree = {
+  //      val typeDefs = tparams.map(typeSymbolToTypeDef(_, forMethod = true))
+  //      val implicitDepDefs = List(implicits.map(_.mkImplicitParam)).filter(_.nonEmpty)
+  //      stripTparamRefs(tparams) {
+  //        q"$mods def $name[..$typeDefs](...$implicitDepDefs) = $ImplicitsObj.infer[$tpe]"
+  //      }
+  //    }
+  //
+  //    def reusableBody: Boolean =
+  //      tparams.isEmpty && implicits.isEmpty && body != EmptyTree && !body.exists(_.isDef)
+  //  }
+  //
+  //    case class CastImplicit(cast: CachedImplicit, tpe: Type) extends CachedImplicit {
+  //      def actualType: Type = tpe
+  //
+  //      def reference(allImplicitArgs: List[Tree]): Tree =
+  //        q"${cast.reference(allImplicitArgs)}.asInstanceOf[$tpe]"
+  //    }
+  //
+  //    private val implicitSearchCache = new mutable.HashMap[TypeKey, Option[CachedImplicit]]
+  //    private val implicitsByTrace = new mutable.HashMap[ImplicitTrace, CachedImplicit]
+  //    private val implicitsToDeclare = new mutable.ListBuffer[InferredImplicit]
+  //
+  //    def tryInferCachedImplicit(
+  //      tpe: Type,
+  //      typeParams: List[Symbol] = Nil,
+  //      availableImplicits: List[Type] = Nil,
+  //      expandMacros: Boolean = false,
+  //    ): Option[CachedImplicit] = {
+  //
+  //      def computeAsDef(): Option[CachedImplicit] = {
+  //        val name = c.freshName(TermName("cachedImplicit"))
+  //        val implicitDeps = availableImplicits.zipWithIndex.map {
+  //          case (t, idx) => ImplicitDep(idx, c.freshName(TermName("dep")), t)
+  //        }
+  //        val ci = InferredImplicit(name, typeParams, implicitDeps, tpe, EmptyTree, stable = false)
+  //        val resolved = c.typecheck(ci.recreateDef(NoMods), silent = true)
+  //        Option(resolved).collect { case dd: DefDef =>
+  //          val actuallyUsedImplicitDeps =
+  //            dd.vparamss.flatten.zip(implicitDeps).flatMap { case (vd, id) =>
+  //              val used = dd.rhs.exists {
+  //                case Ident(n) => n == vd.name
+  //                case _ => false
+  //              }
+  //              if (used) Some(id) else None
+  //            }
+  //
+  //          val ciOptimized = ci.copy(implicits = actuallyUsedImplicitDeps, body = dd)
+  //          ImplicitTrace(dd.rhs).flatMap { tr =>
+  //            implicitsByTrace.get(tr).filter(_.actualType =:= ciOptimized.body.tpe)
+  //          }.getOrElse {
+  //            implicitsToDeclare += ciOptimized
+  //            ciOptimized
+  //          }
+  //        }
+  //      }
+  //
+  //      def computeSingle(): Option[CachedImplicit] =
+  //        Option(inferImplicitValue(tpe, expandMacros = expandMacros)).filter(_ != EmptyTree).map { found =>
+  //          def newCachedImplicit(stable: Boolean): CachedImplicit = {
+  //            val name = c.freshName(TermName("cachedImplicit"))
+  //            val ci = InferredImplicit(name, Nil, Nil, tpe, found, stable)
+  //            implicitsToDeclare += ci
+  //            ci
+  //          }
+  //
+  //          ImplicitTrace(found).fold(newCachedImplicit(stable = false)) { tr =>
+  //            implicitsByTrace.get(tr).map(_.castTo(found.tpe)).getOrElse {
+  //              val ci = newCachedImplicit(tr.stable)
+  //              implicitsByTrace(tr) = ci
+  //              ci
+  //            }
+  //          }
+  //        }
+  //
+  //      implicitSearchCache.getOrElseUpdate(TypeKey(tpe), {
+  //        if (typeParams.isEmpty && availableImplicits.isEmpty) computeSingle()
+  //        else computeAsDef()
+  //      })
+  //    }
+  //
+  //    def inferCachedImplicit(
+  //      tpe: Type,
+  //      errorCtx: ErrorCtx,
+  //      typeParams: List[Symbol] = Nil,
+  //      availableImplicits: List[Type] = Nil,
+  //      expandMacros: Boolean = false,
+  //    ): CachedImplicit =
+  //      tryInferCachedImplicit(tpe, typeParams, availableImplicits, expandMacros).getOrElse {
+  //        val rhsThatWillFail = q"$ImplicitsObj.infer[$tpe](${StringLiteral(errorCtx.clue, errorCtx.pos)})"
+  //        val ci = InferredImplicit(c.freshName(TermName("")), Nil, Nil, tpe, rhsThatWillFail, stable = true)
+  //        implicitSearchCache(TypeKey(tpe)) = Some(ci)
+  //        implicitsToDeclare += ci
+  //        inferCachedImplicit(tpe, errorCtx, typeParams, availableImplicits, expandMacros)
+  //      }
+  //
+  //    def registerImplicit(tpe: Type, name: TermName): Unit = {
+  //      implicitSearchCache(TypeKey(tpe)) = Some(RegisteredImplicit(name, tpe))
+  //    }
+  //
+  //    def cachedImplicitDeclarations: List[Tree] =
+  //      cachedImplicitDeclarations(mkPrivateLazyValOrDef)
+  //
+  //    def cachedImplicitDeclarations(mkDecl: InferredImplicit => Tree): List[Tree] =
+  //      implicitsToDeclare.map(mkDecl).result()
+  //
+  //    def mkPrivateLazyValOrDef(cachedImplicit: InferredImplicit): Tree =
+  //      if (cachedImplicit.stable)
+  //        q"private def ${cachedImplicit.name} = ${cachedImplicit.body}"
+  //      else if (cachedImplicit.reusableBody)
+  //        q"private lazy val ${cachedImplicit.name} = ${cachedImplicit.body}"
+  //      else
+  //        cachedImplicit.recreateDef(Modifiers(Flag.PRIVATE))
 
-//    private def standardImplicitNotFoundMsg(tpe: Type): String =
-//      symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
-//
-//    private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
-//      rawAnnotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
-//        .map(_.tree.children.tail.head)
-//        .collect {
-//          case StringLiteral(error) => error
-//          case NamedArgTree(_, StringLiteral(error)) => error
-//        }
-//        .map { error =>
-//          val tpNames = tparams.map(_.name.decodedName.toString)
-//          (tpNames zip typeArgs).foldLeft(error) {
-//            case (err, (tpName, tpArg)) => err.replace(s"$${$tpName}", tpArg.toString)
-//          }
-//        }
-//        .getOrElse {
-//          if (sym != tpe.typeSymbol) standardImplicitNotFoundMsg(tpe)
-//          else s"no implicit value of type $tpe found"
-//        }
-//
-//    private def replaceArgs(stack: List[Type], error: String, params: List[Symbol], args: List[Tree]): String =
-//      (params zip args)
+  //    private def standardImplicitNotFoundMsg(tpe: Type): String =
+  //      symbolImplicitNotFoundMsg(tpe, tpe.typeSymbol, tpe.typeSymbol.typeSignature.typeParams, tpe.typeArgs)
+  //
+  //    private def symbolImplicitNotFoundMsg(tpe: Type, sym: Symbol, tparams: List[Symbol], typeArgs: List[Type]): String =
+  //      rawAnnotations(sym).find(_.tree.tpe <:< ImplicitNotFoundAT)
+  //        .map(_.tree.children.tail.head)
+  //        .collect {
+  //          case StringLiteral(error) => error
+  //          case NamedArgTree(_, StringLiteral(error)) => error
+  //        }
+  //        .map { error =>
+  //          val tpNames = tparams.map(_.name.decodedName.toString)
+  //          (tpNames zip typeArgs).foldLeft(error) {
+  //            case (err, (tpName, tpArg)) => err.replace(s"$${$tpName}", tpArg.toString)
+  //          }
+  //        }
+  //        .getOrElse {
+  //          if (sym != tpe.typeSymbol) standardImplicitNotFoundMsg(tpe)
+  //          else s"no implicit value of type $tpe found"
+  //        }
+  //
+  //    private def replaceArgs(stack: List[Type], error: String, params: List[Symbol], args: List[Tree]): String =
+  //      (params zip args)
   //      .flatMap { case (param, arg) =>
   //        arg.tpe.baseType(ImplicitNotFoundSym).typeArgs.headOption.map { delTpe =>
   //          param.name.decodedName.toString -> implicitNotFoundMsg(stack, delTpe, arg)
@@ -1122,40 +1136,44 @@ trait MacroCommons {
   //
 
   /**
-   * @param apply   case class constructor or companion object's apply method
-   * @param unapply companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
-   * @param params  parameters with trees evaluating to default values (or `EmptyTree`s)
+   * @param apply
+   *   case class constructor or companion object's apply method
+   * @param unapply
+   *   companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
+   * @param params
+   *   parameters with trees evaluating to default values (or `EmptyTree`s)
    */
-  final class ApplyUnapply(using quotes: Quotes)(
-    ownerTpe: quotes.reflect.TypeRepr,
-    typedCompanion: quotes.reflect.Tree,
-    apply: quotes.reflect.Symbol,
-    unapply: quotes.reflect.Symbol,
-    params: List[quotes.reflect.Symbol],
-  ) {
-    def standardCaseClass: Boolean = apply.isConstructor
+  final case class ApplyUnapply(ownerTpe: Type[?]) {
 
-    def synthetic: Boolean = (apply.isConstructor || apply.isSynthetic) && unapply.isSynthetic
+    def standardCaseClass: Boolean = ???
+    //      apply.isClassConstructor
 
-    def defaultValueFor(param: Symbol): Tree = ???
+    def synthetic: Boolean = ???
+    //      apply.isClassConstructor || apply.isSynthetic && unapply.isSynthetic
+
+    def defaultValueFor(param: quotes.reflect.Symbol) = ???
     //      defaultValueFor(param, params.indexOf(param))
 
-    def defaultValueFor(param: Symbol, idx: Int): Tree = ???
+    def defaultValueFor(param: quotes.reflect.Symbol, idx: Int) = ???
     //      if (param.asTerm.isParamWithDefault) {
     //        val methodEncodedName = param.owner.name.encodedName.toString
     //        q"$typedCompanion.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${ownerTpe.typeArgs}]"
     //      }
     //      else EmptyTree
 
-    def mkApply[T: Liftable](args: Seq[T]): Tree = ???
+    def mkApply[T: ToExpr](args: Seq[T]) = ???
     //      if (standardCaseClass) q"new $ownerTpe(..$args)"
     //      else q"$typedCompanion.apply[..${ownerTpe.typeArgs}](..$args)"
   }
 
-  //    def applyUnapplyFor(tpe: Type): Option[ApplyUnapply] =
-  //    typedCompanionOf(tpe).flatMap(comp => applyUnapplyFor(tpe, comp))
-  //
-  //  def applyUnapplyFor(tpe: Type, typedCompanion: Tree): Option[ApplyUnapply] = measure("applyUnapplyFor") {
+  def applyUnapplyFor[T](using quotes: Quotes): Option[ApplyUnapply] = summonFrom {
+    case m: Mirror.SumOf[T] =>
+    case _ => None
+  }
+  typedCompanionOf[T].flatMap(comp => applyUnapplyFor[T](comp))
+
+  def applyUnapplyFor[T](using quotes: Quotes)(typedCompanion: quotes.reflect.Tree): Option[ApplyUnapply] = ???
+
   //    val dtpe = tpe.dealias
   //    val ts = dtpe.typeSymbol.asType
   //    val caseClass = ts.isClass && ts.asClass.isCaseClass
@@ -1233,7 +1251,8 @@ trait MacroCommons {
   //      None
   //  })
   //
-  //  def typedCompanionOf(tpe: Type): Option[Tree] = {
+  def typedCompanionOf[T](using quotes: Quotes): Option[quotes.reflect.Tree] = ???
+
   //    val result = tpe match {
   //      case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
   //        singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
@@ -1280,15 +1299,19 @@ trait MacroCommons {
   //
   //  private val positionCache = new mutable.HashMap[Symbol, Int]
   //
-  def positionPoint(using q: Quotes)(sym: Symbol): Int =
+  final def positionPoint(using quotes: Quotes)(sym: quotes.reflect.Symbol): Int =
+    import quotes.reflect.*
     if Position.ofMacroExpansion == sym.pos then sym.pos.get.start
-    else positionCache.getOrElseUpdate(
-      sym,
-      rawAnnotations(sym).find(_.tpe <:< TypeRepr.of[positioned]).map {
-        case Apply(_, List(Literal(point: Int))) => point
-        case t => report.errorAndAbort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
-      } getOrElse report.errorAndAbort(s"Could not determine source position of $sym - it resides in separate file than macro invocation and has no @positioned annotation"),
-    )
+    else
+      positionCache.getOrElseUpdate(
+        sym,
+        rawAnnotations(sym).find(_.tpe <:< TypeRepr.of[positioned]).map {
+          case Apply(_, List(Literal(point: Int))) => point
+          case t => report.errorAndAbort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
+        } getOrElse report.errorAndAbort(
+          s"Could not determine source position of $sym - it resides in separate file than macro invocation and has no @positioned annotation",
+        ),
+      )
   //
   //  def innerTypeSymbols(tpe: Type): Set[Symbol] = {
   //    val result = Set.newBuilder[Symbol]
@@ -1463,12 +1486,11 @@ trait MacroCommons {
   //  def stripTparamRefs(tparams: List[Symbol])(tree: Tree): Tree =
   //    if (tparams.isEmpty) tree
   //    else new TparamRefStripper(tparams).transform(tree)
-  //}
+  // }
   //
 
 }
 
 object MacroCommons {
   private val positionCache = new mutable.HashMap[Any, Int]
-
 }

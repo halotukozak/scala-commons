@@ -2,7 +2,7 @@ package com.avsystem.commons
 package ser
 
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import io.circe.{Json, JsonObject}
 
 import scala.collection.mutable.ArrayBuffer
@@ -65,8 +65,11 @@ class CirceJsonInput(json: Json) extends InputAndSimpleInput {
   def readDouble(): Double = asNumber.toDouble
   def readBigInt(): BigInt = asNumber.toBigInt.getOrElse(failNot("bigInteger"))
   def readBigDecimal(): BigDecimal = asNumber.toBigDecimal.getOrElse(failNot("bigDecimal"))
-  def readBinary(): Array[Byte] = json.asArray.getOrElse(failNot("array")).iterator
-    .map(_.asNumber.flatMap(_.toByte).getOrElse(failNot("byte"))).toArray
+  def readBinary(): Array[Byte] = json.asArray
+    .getOrElse(failNot("array"))
+    .iterator
+    .map(_.asNumber.flatMap(_.toByte).getOrElse(failNot("byte")))
+    .toArray
   def readList(): ListInput = new CirceJsonListInput(json.asArray.getOrElse(failNot("array")))
   def readObject(): ObjectInput = new CirceJsonObjectInput(json.asObject.getOrElse(failNot("object")))
   def skip(): Unit = ()

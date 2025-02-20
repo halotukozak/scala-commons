@@ -5,16 +5,15 @@ import org.apache.pekko.actor.Actor
 import org.apache.pekko.event.LoggingAdapter
 
 /**
-  * Author: ghik
-  * Created: 12/04/16.
-  */
+ * Author: ghik Created: 12/04/16.
+ */
 trait ActorLazyLogging { self: Actor =>
   object log {
     val rawLog: LoggingAdapter = org.apache.pekko.event.Logging(context.system, self)
 
     def error(msg: => String, cause: Throwable = null): Unit =
-      if (rawLog.isErrorEnabled) {
-        if (cause == null) {
+      if rawLog.isErrorEnabled then {
+        if cause == null then {
           rawLog.error(msg)
         } else {
           rawLog.error(cause, msg)

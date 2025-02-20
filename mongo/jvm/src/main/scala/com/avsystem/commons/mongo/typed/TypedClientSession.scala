@@ -11,10 +11,9 @@ import org.bson.{BsonDocument, BsonTimestamp}
 import java.io.Closeable
 
 /**
-  * Better typed wrapper over [[ClientSession]].
-  */
-class TypedClientSession(val nativeSession: ClientSession)
-  extends Closeable with TypedMongoUtils {
+ * Better typed wrapper over [[ClientSession]].
+ */
+class TypedClientSession(val nativeSession: ClientSession) extends Closeable with TypedMongoUtils {
 
   def hasActiveTransaction: Boolean =
     nativeSession.hasActiveTransaction
@@ -22,9 +21,7 @@ class TypedClientSession(val nativeSession: ClientSession)
   def transactionOptions: TransactionOptions =
     nativeSession.getTransactionOptions
 
-  def startTransaction(
-    transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
-  ): Unit =
+  def startTransaction(transactionOptions: TransactionOptions = TransactionOptions.builder().build()): Unit =
     nativeSession.startTransaction(transactionOptions)
 
   def commitTransaction: Task[Unit] =
@@ -34,15 +31,13 @@ class TypedClientSession(val nativeSession: ClientSession)
     empty(nativeSession.abortTransaction())
 
   /**
-    * Executes a MongoDB transaction - whose contents are expressed as Monix [[Task]].
-    * If the task succeeds, the transaction is committed. If the task fails, the transaction is aborted and the
-    * error is propagated. The transaction is also aborted upon cancellation.
-    */
+   * Executes a MongoDB transaction - whose contents are expressed as Monix [[Task]]. If the task succeeds, the
+   * transaction is committed. If the task fails, the transaction is aborted and the error is propagated. The
+   * transaction is also aborted upon cancellation.
+   */
   def inTransaction[T](
     transactionOptions: TransactionOptions = TransactionOptions.builder().build(),
-  )(
-    task: Task[T],
-  ): Task[T] = Task.defer {
+  )(task: Task[T]): Task[T] = Task.defer {
     startTransaction(transactionOptions)
     task.guaranteeCase {
       case ExitCase.Completed => commitTransaction

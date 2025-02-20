@@ -3,8 +3,9 @@ package misc
 
 import misc.macros.sourceInfo
 
-/** Macro-materialized givenue that provides information about callsite source file position. It can be used in
- * runtime for logging and debugging purposes. Similar to Scalactic's `Position`, but contains more information.
+/**
+ * Macro-materialized givenue that provides information about callsite source file position. It can be used in runtime
+ * for logging and debugging purposes. Similar to Scalactic's `Position`, but contains more information.
  */
 
 final case class SourceInfo(
@@ -28,4 +29,3 @@ object SourceInfo:
   def apply()(using si: SourceInfo): SourceInfo = si
 
   inline given here: SourceInfo = ${ sourceInfo }
-

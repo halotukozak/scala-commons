@@ -8,7 +8,7 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 
 object DelayedFuture {
   def apply(delay: FiniteDuration)(implicit system: ActorSystem): Future[Unit] =
-    if (delay <= Duration.Zero) Future.unit
+    if delay <= Duration.Zero then Future.unit
     else {
       val promise = Promise[Unit]()
       system.scheduler.scheduleOnce(delay)(promise.success(()))(RunNowEC)

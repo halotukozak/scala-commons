@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package spring
 
-import com.typesafe.config._
+import com.typesafe.config.*
 
 trait HoconType[T] {
 
@@ -12,7 +12,10 @@ trait HoconType[T] {
 
   protected def requireType(requiredType: ConfigValueType, value: ConfigValue): Unit = {
     requireNonNull(value)
-    require(value.valueType == requiredType, s"Value at ${value.origin.description} has type, ${value.valueType}, required $requiredType")
+    require(
+      value.valueType == requiredType,
+      s"Value at ${value.origin.description} has type, ${value.valueType}, required $requiredType",
+    )
   }
 
   def get(value: ConfigValue): T
@@ -20,7 +23,7 @@ trait HoconType[T] {
 
 object HoconType {
 
-  import com.typesafe.config.ConfigValueType._
+  import com.typesafe.config.ConfigValueType.*
 
   implicit object anyHoconType extends HoconType[Any] {
     def get(value: ConfigValue) =
@@ -111,15 +114,19 @@ object HoconType {
     def get(value: ConfigValue) = {
       requireType(OBJECT, value)
       val elementHoconType = implicitly[HoconType[T]]
-      value.asInstanceOf[ConfigObject].asScala.map {
-        case (k, v) => (k, elementHoconType.get(v))
-      }.asJava
+      value
+        .asInstanceOf[ConfigObject]
+        .asScala
+        .map { case (k, v) =>
+          (k, elementHoconType.get(v))
+        }
+        .asJava
     }
   }
 
   implicit def optionHoconType[T: HoconType]: HoconType[Option[T]] = new HoconType[Option[T]] {
     def get(value: ConfigValue): Option[T] =
-      if (value == null || value.valueType == NULL) None
+      if value == null || value.valueType == NULL then None
       else Some(implicitly[HoconType[T]].get(value))
   }
 
@@ -130,8 +137,10 @@ object HoconType {
 
       (leftTry, rightTry) match {
         case (Failure(left), Failure(right)) =>
-          throw new IllegalArgumentException("Could not parse config value as one of two types:\n" +
-            left.getMessage + "\n" + right.getMessage)
+          throw new IllegalArgumentException(
+            "Could not parse config value as one of two types:\n" +
+              left.getMessage + "\n" + right.getMessage,
+          )
         case (Success(left), _) => Left(left)
         case (_, Success(right)) => Right(right)
       }

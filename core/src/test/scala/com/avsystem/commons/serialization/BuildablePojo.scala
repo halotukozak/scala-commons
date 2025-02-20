@@ -38,7 +38,7 @@ object BuildablePojo {
   }
 }
 
-final class BuildablePojo private(
+final class BuildablePojo private (
   private val str: String,
   private val num: Int,
   private val flags: JList[Boolean],

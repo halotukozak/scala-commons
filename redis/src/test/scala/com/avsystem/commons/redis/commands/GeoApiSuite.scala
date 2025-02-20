@@ -1,18 +1,17 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.commands.GeoradiusAttrs._
+import com.avsystem.commons.redis.*
+import com.avsystem.commons.redis.commands.GeoradiusAttrs.*
 
 import scala.collection.immutable.ListMap
 
 /**
-  * Author: ghik
-  * Created: 12/09/16.
-  */
+ * Author: ghik Created: 12/09/16.
+ */
 trait GeoApiSuite extends CommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   final val Key = "Cities"
   final val StoreKey = "{Cities}Stored"
@@ -31,7 +30,7 @@ trait GeoApiSuite extends CommandsSuite {
     "Wrocław" -> Wroclaw,
     "Poznań" -> Poznan,
     "Gdańsk" -> Gdansk,
-    "Łódź" -> Lodz
+    "Łódź" -> Lodz,
   )
 
   apiTest("GEOADD") {
@@ -42,27 +41,17 @@ trait GeoApiSuite extends CommandsSuite {
   apiTest("GEOHASH") {
     setup(geoadd(Key, Cities.toList.take(3)))
     geohash(Key, Nil).assert(_.isEmpty)
-    geohash(Key, Cities.keys.toList).assertEquals(List(
-      "u2yhvcgrxx0".opt,
-      "u3qcnhheum0".opt,
-      "u3h4exzj480".opt,
-      Opt.Empty,
-      Opt.Empty,
-      Opt.Empty
-    ).map(_.map(GeoHash.apply)))
+    geohash(Key, Cities.keys.toList).assertEquals(
+      List("u2yhvcgrxx0".opt, "u3qcnhheum0".opt, "u3h4exzj480".opt, Opt.Empty, Opt.Empty, Opt.Empty)
+        .map(_.map(GeoHash.apply)),
+    )
     geohash(OtherKey, Cities.keys.toList).assertEquals(List.fill(Cities.size)(Opt.Empty))
   }
 
   apiTest("GEOPOS") {
     setup(geoadd(Key, Cities.toList.take(3)))
-    geopos(Key, Cities.keys.toList).assertEquals(List(
-      Cracow.opt,
-      Warsaw.opt,
-      Wroclaw.opt,
-      Opt.Empty,
-      Opt.Empty,
-      Opt.Empty
-    ))
+    geopos(Key, Cities.keys.toList)
+      .assertEquals(List(Cracow.opt, Warsaw.opt, Wroclaw.opt, Opt.Empty, Opt.Empty, Opt.Empty))
     geopos(OtherKey, Cities.keys.toList).assertEquals(List.fill(Cities.size)(Opt.Empty))
   }
 
@@ -74,37 +63,13 @@ trait GeoApiSuite extends CommandsSuite {
     geodist(OtherKey, "Kraków", "Warszawa").assertEquals(Opt.Empty)
   }
 
-  val Names = List(
-    "Łódź",
-    "Warszawa",
-    "Wrocław",
-    "Poznań",
-    "Kraków",
-    "Gdańsk"
-  )
+  val Names = List("Łódź", "Warszawa", "Wrocław", "Poznań", "Kraków", "Gdańsk")
   val Distances = List(
-    0.0,
-    118.7290,
-    182.6025,
-    187.3482,
-    191.5769,
-    293.4112
+    0.0, 118.7290, 182.6025, 187.3482, 191.5769, 293.4112,
   )
-  val Coords = List(
-    Lodz,
-    Warsaw,
-    Wroclaw,
-    Poznan,
-    Cracow,
-    Gdansk
-  )
+  val Coords = List(Lodz, Warsaw, Wroclaw, Poznan, Cracow, Gdansk)
   val Hashes = List(
-    3675939619438045L,
-    3676555161427275L,
-    3675690699196023L,
-    3675964217593962L,
-    3675468168314803L,
-    3687998315644695L
+    3675939619438045L, 3676555161427275L, 3675690699196023L, 3675964217593962L, 3675468168314803L, 3687998315644695L,
   )
 
   apiTest("GEORADIUS") {
@@ -170,4 +135,3 @@ trait GeoApiSuite extends CommandsSuite {
     georadiusbymemberStore(Key, "Łódź", 300, GeoUnit.Km, StoreKey, storeDist = true).assertEquals(Opt(6L))
   }
 }
-

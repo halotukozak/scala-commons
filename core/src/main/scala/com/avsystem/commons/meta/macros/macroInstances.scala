@@ -14,7 +14,7 @@
 //  lazy val MaterializeWithAT = TypeRepr.of[materializeWith].typeSymbol
 //
 //  lazy val enclosingClasses = {
-//    def enclosingSym: Symbol = 
+//    def enclosingSym: Symbol =
 //      Symbol.spliceOwner match
 //      case sym if sym.isPackageDef =>
 //        Iterator.iterate(sym)(_.owner).find(m => m.isClassDef && m.flags.is(Flags.Module)).getOrElse(Symbol.noSymbol)

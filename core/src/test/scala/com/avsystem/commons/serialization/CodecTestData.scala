@@ -107,10 +107,10 @@ object CodecTestData {
   }
 
   @flatten sealed trait TransparentFlatSealedBase
-//
-//  final case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
 
-//  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
+  final case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
+
+  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
 
   object TransparentFlatSealedBase extends HasGenCodec[TransparentFlatSealedBase]
 
@@ -118,7 +118,7 @@ object CodecTestData {
 
   object TransparentFlatThing extends HasApplyUnapplyCodec[TransparentFlatThing]
 
-  abstract class Wrapper[Self <: Wrapper[Self] : ClassTag](private val args: Any*) { this: Self =>
+  abstract class Wrapper[Self <: Wrapper[Self]: ClassTag](private val args: Any*) { this: Self =>
     override def equals(obj: Any): Boolean = obj match
       case other: Self => args == other.args
       case _ => false
@@ -149,15 +149,15 @@ object CodecTestData {
   final case class TransparentWrapperWithDependency(str: String)
 
   object TransparentWrapperWithDependency {
-    //order matters
+    // order matters
     given codec: GenCodec[TransparentWrapperWithDependency] = GenCodec.materialize
 
     given stringCodec: GenCodec[String] = GenCodec.StringCodec
   }
 
-//  @transparent final case class StringId(id: String)
+  @transparent final case class StringId(id: String)
 
-//  object StringId extends TransparentWrapperCompanion[String, StringId]
+  object StringId extends TransparentWrapperCompanion[String, StringId]
 
   trait HasSomeStr {
     @name("some.str") def str: String
@@ -197,10 +197,10 @@ object CodecTestData {
     nint: NOpt[Opt[Int]],
   )
 
-  object CaseClassWithAutoOptionalFields extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
+  object CaseClassWithAutoOptionalFields
+      extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
 
-  class CaseClassLike(val str: String, val intList: List[Int])
-    extends Wrapper[CaseClassLike](str, intList)
+  class CaseClassLike(val str: String, val intList: List[Int]) extends Wrapper[CaseClassLike](str, intList)
 
   object CaseClassLike extends HasGenCodec[CaseClassLike] {
     def apply(@name("some.str") str: String, intList: List[Int]): CaseClassLike = new CaseClassLike(str, intList)
@@ -208,8 +208,7 @@ object CodecTestData {
     def unapply(ccl: CaseClassLike): Opt[(String, List[Int])] = (ccl.str, ccl.intList).opt
   }
 
-  class HasInheritedApply(val str: String, val intList: List[Int])
-    extends Wrapper[HasInheritedApply](str, intList)
+  class HasInheritedApply(val str: String, val intList: List[Int]) extends Wrapper[HasInheritedApply](str, intList)
 
   trait ApplyAndUnapply[A, B, C] {
     protected def doApply(a: A, lb: List[B]): C
@@ -261,7 +260,10 @@ object CodecTestData {
     def unapplySeq(vccl: OnlyVarargsCaseClassLike): Opt[Seq[String]] = vccl.strings.opt
   }
 
-  final case class HasDefaults(@transientDefault int: Int = 42, @transientDefault @whenAbsent("dafuq") str: String = "kek")
+  final case class HasDefaults(
+    @transientDefault int: Int = 42,
+    @transientDefault @whenAbsent("dafuq") str: String = "kek",
+  )
 
   object HasDefaults extends HasGenCodec[HasDefaults]
 
@@ -296,7 +298,7 @@ object CodecTestData {
 
     given stringCodec: GenCodec[Expr[String]] = GenCodec.materialize
 
-    given baseGenericCodec[T]: GenCodec[BaseExpr {type Value = T}] = GenCodec.materialize
+    given baseGenericCodec[T]: GenCodec[BaseExpr { type Value = T }] = GenCodec.materialize
   }
 
   object Expr extends HasGadtCodec[Expr]
@@ -322,7 +324,7 @@ object CodecTestData {
   final case class LazyRecExpr[+T](expr: RecExpr[T]) extends RecExpr[T]
 
   object RecExpr {
-    private def mkCodec[T <: RecBound[T] : GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
+    private def mkCodec[T <: RecBound[T]: GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
 
     given codec[T: GenCodec]: GenCodec[RecExpr[T]] =
       mkCodec[Nothing](using GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
@@ -445,7 +447,7 @@ object CodecTestData {
       type X = Type
     }
 
-    given codec[T: GenCodec]: GenCodec[SealedRefined {type X = T}] = GenCodec.materialize
+    given codec[T: GenCodec]: GenCodec[SealedRefined { type X = T }] = GenCodec.materialize
   }
 
   final case class StepOne(stepTwo: StepTwo)
@@ -458,9 +460,9 @@ object CodecTestData {
 
   object OuterThing extends HasRecursiveGenCodec[OuterThing]
 
-//  @transparent final case class ThingId(value: String)
-//
-//  object ThingId extends StringWrapperCompanion[ThingId]
+  //  @transparent final case class ThingId(value: String)
+  //
+  //  object ThingId extends StringWrapperCompanion[ThingId]
 
   locally {
     final case class LocalStuff()
@@ -479,7 +481,8 @@ object CodecTestData {
     def abstractUpper: String = value.toUpperCase
 
     @generated val valUpper: String = value.toUpperCase
-    @(generated @getter) val getterUpper: String = value.toUpperCase
+    @(generated @getter)
+    val getterUpper: String = value.toUpperCase
     @generated var varUpper: String = value.toUpperCase
     @generated val lazyValUpper: String = value.toUpperCase
   }

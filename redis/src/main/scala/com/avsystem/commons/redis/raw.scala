@@ -9,9 +9,9 @@ import com.avsystem.commons.redis.protocol.{ArrayMsg, BulkStringMsg, RedisMsg, R
 import scala.collection.mutable
 
 /**
-  * One or more raw Redis commands. More lightweight than regular Scala collection
-  * (avoids wrapping in case of single element).
-  */
+ * One or more raw Redis commands. More lightweight than regular Scala collection (avoids wrapping in case of single
+ * element).
+ */
 trait RawCommands {
   def emitCommands(consumer: RawCommand => Unit): Unit
 }
@@ -24,7 +24,7 @@ trait RawCommand extends RawCommandPack with RawCommands with ReplyPreprocessor 
   override def maxBlockingMillis: Int = 0
 
   final def checkLevel(minAllowed: Level, clientType: String): Unit =
-    if (!minAllowed.allows(level)) {
+    if !minAllowed.allows(level) then {
       throw new ForbiddenCommandException(this, clientType)
     }
 
@@ -71,18 +71,18 @@ object RawCommand {
 }
 
 /**
-  * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Iterable[RawCommandPack]]`
-  * but more lightweight.
-  */
+ * One or more [[RawCommandPack]]s. Conceptually pretty much the same as `Iterable[RawCommandPack]]` but more
+ * lightweight.
+ */
 trait RawCommandPacks {
   def emitCommandPacks(consumer: RawCommandPack => Unit): Unit
   def computeSize(limit: Int): Int
 
   /**
-    * Maximum amount of time that these command packs may block on Redis side (like e.g. `BLPOP`).
-    * This method is overridden for [[RawCommand]] to return 0 and should be further overridden by each
-    * blocking command. `Int.MaxValue` should be returned for unlimited blocking.
-    */
+   * Maximum amount of time that these command packs may block on Redis side (like e.g. `BLPOP`). This method is
+   * overridden for [[RawCommand]] to return 0 and should be further overridden by each blocking command. `Int.MaxValue`
+   * should be returned for unlimited blocking.
+   */
   def maxBlockingMillis: Int = {
     val counter = new RawCommandPacks.MaxBlockingMillisCounter
     emitCommandPacks(counter)
@@ -90,13 +90,17 @@ trait RawCommandPacks {
   }
 
   final def foreachKey(consumer: ByteString => Unit): Unit =
-    emitCommandPacks(_.rawCommands(inTransaction = false)
-      .emitCommands(_.encoded.elements.foreach(bs => if (bs.isCommandKey) consumer(bs.string))))
+    emitCommandPacks(
+      _.rawCommands(inTransaction = false)
+        .emitCommands(_.encoded.elements.foreach(bs => if bs.isCommandKey then consumer(bs.string))),
+    )
 
   final def encodedSize: Int = {
     var result = 0
-    emitCommandPacks(_.rawCommands(inTransaction = false)
-      .emitCommands(c => result += RedisMsg.encodedSize(c.encoded)))
+    emitCommandPacks(
+      _.rawCommands(inTransaction = false)
+        .emitCommands(c => result += RedisMsg.encodedSize(c.encoded)),
+    )
     result
   }
 
@@ -118,10 +122,10 @@ object RawCommandPacks {
 }
 
 /**
-  * Represents a sequence of commands that is always executed atomically, using a single network call
-  * on a single Redis connection. [[RawCommandPack]] is effectively either a single command or a transaction,
-  * optionally preceded by the `ASKING` special command.
-  */
+ * Represents a sequence of commands that is always executed atomically, using a single network call on a single Redis
+ * connection. [[RawCommandPack]] is effectively either a single command or a transaction, optionally preceded by the
+ * `ASKING` special command.
+ */
 trait RawCommandPack extends RawCommandPacks {
   def rawCommands(inTransaction: Boolean): RawCommands
   def createPreprocessor(replyCount: Int): ReplyPreprocessor
@@ -137,12 +141,11 @@ trait WatchState {
 }
 
 /**
-  * Something that translates incoming [[protocol.RedisMsg RedisMsg]]
-  * messages and emits a single [[protocol.RedisReply RedisReply]].
-  * For example, it may handle transactions by extracting actual responses for every command from
-  * the `EXEC` response and returning them in a [[protocol.TransactionReply TransactionReply]]
-  * (see [[Transaction]]).
-  */
+ * Something that translates incoming [[protocol.RedisMsg RedisMsg]] messages and emits a single
+ * [[protocol.RedisReply RedisReply]]. For example, it may handle transactions by extracting actual responses for every
+ * command from the `EXEC` response and returning them in a [[protocol.TransactionReply TransactionReply]] (see
+ * [[Transaction]]).
+ */
 trait ReplyPreprocessor {
   def preprocess(message: RedisMsg, watchState: WatchState): Opt[RedisReply]
 }

@@ -3,18 +3,13 @@ package ser
 
 import com.avsystem.commons.serialization.json.JsonStringOutput
 import com.avsystem.commons.serialization.{GenCodec, flatten}
-import io.circe._
-import io.circe.generic.semiauto._
-import io.circe.syntax._
+import io.circe.*
+import io.circe.generic.semiauto.*
+import io.circe.syntax.*
 
 import scala.annotation.nowarn
 
-case class Something(
-  name: String,
-  year: Int,
-  stuffs: List[Stuff],
-  ints: Set[Int]
-)
+case class Something(name: String, year: Int, stuffs: List[Stuff], ints: Set[Int])
 @nowarn
 object Something {
   implicit val codec: GenCodec[Something] = GenCodec.materialize
@@ -26,7 +21,7 @@ object Something {
     "The Name of Something",
     2017,
     List(
-      Stuff(Map(), 3.15)
+      Stuff(Map(), 3.15),
       //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.14),
       //      Stuff(Map("fuu" -> true), 3.16),
       //      Stuff(Map("fuu" -> true, "boo \n\r\t" -> false, "fag" -> true, "moar" -> false), 3.17),
@@ -34,20 +29,15 @@ object Something {
       //      Stuff(Map("fuu" -> true, "boo" -> false, "fag" -> true), 3.19),
     ),
     Set(
-      1 //5, 62, -23, 454, 123, 75, -234,
-    )
+      1, // 5, 62, -23, 454, 123, 75, -234,
+    ),
   )
 
   final val ExampleJson = Example.asJson
   final val ExampleJsonString = ExampleJson.noSpaces
 }
 
-case class Primitives(
-  b: Boolean,
-  i: Int,
-  l: Long,
-  d: Double
-)
+case class Primitives(b: Boolean, i: Int, l: Long, d: Double)
 @nowarn
 object Primitives {
   implicit val codec: GenCodec[Primitives] = GenCodec.materialize
@@ -127,9 +117,11 @@ object Foo {
   implicit val codec: GenCodec[Foo] = GenCodec.materialize
   implicit val rw: upickle.default.ReadWriter[Foo] = upickle.default.macroRW
 
-  final val ExampleMap: Map[String, Foo] = List.tabulate(100) { i =>
-    ("b" * i) -> Foo("a" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
-  }.toMap
+  final val ExampleMap: Map[String, Foo] = List
+    .tabulate(100) { i =>
+      ("b" * i) -> Foo("a" * i, (i + 2.0) / (i + 1.0), i, i * 1000L, (0 to i).map(_ % 2 == 0).toList)
+    }
+    .toMap
 
   final val ExampleJson = ExampleMap.asJson
   final val ExampleJsonString = ExampleJson.noSpaces

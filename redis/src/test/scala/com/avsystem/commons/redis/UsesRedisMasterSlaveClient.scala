@@ -5,9 +5,8 @@ import com.avsystem.commons.redis.config.MasterSlaveConfig
 import org.scalatest.Suite
 
 /**
-  * Author: ghik
-  * Created: 14/04/16.
-  */
+ * Author: ghik Created: 14/04/16.
+ */
 trait UsesRedisMasterSlaveClient extends UsesMasterSlaveServers with UsesActorSystem { this: Suite =>
   def masterSlaveConfig: MasterSlaveConfig = MasterSlaveConfig()
   def seedSentinels: Seq[NodeAddress] = sentinelAddresses.take(1)

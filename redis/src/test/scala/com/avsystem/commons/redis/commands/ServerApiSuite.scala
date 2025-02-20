@@ -1,23 +1,28 @@
 package com.avsystem.commons
 package redis.commands
 
-import com.avsystem.commons.redis._
+import com.avsystem.commons.redis.*
 import com.avsystem.commons.redis.exception.ErrorReplyException
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 
 /**
-  * Author: ghik
-  * Created: 03/10/16.
-  */
+ * Author: ghik Created: 03/10/16.
+ */
 trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   def waitForPersistence() =
-    waitUntil(RedisApi.Batches.StringTyped.info(PersistenceInfo).map { pi =>
-      pi.rdbBgsaveInProgress.contains(false) && pi.aofRewriteInProgress.contains(false)
-    }.exec, 50.millis)
+    waitUntil(
+      RedisApi.Batches.StringTyped
+        .info(PersistenceInfo)
+        .map { pi =>
+          pi.rdbBgsaveInProgress.contains(false) && pi.aofRewriteInProgress.contains(false)
+        }
+        .exec,
+      50.millis,
+    )
 
   apiTest("BGSAVE") {
     waitForPersistence()
@@ -61,8 +66,9 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
   }
 
   apiTest("COMMAND INFO") {
-    commandInfo("mget").assertEquals(CommandInfo("mget", CommandArity(2, more = true),
-      CommandFlags.Readonly | CommandFlags.Fast, 1, -1, 1))
+    commandInfo("mget").assertEquals(
+      CommandInfo("mget", CommandArity(2, more = true), CommandFlags.Readonly | CommandFlags.Fast, 1, -1, 1),
+    )
   }
 
   apiTest("CONFIG GET") {
@@ -105,7 +111,8 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
   apiTest("SAVE") {
     waitForPersistence()
-    try save.get catch {
+    try save.get
+    catch {
       // ignore spurious Redis failures
       case e: ErrorReplyException if e.errorStr == "ERR Background save already in progress" =>
     }
@@ -139,7 +146,7 @@ trait ServerApiSuite extends CommandsSuite with UsesActorSystem {
 
 trait ConnectionServerApiSuite extends ServerApiSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   apiTest("CLIENT GETNAME") {
     clientGetname.assertEquals(Opt.Empty)
@@ -151,4 +158,3 @@ trait ConnectionServerApiSuite extends ServerApiSuite {
     clientSetname("name").get
   }
 }
-

@@ -3,8 +3,8 @@ package ser
 
 import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
 import com.avsystem.commons.serialization.nativejs.{NativeJsonInput, NativeJsonOutput}
-import io.circe.parser._
-import io.circe.syntax._
+import io.circe.parser.*
+import io.circe.syntax.*
 import japgolly.scalajs.benchmark.gui.GuiSuite
 import japgolly.scalajs.benchmark.{Benchmark, Suite}
 
@@ -35,7 +35,6 @@ object JsonBenchmarks {
       Benchmark("Reading case class: uPickle") {
         upickle.default.read[Something](Something.ExampleJsonString)
       },
-
       Benchmark("Writing sealed hierarchy: GenCodec, String Json format") {
         JsonStringOutput.write(SealedStuff.ExampleList)
       },
@@ -72,7 +71,6 @@ object JsonBenchmarks {
       Benchmark("Reading sealed hierarchy: uPickle") {
         upickle.default.read[List[SealedStuff]](SealedStuff.ExampleUpickleJsonString)
       },
-
       Benchmark("Writing foos: GenCodec, String Json format") {
         JsonStringOutput.write(Foo.ExampleMap)
       },
@@ -96,7 +94,7 @@ object JsonBenchmarks {
       },
       Benchmark("Reading foos: uPickle") {
         upickle.default.read[Map[String, Foo]](Foo.ExampleUpickleJsonString)
-      }
-    )
+      },
+    ),
   )
 }

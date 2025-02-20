@@ -10,11 +10,12 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
 /**
-  * @author MKej
-  */
+ * @author
+ *   MKej
+ */
 class JettyRPCFrameworkTest extends AnyFunSuite with ScalaFutures with Matchers with BeforeAndAfterAll {
 
-  import JettyRPCFramework._
+  import JettyRPCFramework.*
 
   override implicit def patienceConfig: PatienceConfig =
     PatienceConfig(scaled(Span(5, Seconds)), scaled(Span(50, Milliseconds)))

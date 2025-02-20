@@ -18,13 +18,16 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
 
   val simpleName: TypeRepr => String = _.show(using Printer.TypeReprShortCode)
 
-  def mkName(tpe: TypeRepr, param: Int => TypeRepr = _ => report.errorAndAbort(history.result().mkString("->"))): String = tpe match
+  def mkName(
+    tpe: TypeRepr,
+    param: Int => TypeRepr = _ => report.errorAndAbort(history.result().mkString("->")),
+  ): String = tpe match
     case ConstantType(value) =>
       history.addOne("Constant")
       value.toString
     case tpe: TermRef =>
       def generatePath: TypeRepr => List[String] =
-        case TermRef(qual, name) if qual.typeSymbol.isPackageDef || qual =:= TypeRepr.of[Predef.type ] => name :: Nil
+        case TermRef(qual, name) if qual.typeSymbol.isPackageDef || qual =:= TypeRepr.of[Predef.type] => name :: Nil
         case TermRef(qual, name) => generatePath(qual) ::: (name :: Nil)
         case _ => Nil
 
@@ -38,10 +41,10 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
 
       history.addOne("Refinement")
       info match
-        case TypeBounds(low@TypeLambda(paramNames, paramBounds, resType), hi) if low =:= hi =>
+        case TypeBounds(low @ TypeLambda(paramNames, paramBounds, resType), hi) if low =:= hi =>
           history.addOne("Refinement.TypeBounds1")
           s"$parentName{type $name[${paramNames.zip(low.paramVariances).map((p, v) => s"${showVariance(v)}$p").mkString(", ")}] = ${mkName(resType, low.param)}}"
-        case TypeBounds(low@MethodType(paramNames, paramBounds, resType), hi) =>
+        case TypeBounds(low @ MethodType(paramNames, paramBounds, resType), hi) =>
           history.addOne("Refinement.TypeBounds1.1")
           s"$parentName{type $name(${paramNames.zip(paramBounds).map((p, t) => s"$p: ${mkName(t)}").mkString(", ")}) = ${mkName(resType)}}"
         case TypeBounds(low, hi) if low =:= hi =>
@@ -63,7 +66,7 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
         case other =>
           history.addOne("Refinement.Other")
           s"$parentName{type $name = ${mkName(other)}}"
-    case tpe@AppliedType(t, args) if tpe.isFunctionType =>
+    case tpe @ AppliedType(t, args) if tpe.isFunctionType =>
       val preparedArgs = args.init match
         case ByNameType(head) :: Nil =>
           history.addOne("FunctionType.ByName")
@@ -80,11 +83,11 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
 
       history.addOne("FunctionType")
       s"$preparedArgs => ${mkName(args.last)}"
-    case tpe@AppliedType(t, args) if t <:< defn.RepeatedParamClass.typeRef =>
+    case tpe @ AppliedType(t, args) if t <:< defn.RepeatedParamClass.typeRef =>
       history.addOne("RepeatedParam")
       if args.length != 1 then report.errorAndAbort("Repeated param must have exactly one argument")
       s"${mkName(args.head)}*"
-    case tpe@AppliedType(t, args) if tpe.isTupleN =>
+    case tpe @ AppliedType(t, args) if tpe.isTupleN =>
       history.addOne("Tuple")
       s"(${args.map(mkName(_)).mkString(", ")})"
     case AppliedType(t, args) =>
@@ -115,7 +118,7 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
     case PolyType(paramNames, paramBounds, resType) =>
       report.errorAndAbort("Poly types are not supported")
     //      s"[${paramNames.zip(paramBounds).map((n, t) => s"${n}: ${mkName(t)}").mkString(", ")}] => ${mkName(resType)}"
-    case tpe@TypeLambda(paramNames, paramBounds, resType) =>
+    case tpe @ TypeLambda(paramNames, paramBounds, resType) =>
       history.addOne("TypeLambda")
       s"[${paramNames.zip(paramBounds).map((n, t) => s"$n: ${mkName(t)}").mkString(", ")}] => ${mkName(resType, tpe.param)}"
     case MatchCase(caseDef, body) =>

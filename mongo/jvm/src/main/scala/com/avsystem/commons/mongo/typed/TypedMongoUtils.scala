@@ -7,7 +7,7 @@ import monix.reactive.Observable
 import org.reactivestreams.Publisher
 
 trait TypedMongoUtils {
-  import com.avsystem.commons.mongo.reactive.ReactiveMongoExtensions._
+  import com.avsystem.commons.mongo.reactive.ReactiveMongoExtensions.*
 
   protected final def empty(publisher: Publisher[Void]): Task[Unit] = publisher.completedL
   protected final def single[T](publisher: Publisher[T]): Task[T] = publisher.headL
@@ -16,11 +16,11 @@ trait TypedMongoUtils {
   protected final def multi[T](publisher: Publisher[T]): Observable[T] = publisher.asMonix
 
   /**
-    * Transforms an expression `method(nullableArg, moreArgs)` into
-    * `if(nullableArg ne null) method(nullableArg, moreArgs) else method(moreArgs)`.
-    *
-    * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that
-    * may or may not take `ClientSession` as its first argument (non-nullable).
-    */
+   * Transforms an expression `method(nullableArg, moreArgs)` into `if(nullableArg ne null) method(nullableArg,
+   * moreArgs) else method(moreArgs)`.
+   *
+   * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that may or may
+   * not take `ClientSession` as its first argument (non-nullable).
+   */
   protected def optionalizeFirstArg[T](expr: T): T = macro MiscMacros.optionalizeFirstArg
 }

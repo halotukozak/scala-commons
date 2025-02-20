@@ -62,7 +62,7 @@ trait JLinkedHashSetFac:
 trait JSortedSetFac:
   // for JSortedSet, JNavigableSet and JTreeSet
   given jTreeSetFac[A: Ordering]: JCollectionFactory[A, JTreeSet[A]] =
-  new JCollectionFactory(new JTreeSet(Ordering[A]))
+    new JCollectionFactory(new JTreeSet(Ordering[A]))
 
 trait JLinkedListFac:
   given jLinkedListFac[A]: JCollectionFactory[A, JLinkedList[A]] =
@@ -71,8 +71,7 @@ trait JLinkedListFac:
 trait JMapFac extends JSortedMapFac with JLinkedHashMapFac:
   // for JMap and JHashMap
   given jHashMapFac[K, V]: JMapFactory[K, V, JHashMap[K, V]] =
-  new JMapFactory(new JHashMap)
-
+    new JMapFactory(new JHashMap)
 
 trait JLinkedHashMapFac:
   given jLinkedHashMapFac[K, V]: JMapFactory[K, V, JLinkedHashMap[K, V]] =
@@ -81,4 +80,4 @@ trait JLinkedHashMapFac:
 trait JSortedMapFac:
   // for JSortedMap, JNavigableMap and JTreeMap
   given jTreeMapFac[K: Ordering, V]: JMapFactory[K, V, JTreeMap[K, V]] =
-  new JMapFactory(new JTreeMap(Ordering[K]))
+    new JMapFactory(new JTreeMap(Ordering[K]))

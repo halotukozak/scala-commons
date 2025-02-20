@@ -5,14 +5,15 @@ import java.nio.charset.StandardCharsets
 
 import com.avsystem.commons.misc.{NamedEnum, NamedEnumCompanion}
 import com.avsystem.commons.redis.CommandEncoder.CommandArg
-import com.avsystem.commons.redis._
-import com.avsystem.commons.redis.commands.ReplyDecoders._
+import com.avsystem.commons.redis.*
+import com.avsystem.commons.redis.commands.ReplyDecoders.*
 import com.avsystem.commons.redis.exception.ErrorReplyException
 import com.avsystem.commons.redis.protocol.ValidRedisMsg
 import scala.annotation.nowarn
 import com.google.common.hash.Hashing
 
 trait KeyedScriptingApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/eval EVAL]] */
   def eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     execute(new Eval(script, keys, args))
@@ -30,22 +31,28 @@ trait KeyedScriptingApi extends ApiSubset {
     execute(new Evalsha(sha1, decoder, keys, args))
 
   private final class Eval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value])
-    extends AbstractRedisCommand[T](script.decoder) with NodeCommand {
+      extends AbstractRedisCommand[T](script.decoder)
+      with NodeCommand {
     val encoded: Encoded = encoder("EVAL").add(script.source).add(keys.size).keys(keys).datas(args).result
   }
 
-  private final class Evalsha[T](sha1: Sha1, decoder: PartialFunction[ValidRedisMsg, T], keys: Seq[Key], args: Seq[Value])
-    extends AbstractRedisCommand[T](decoder) with NodeCommand {
+  private final class Evalsha[T](
+    sha1: Sha1,
+    decoder: PartialFunction[ValidRedisMsg, T],
+    keys: Seq[Key],
+    args: Seq[Value],
+  ) extends AbstractRedisCommand[T](decoder)
+      with NodeCommand {
     val encoded: Encoded = encoder("EVALSHA").add(sha1.raw).add(keys.size).keys(keys).datas(args).result
   }
 }
 
 trait RecoverableKeyedScriptingApi extends RecoverableApiSubset with KeyedScriptingApi {
+
   /**
-    * Tries to execute [[http://redis.io/commands/evalsha EVALSHA]]
-    * and falls back to [[http://redis.io/commands/eval EVAL]]
-    * if script isn't loaded yet.
-    */
+   * Tries to execute [[http://redis.io/commands/evalsha EVALSHA]] and falls back to
+   * [[http://redis.io/commands/eval EVAL]] if script isn't loaded yet.
+   */
   def evalshaOrEval[T](script: RedisScript[T], keys: Seq[Key], args: Seq[Value]): Result[T] =
     recoverWith(evalsha(script, keys, args)) {
       case e: ErrorReplyException if e.reply.errorCode == "NOSCRIPT" =>
@@ -54,6 +61,7 @@ trait RecoverableKeyedScriptingApi extends RecoverableApiSubset with KeyedScript
 }
 
 trait NodeScriptingApi extends KeyedScriptingApi {
+
   /** [[http://redis.io/commands/script-exists SCRIPT EXISTS]] */
   def scriptExists(hash: Sha1): Result[Boolean] =
     execute(new ScriptExists(hash.single).map(_.head))
@@ -62,8 +70,9 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   def scriptExists(hash: Sha1, hashes: Sha1*): Result[Seq[Boolean]] =
     execute(new ScriptExists(hash +:: hashes))
 
-  /** Executes [[http://redis.io/commands/script-exists SCRIPT EXISTS]]
-    * NOTE: `hashes` CAN be empty, Redis accepts it */
+  /**
+   * Executes [[http://redis.io/commands/script-exists SCRIPT EXISTS]] NOTE: `hashes` CAN be empty, Redis accepts it
+   */
   def scriptExists(hashes: Iterable[Sha1]): Result[Seq[Boolean]] =
     execute(new ScriptExists(hashes))
 
@@ -80,11 +89,12 @@ trait NodeScriptingApi extends KeyedScriptingApi {
     execute(new ScriptLoad(script))
 
   private final class ScriptExists(hashes: Iterable[Sha1])
-    extends RedisSeqCommand[Boolean](integerAsBoolean) with NodeCommand {
+      extends RedisSeqCommand[Boolean](integerAsBoolean)
+      with NodeCommand {
     val encoded: Encoded = encoder("SCRIPT", "EXISTS").add(hashes).result
 
     override def immediateResult: Opt[ISeq[Boolean]] =
-      if(hashes.isEmpty) Opt(Nil) else Opt.Empty
+      if hashes.isEmpty then Opt(Nil) else Opt.Empty
   }
 
   private object ScriptFlush extends RedisUnitCommand with NodeCommand {
@@ -96,12 +106,14 @@ trait NodeScriptingApi extends KeyedScriptingApi {
   }
 
   private final class ScriptLoad(script: RedisScript[Any])
-    extends AbstractRedisCommand[Sha1](bulkAsSha1) with NodeCommand {
+      extends AbstractRedisCommand[Sha1](bulkAsSha1)
+      with NodeCommand {
     val encoded: Encoded = encoder("SCRIPT", "LOAD").add(script.source).result
   }
 }
 
 trait ConnectionScriptingApi extends NodeScriptingApi {
+
   /** Executes [[http://redis.io/commands/script-debug SCRIPT DEBUG]] */
   def scriptDebug(mode: DebugMode): Result[Unit] =
     execute(new ScriptDebug(mode))

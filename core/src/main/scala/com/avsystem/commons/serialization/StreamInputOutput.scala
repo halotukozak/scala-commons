@@ -133,8 +133,7 @@ class StreamInput(is: DataInputStream) extends InputAndSimpleInput {
       throw new ReadFailure(s"Unexpected marker byte: $unexpected")
 }
 
-class StreamFieldInput(val fieldName: String, is: DataInputStream)
-  extends StreamInput(is) with FieldInput
+class StreamFieldInput(val fieldName: String, is: DataInputStream) extends StreamInput(is) with FieldInput
 
 private class StreamListInput(is: DataInputStream) extends ListInput {
   private var currentInput: Opt[StreamInput] = Opt.empty

@@ -6,10 +6,14 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-class RedisMasterSlaveClientInitTest extends AnyFunSuite
-  with Matchers with ScalaFutures with UsesActorSystem with UsesPreconfiguredMasterSlave {
+class RedisMasterSlaveClientInitTest
+    extends AnyFunSuite
+    with Matchers
+    with ScalaFutures
+    with UsesActorSystem
+    with UsesPreconfiguredMasterSlave {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   def createClient(sentinelPorts: Int*): RedisMasterSlaveClient =
     new RedisMasterSlaveClient(masterName, sentinelPorts.map(p => NodeAddress(port = p)))
@@ -35,12 +39,12 @@ class RedisMasterSlaveClientInitTest extends AnyFunSuite
 
 class RedisMasterSlaveFailoverTest extends RedisMasterSlaveCommandsSuite {
 
-  import RedisApi.Batches.StringTyped._
+  import RedisApi.Batches.StringTyped.*
 
   test("failover test") {
     val failoverPromise = Promise[Unit]()
     redisClient.setMasterListener { client =>
-      if (client.address.port != ports.head) {
+      if client.address.port != ports.head then {
         failoverPromise.success(())
       }
     }

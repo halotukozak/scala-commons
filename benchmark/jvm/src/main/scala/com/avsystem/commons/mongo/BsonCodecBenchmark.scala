@@ -16,7 +16,7 @@ import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement,
 @State(Scope.Thread)
 class BsonCodecBenchmark {
 
-  import BsonCodecBenchmark._
+  import BsonCodecBenchmark.*
 
   private val something = Toplevel(42, Nested(List(4, 8, 15, 16, 23, 42, 0), 131), "lol")
   private val doc = somethingCodec.toDocument(something)
@@ -55,7 +55,7 @@ class BsonCodecBenchmark {
 
 object BsonCodecBenchmark {
 
-  import BsonCodec._
+  import BsonCodec.*
 
   val bsonDocumentCodec = new BsonDocumentCodec()
 
@@ -68,10 +68,7 @@ object BsonCodecBenchmark {
       .put(listKey, t.list)
       .put(intKey, t.int)
 
-    override def fromDocument(doc: Doc) = Nested(
-      list = doc.require(listKey),
-      int = doc.require(intKey)
-    )
+    override def fromDocument(doc: Doc) = Nested(list = doc.require(listKey), int = doc.require(intKey))
   }
 
   val nestedKey: DocKey[Nested, BsonDocument] = nestedCodec.bsonCodec.key("nested")
@@ -82,10 +79,7 @@ object BsonCodecBenchmark {
       .put(nestedKey, t.nested)
       .put(strKey, t.str)
 
-    override def fromDocument(doc: Doc): Toplevel = Toplevel(
-      int = doc.require(intKey),
-      nested = doc.require(nestedKey),
-      str = doc.require(strKey)
-    )
+    override def fromDocument(doc: Doc): Toplevel =
+      Toplevel(int = doc.require(intKey), nested = doc.require(nestedKey), str = doc.require(strKey))
   }
 }

@@ -14,6 +14,7 @@ import com.avsystem.commons.serialization._
 import com.avsystem.commons.serialization.cbor._
 
 case class Thing(int: Int, str: String)
+
 object Thing extends HasGenCodec[Thing]
 
 val cborBytes: Array[Byte] = CborOutput.write(Thing(42, "foo"))
@@ -32,6 +33,7 @@ val rawCbor: RawCbor = CborOutput.writeRawCbor(Thing(42, "foo"))
 
 ```scala
 case class RawCborThing(id: Int, data: RawCbor)
+
 object RawCborThing extends HasGenCodec[RawCborThing]
 ```
 
@@ -41,7 +43,8 @@ CBOR lists and maps can be encoded in two ways:
 
 * with explicit number of elements at the beginning (more compact, allows preallocation of buffers and better
   performance)
-* with unspecified number of elements at the beginning along with a _break_ byte (`0xFF`) at the end (better for streaming
+* with unspecified number of elements at the beginning along with a _break_ byte (`0xFF`) at the end (better for
+  streaming
   applications)
 
 When serializing collections into CBOR, you can control whether they are explicitly sized. This is done with
@@ -93,6 +96,7 @@ val keyCodec = new CborKeyCodec {
 }
 
 case class Thing(intField: Int, strField: String)
+
 object Thing extends HasGenCodec[Thing]
 
 val cborBytes: Array[Byte] = CborOutput.write(Thing(42, "foo"), keyCodec)
@@ -115,9 +119,12 @@ Example:
 
 ```scala
 @cborDiscriminator(0) sealed trait UnionData
+
 object UnionData extends HasCborCodec[UnionData] {
   @cborKey(1) case class Textual(@cborKey(1) txt: String) extends UnionData
+
   @cborKey(2) case class Numeric(@cborKey(true) num: Int) extends UnionData
+
   @cborKey(3) case class Mapping(@cborKey("m") map: Map[Int, String]) extends UnionData
 }
 ```

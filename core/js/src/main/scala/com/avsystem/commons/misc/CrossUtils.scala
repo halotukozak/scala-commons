@@ -10,7 +10,7 @@ object CrossUtils {
   def newNativeArray[A](size: Int): NativeArray[A] = {
     val res = new js.Array[A](size)
     var idx = 0
-    while (idx < size) {
+    while idx < size do {
       res(idx) = null.asInstanceOf[A]
       idx += 1
     }
@@ -19,9 +19,9 @@ object CrossUtils {
 
   def newNativeDict[A]: NativeDict[A] = js.Dictionary.empty[A]
 
-  def wrappedArray[A](elems: A*): MIndexedSeq[A] = js.Array(elems *)
+  def wrappedArray[A](elems: A*): MIndexedSeq[A] = js.Array(elems*)
 
   def arrayBuffer[A]: MIndexedSeq[A] & MBuffer[A] = js.Array[A]()
 
-  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = js.Dictionary(keyValues *)
+  def dictionary[A](keyValues: (String, A)*): MMap[String, A] = js.Dictionary(keyValues*)
 }
