@@ -84,5 +84,5 @@ trait Components extends ComponentsLowPrio {
 trait ComponentsLowPrio {
   //  @compileTimeOnly("implicit Component[T] => implicit T inference only works inside code passed to component/singleton macro")
   //  given inject[T]: Conversion[Component[T], T] = sys.error("stub")
-  implicit def inject[T](using Component[T]): T = sys.error("stub")
+  implicit protected def inject[T](using Component[T]): T = sys.error("stub")
 }

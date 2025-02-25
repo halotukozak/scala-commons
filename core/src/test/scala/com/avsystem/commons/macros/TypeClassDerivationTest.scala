@@ -60,7 +60,7 @@ object TypeClassDerivationTest {
     }
 
     object Deferred {
-      def apply[T](underlying: TC[T]) = {
+      def apply[T](underlying: TC[T]): Deferred[T] = {
         val res = new Deferred[T]
         res.underlying = underlying
         res

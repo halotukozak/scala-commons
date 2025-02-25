@@ -196,7 +196,7 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
         case _ => None
 
     def applyUnapplyTc: Option[Expr[TC[T]]] =
-      applyUnapplyFor[T].map(forApplyUnapply)
+      applyUnapplyForImpl[T].map(forApplyUnapply)
 
     def sealedHierarchyTc: Option[Expr[TC[T]]] = knownSubtypes[T]().map {
       case Nil => report.errorAndAbort(s"Could not find any subtypes for ${Type.show[T]}")
@@ -210,19 +210,16 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
         forSealedHierarchy[T](dependencies)
     }
 
-    singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown[T]
+    singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown
   }
 
   def withRecursiveImplicitGuard[T: Type](using quotes: Quotes, tpe: Type[TC])(unguarded: Expr[TC[T]]): Expr[TC[T]] = {
     import quotes.reflect.*
-    val dtpe = TypeRepr.of[T].dealias
-    val tcTpe = typeClassInstance[T]
 
-    val withDummyImplicit =
-      '{
-        given (DeferredInstance[TC[T]] & TC[T]) = ???
-        $unguarded
-      }
+    val withDummyImplicit: Expr[TC[T]] = '{
+      implicit def deferred: (DeferredInstance[TC[T]] & TC[T]) = ???
+      $unguarded
+    }
 
     def guarded: Expr[TC[T]] = '{
       given deferred: (DeferredInstance[TC[T]] & TC[T]) = ${ implementDeferredInstance[T] }
@@ -232,15 +229,12 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
     }
 
     withDummyImplicit.asTerm match
-      case Block(deferredDef :: Nil, typedUnguarded)
-          if !typedUnguarded.symbol.children.exists(_ == deferredDef.symbol) => {
-        printTypeReprInfo(typedUnguarded.tpe)
+      case Inlined(_, _, Block(deferredDef :: Nil, typedUnguarded))
+          if !typedUnguarded.symbol.children.exists(_ == deferredDef.symbol) =>
         typedUnguarded.asExprOf[TC[T]]
-      }
-      case _ => guarded
+      case _ =>
+        guarded
   }
 
   def materializeImpl[T: Type](using Quotes, Type[TC]): Expr[TC[T]] = withRecursiveImplicitGuard[T](materializeFor[T])
-
-//  def materializeImplicitly[T: Type](allow: Tree): Expr[TC[T]] = materialize[T]
 }

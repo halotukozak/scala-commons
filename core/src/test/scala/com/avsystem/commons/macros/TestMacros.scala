@@ -27,15 +27,14 @@ private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivati
     au: ApplyUnapply[T],
   )(using Quotes): Expr[TypeClassDerivationTest.ApplyUnapplyTC[T]] = {
     val deps: Expr[List[(String, TC[?], Option[DefVal])]] = Expr.ofList {
-      au.params.map {
-        case ApplyUnapply.Param(label, index, tpe, repeated, dv) =>
-          val name = Expr(label)
-          val tc = tpe match
-            case '[t] => materializeImpl[t]
-          val defaultValueOpt: Expr[Option[DefVal]] = dv match
-            case Some(value) => '{ Some(DefVal($value())) }
-            case None => '{ None }
-          '{ ($name, $tc, $defaultValueOpt) }
+      au.params.map { case ApplyUnapply.Param(label, index, tpe, repeated, dv) =>
+        val name = Expr(label)
+        val tc = tpe match
+          case '[t] => materializeImpl[t]
+        val defaultValueOpt = dv match
+          case Some(value) => '{ Some(DefVal($value())) }
+          case None => '{ None }
+        '{ ($name, $tc, $defaultValueOpt) }
       }
     }
     val name = nameForExpr(using au.ownerTpe)
@@ -110,9 +109,10 @@ private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivati
 
   inline def materialize[T]: TC[T] = ${ materializeImpl[T] }
 
-
   inline def nameFor[T]: String = TypeString.of[T]
 
   def nameForExpr[T: Type](using Quotes): Expr[String] = typeStringImpl[T] match
     case '{ $ts: TypeString[T] } => '{ $ts.value }
+
+  inline def testTreeForType(tpeRepr: String) = assert(scala.compiletime.testing.typeChecks(tpeRepr))
 }

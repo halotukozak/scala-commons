@@ -16,7 +16,7 @@ trait HasMacroUtils extends MacroCommons {
     }
   }
 
-  inline final def printTree[T](inline x: T): T = ${ PrintTree.printTreeImpl('{ x }) }
+  inline final def printTree[T](inline x: T): Nothing = ${ PrintTree.printTreeImpl('{ x }) }
 
   final def printSymbolInfo(using quotes: Quotes)(symbol: quotes.reflect.Symbol): Unit = quotes.reflect.report.info {
     s"""
@@ -99,11 +99,11 @@ trait HasMacroUtils extends MacroCommons {
 object HasMacroUtils extends HasMacroUtils
 
 object PrintTree {
-  def printTreeImpl[T: Type](x: Expr[T])(using quotes: Quotes): Expr[T] = {
+  def printTreeImpl[T: Type](x: Expr[T])(using quotes: Quotes): Expr[Nothing] = {
     import quotes.reflect.*
 
     println("Structure " + x.asTerm.show(using Printer.TreeStructure))
     println("ShortCode " + x.asTerm.show(using Printer.TreeShortCode))
-    x
+    ???
   }
 }

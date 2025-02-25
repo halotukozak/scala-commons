@@ -2,7 +2,8 @@ package com.avsystem.commons
 package misc.macros
 
 import scala.Tuple.Elem
-import scala.compiletime.summonFrom
+import scala.annotation.tailrec
+import scala.compiletime.{summonFrom, summonInline}
 import scala.deriving.Mirror
 
 /**
@@ -13,7 +14,7 @@ import scala.deriving.Mirror
  * @param params
  *   parameters with trees evaluating to default values (or `EmptyTree`s)
  */
-final case class ApplyUnapply[T](ownerTpe: Type[T], params: Seq[ApplyUnapply.Param])(using val m: Mirror.ProductOf[T]) {
+final case class ApplyUnapply[T](ownerTpe: Type[T], params: Seq[ApplyUnapply.Param]) {
 
   def standardCaseClass: Boolean = ???
   //      apply.isClassConstructor
@@ -21,11 +22,11 @@ final case class ApplyUnapply[T](ownerTpe: Type[T], params: Seq[ApplyUnapply.Par
   def synthetic: Boolean = ???
   //      apply.isClassConstructor || apply.isSynthetic && unapply.isSynthetic
 
-  def defaultValueFor(idx: Int) =
-    params(idx).default.asInstanceOf[Elem[m.MirroredElemTypes, idx.type]]
+  def defaultValueFor(idx: Int) = ???
+//    params(idx).default.asInstanceOf[Option[Expr[Elem[m.MirroredElemTypes, idx.type]]]]
 
-  def mkApply(args: Seq[Any]): T =
-    m.fromProduct(Tuple.fromArray(args.toArray))
+  def mkApply(args: Seq[Any]): T = ???
+//    m.fromProduct(Tuple.fromArray(args.toArray))
 }
 
 object ApplyUnapply:
@@ -37,22 +38,65 @@ object ApplyUnapply:
     default: Option[Expr[() => Any]],
   )
 
-inline def applyUnapplyFor[T](using quotes: Quotes): Option[ApplyUnapply[T]] = {
+def applyUnapplyForImpl[T: Type](using quotes: Quotes): Option[ApplyUnapply[T]] = {
   import quotes.reflect.*
-  Expr.summon[Mirror.ProductOf[T]].flatMap { x =>
-    x.asTerm.info
-    None
+  val tpe = TypeRepr.of[T]
+
+  val comp = tpe.classSymbol.get.companionModule
+  val ts = tpe.dealias.typeSymbol
+  val isCaseClass = ts.isClassDef && ts.flags.is(Flags.Case)
+
+  def isFirstListVarargs(sym: Symbol) =
+    sym.paramSymss.headOption.flatMap(_.lastOption).exists(_.isRepeatedParam)
+
+  def params(methodSig: DefDef): List[ApplyUnapply.Param] =
+    methodSig.termParamss.flatMap(_.params).zipWithIndex.map { case (param: ValDef, idx) =>
+      ApplyUnapply.Param(param.name, idx, param.tpt.tpe.widen.asType, param.symbol.isRepeatedParam, param.rhs.map(_.asExprOf[() => Any]))
+    }
+
+  def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
+    val expected = tpe.typeArgs.length
+    apply.typeRef.typeArgs.length == expected && unapply.typeRef.typeArgs.length == expected
+  }
+
+  val applyUnapplyPairs: List[(Symbol, Symbol)] =
+    if comp == TypeRepr.of[Seq.type].typeSymbol then Nil
+    else
+      for
+        apply <- comp.methodMember("apply")
+        unapplyName = if isFirstListVarargs(apply) then "unapplySeq" else "unapply"
+        unapply <- comp.methodMember(unapplyName)
+      yield (apply, unapply)
+
+  if isCaseClass && applyUnapplyPairs.isEmpty then { // case classes with more than 22 fields
+
+    ???
+    val constructor = tpe.classSymbol.get.primaryConstructor
+    Some(ApplyUnapply(Type.of[T], params(constructor.tree.asInstanceOf[DefDef])))
+  } else {
+    val applicableResults = applyUnapplyPairs.flatMap {
+      case (apply, unapply) if isCaseClass && apply.isSynthetic && unapply.isSynthetic =>
+        val constructor = tpe.classSymbol.get.primaryConstructor
+        Some(ApplyUnapply(Type.of[T], params(constructor.tree.asInstanceOf[DefDef])))
+      case (apply, unapply) if typeParamsMatch(apply, unapply) =>
+//        val applySig =
+//          setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
+//        val unapplySig =
+//          setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
+//        if matchingApplyUnapply(dtpe, applySig, unapplySig) then
+        Some(ApplyUnapply(Type.of[T], params(apply.tree.asInstanceOf[DefDef])))
+//        else None
+      case _ => None
+    }
+
+    @tailrec def choose(results: List[ApplyUnapply[T]]): Option[ApplyUnapply[T]] = results match
+      case Nil => None
+      case result :: Nil => Some(result)
+      case multiple if multiple.exists(_.synthetic) =>
+        // prioritize non-synthetic apply/unapply pairs
+        choose(multiple.filterNot(_.synthetic))
+      case _ => None
+
+    choose(applicableResults)
   }
 }
-
-//  summonFrom {
-//  case given Mirror.ProductOf[T] =>
-//    ???
-////    val params =
-////      types[m.MirroredElemTypes].zip(labels[T]).zip(repeated[T]).zip(defaultValue[T]).zipWithIndex.map {
-////        case ((((tpe, label), repeated), default), idx) =>
-////          ApplyUnapply.Param(label, idx, tpe, repeated, default)
-////      }
-////    ApplyUnapply(typeOf[T], params)
-//  case _ => None
-//}

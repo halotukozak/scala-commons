@@ -27,6 +27,13 @@ trait MacroCommons {
         case e :: Nil => e
         case _ => report.errorAndAbort(s"Symbol $symbol has multiple method members $other")
     }
+        
+    def safeSingleMethodMember(other: String): Option[quotes.reflect.Symbol] =
+      symbol.methodMember(other) match
+        case Nil => None
+        case e :: Nil => Some(e)
+        case _ => None
+
     def isPublic: Boolean = {
       import quotes.reflect.*
       !symbol.flags.isAnyOf(Flags.Private, Flags.PrivateLocal, Flags.Protected)
@@ -1339,11 +1346,10 @@ trait MacroCommons {
 
 private val positionCache = new mutable.HashMap[Any, Int]
 
-inline def defaultValue[T]: List[Option[() => Any]] = ${ defaultValueImpl[T] }
-private def defaultValueImpl[T: Type](using quotes: Quotes): Expr[List[Option[() => Any]]] = {
+private def defaultValue[T: Type](using quotes: Quotes): List[Option[Expr[() => Any]]] = {
   import quotes.reflect.*
   val tpe = TypeRepr.of[T].typeSymbol
-  val terms = tpe.primaryConstructor.paramSymss.flatten
+  val terms: List[Option[Expr[() => Any]]] = tpe.primaryConstructor.paramSymss.flatten
     .filter(_.isValDef)
     .zipWithIndex
     .map { (field, i) =>
@@ -1363,11 +1369,13 @@ private def defaultValueImpl[T: Type](using quotes: Quotes): Expr[List[Option[()
             case tree: DefDef => tree.rhs.getOrElse(callDefault)
             case _ => callDefault
         }
-        .map(_.asExprOf[Any]) match
-        case Some(ex) => '{ Some(() => $ex) }
-        case None => '{ None }
+        .map(_.asExprOf[Any])
+        .map { case ex =>
+          val value = '{ () => $ex }
+          value
+        }
     }
-  Expr.ofList(terms)
+  terms
 }
 
 inline def repeated[T]: List[Boolean] = ${ repeatedImpl[T] }
@@ -1387,14 +1395,8 @@ def repeatedImpl[T: Type](using quotes: Quotes): Expr[List[Boolean]] = {
   }
 }
 
-inline def types[T <: Tuple]: List[Type[?]] = ${ typesImpl[T] }
-private def typesImpl[T <: Tuple: Type](using quotes: Quotes): Expr[List[Type[?]]] = {
-  def loop[tuple <: Tuple: Type]: List[Expr[Type[?]]] = Type.of[tuple] match
-    case '[EmptyTuple] => Nil
-    case '[t *: ts] => Expr.summon[Type[t]].get :: loop[ts]
-
-  Expr.ofList(loop[T])
-}
+inline def types[T <: Tuple]: List[Type[?]] =
+  compiletime.summonAll[Tuple.Map[T, Type]].toList.asInstanceOf[List[Type[?]]]
 
 inline def typeOf[T]: Type[T] = ${ typeOfImpl[T] }
 private def typeOfImpl[T: Type](using quotes: Quotes): Expr[Type[T]] = Expr.summon[Type[T]].get
