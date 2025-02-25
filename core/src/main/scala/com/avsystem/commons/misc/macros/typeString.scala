@@ -137,7 +137,7 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
       simpleName(t)
 
   val name = mkName(TypeRepr.of[T])
-  report.info(history.result().mkString("->"))
+//  report.info(history.result().mkString("->"))
   val tpe = Expr(name)
   '{ new TypeString(${ tpe }) }
 }

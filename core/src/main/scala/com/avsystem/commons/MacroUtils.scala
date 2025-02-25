@@ -1,43 +1,13 @@
 package com.avsystem.commons
 
-import MacroUtils.positionCache
 import annotation.positioned
+import misc.macros.MacroCommons
+import serialization.optionalParam
 
 import scala.collection.mutable
-import scala.quoted.{Expr, Quotes, Type}
+import scala.quoted.*
 
-trait MacroUtils {
-  protected def positionPoint(using quotes: Quotes)(sym: quotes.reflect.Symbol): Int = {
-    import quotes.reflect.*
-
-    if Position.ofMacroExpansion == sym.pos then sym.pos.get.start
-    else positionCache.getOrElseUpdate(
-      sym,
-      rawAnnotations(sym).find(_.tpe <:< TypeRepr.of[positioned]).map {
-        case Apply(_, List(Literal(point: Int))) => point
-        case t => report.errorAndAbort(s"expected literal int as argument of @positioned annotation on $sym, got $t")
-      } getOrElse report.errorAndAbort(s"Could not determine source position of $sym - it resides in separate file than macro invocation and has no @positioned annotation"),
-    )
-  }
-
-  def rawAnnotations(using quotes: Quotes)(s: quotes.reflect.Symbol): List[quotes.reflect.Term] = {
-    import quotes.reflect.*
-
-    // for vals or vars, fetch annotations from underlying field
-    if s.isDefDef && s.flags.is(Flags.FieldAccessor) then {
-      val accessors = Select(s.tree.asInstanceOf[Term], s)
-      s.annotations ++ accessors.qualifier.tpe.termSymbol.annotations
-    }
-    else s.annotations
-  }
-
-  def containsInaccessibleThises(using quotes: Quotes)(tree: quotes.reflect.Symbol): Boolean = {
-    import quotes.reflect.*
-    tree.children.exists {
-      case t@This(_) if !t.symbol.isPackageDef /*&& !enclosingClasses.contains(t.symbol)*/ => true
-      case _ => false
-    }
-  }
+trait HasMacroUtils extends MacroCommons {
 
   extension (using quotes: Quotes)(any: Any) {
     inline def info: any.type = {
@@ -46,32 +16,87 @@ trait MacroUtils {
     }
   }
 
-  extension (using quotes: Quotes)(flags: quotes.reflect.Flags) {
-    def isAnyOf(other: quotes.reflect.Flags*): Boolean = other.foldLeft(false)(_ || flags.is(_))
-  }
-  extension (using quotes: Quotes)(symbol: quotes.reflect.Symbol) {
-    def singleMethodMember(other: String): quotes.reflect.Symbol = {
-      
-      import quotes.reflect.*
-      symbol.methodMember(other) match
-        case Nil => report.errorAndAbort(s"Symbol $symbol does not have a single method member $other")
-        case e :: Nil => e
-        case _ => report.errorAndAbort(s"Symbol $symbol has multiple method members $other")
-    }
-    
-    def isPublic: Boolean = {
-      import quotes.reflect.*
-      !symbol.flags.isAnyOf(Flags.Private, Flags.PrivateLocal, Flags.Protected)
-    }
+  inline final def printTree[T](inline x: T): T = ${ PrintTree.printTreeImpl('{ x }) }
+
+  final def printSymbolInfo(using quotes: Quotes)(symbol: quotes.reflect.Symbol): Unit = quotes.reflect.report.info {
+    s"""
+       |maybeOwner: ${symbol.maybeOwner}
+       |flags: ${symbol.flags.show}
+       |privateWithin: ${symbol.privateWithin.map(_.show)}
+       |protectedWithin: ${symbol.protectedWithin.map(_.show)}
+       |name: ${symbol.name}
+       |fullName: ${symbol.fullName}
+       |pos: ${symbol.pos}
+       |docstring: ${symbol.docstring}
+       |tree: ${Try(symbol.tree.show) getOrElse "no tree"}
+       |annotations: ${symbol.annotations.map(_.show)}
+       |isDefinedInCurrentRun: ${symbol.isDefinedInCurrentRun}
+       |isLocalDummy: ${symbol.isLocalDummy}
+       |isRefinementClass: ${symbol.isRefinementClass}
+       |isAliasType: ${symbol.isAliasType}
+       |isAnonymousClass: ${symbol.isAnonymousClass}
+       |isAnonymousFunction: ${symbol.isAnonymousFunction}
+       |isAbstractType: ${symbol.isAbstractType}
+       |isClassConstructor: ${symbol.isClassConstructor}
+       |isSuperAccessor: ${symbol.isSuperAccessor}
+       |isType: ${symbol.isType}
+       |isTerm: ${symbol.isTerm}
+       |isPackageDef: ${symbol.isPackageDef}
+       |isClassDef: ${symbol.isClassDef}
+       |isTypeDef: ${symbol.isTypeDef}
+       |isValDef: ${symbol.isValDef}
+       |isDefDef: ${symbol.isDefDef}
+       |isBind: ${symbol.isBind}
+       |isNoSymbol: ${symbol.isNoSymbol}
+       |exists: ${symbol.exists}
+       |declaredFields: ${symbol.declaredFields}
+       |fieldMembers: ${symbol.fieldMembers}
+       |declaredMethods: ${symbol.declaredMethods}
+       |methodMembers: ${symbol.methodMembers}
+       |declaredTypes: ${symbol.declaredTypes}
+       |typeMembers: ${symbol.typeMembers}
+       |declarations: ${symbol.declarations}
+       |paramSymss: ${symbol.paramSymss}
+       |allOverriddenSymbols: ${symbol.allOverriddenSymbols}
+       |primaryConstructor: ${symbol.primaryConstructor}
+       |caseFields: ${symbol.caseFields}
+       |isTypeParam: ${symbol.isTypeParam}
+       |paramVariance: ${symbol.paramVariance.show}
+       |signature: ${symbol.signature}
+       |moduleClass: ${symbol.moduleClass}
+       |companionClass: ${symbol.companionClass}
+       |companionModule: ${symbol.companionModule}
+       |children: ${symbol.children}
+       |typeRef: ${Try(symbol.typeRef.show) getOrElse "no typeRef"}
+       |termRef: ${Try(symbol.termRef.show) getOrElse "no termRef"}
+       |""".stripMargin
   }
 
-  inline def printTree[T](inline x: T): T = ${ PrintTree.printTreeImpl('{ x }) }
-
+  final def printTypeReprInfo(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): Unit = quotes.reflect.report.info {
+    s"""
+       |type: ${tpe.show}
+       |widen: ${tpe.widen}
+       |widenTermRefByName: ${tpe.widenTermRefByName}
+       |widenByName: ${tpe.widenByName}
+       |dealias: ${tpe.dealias}
+       |dealiasKeepOpaques: ${tpe.dealiasKeepOpaques}
+       |simplified: ${tpe.simplified}
+       |classSymbol: ${tpe.classSymbol}
+       |typeSymbol: ${tpe.typeSymbol}
+       |termSymbol: ${tpe.termSymbol}
+       |isSingleton: ${tpe.isSingleton}
+       |baseClasses: ${tpe.baseClasses}
+       |isFunctionType: ${tpe.isFunctionType}
+       |isContextFunctionType: ${tpe.isContextFunctionType}
+       |isErasedFunctionType: ${tpe.isErasedFunctionType}
+       |isDependentFunctionType: ${tpe.isDependentFunctionType}
+       |isTupleN: ${tpe.isTupleN}
+       |typeArgs: ${tpe.typeArgs}
+       |""".stripMargin
+  }
 }
 
-object MacroUtils extends MacroUtils {
-  private val positionCache = new mutable.HashMap[Any, Int]
-}
+object HasMacroUtils extends HasMacroUtils
 
 object PrintTree {
   def printTreeImpl[T: Type](x: Expr[T])(using quotes: Quotes): Expr[T] = {

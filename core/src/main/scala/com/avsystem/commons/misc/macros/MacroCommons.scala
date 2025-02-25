@@ -2,16 +2,18 @@ package com.avsystem.commons
 package misc.macros
 
 import annotation.positioned
-import misc.macros.MacroCommons.positionCache
 import serialization.optionalParam
 
+import scala.::
+import scala.Tuple.Elem
 import scala.collection.mutable
 import scala.compiletime.summonFrom
 import scala.deriving.Mirror
 import scala.quoted.*
 import scala.reflect.classTag
+import scala.runtime.stdLibPatches.Predef.summon
 
-trait MacroCommons[Q <: Quotes](using protected val quotes: Q) {
+trait MacroCommons {
 
   extension (using quotes: Quotes)(flags: quotes.reflect.Flags) {
     def isAnyOf(other: quotes.reflect.Flags*): Boolean = other.foldLeft(false)(_ || flags.is(_))
@@ -1135,170 +1137,14 @@ trait MacroCommons[Q <: Quotes](using protected val quotes: Q) {
   //    }
   //
 
-  /**
-   * @param apply
-   *   case class constructor or companion object's apply method
-   * @param unapply
-   *   companion object'a unapply method or `NoSymbol` for case class with more than 22 fields
-   * @param params
-   *   parameters with trees evaluating to default values (or `EmptyTree`s)
-   */
-  final case class ApplyUnapply(ownerTpe: Type[?]) {
+  inline def summonInstances[T <: Tuple]: List[Any] =
+    inline compiletime.erasedValue[T] match
+      case h *: elems => compiletime.summonInline[T] :: summonInstances[elems.type]
+      case EmptyTuple => Nil
 
-    def standardCaseClass: Boolean = ???
-    //      apply.isClassConstructor
+  inline def labels[T](using m: Mirror.ProductOf[T]): Seq[String] =
+    compiletime.summonAll[m.MirroredElemLabels].toList.asInstanceOf[Seq[String]]
 
-    def synthetic: Boolean = ???
-    //      apply.isClassConstructor || apply.isSynthetic && unapply.isSynthetic
-
-    def defaultValueFor(param: quotes.reflect.Symbol) = ???
-    //      defaultValueFor(param, params.indexOf(param))
-
-    def defaultValueFor(param: quotes.reflect.Symbol, idx: Int) = ???
-    //      if (param.asTerm.isParamWithDefault) {
-    //        val methodEncodedName = param.owner.name.encodedName.toString
-    //        q"$typedCompanion.${TermName(s"$methodEncodedName$$default$$${idx + 1}")}[..${ownerTpe.typeArgs}]"
-    //      }
-    //      else EmptyTree
-
-    def mkApply[T: ToExpr](args: Seq[T]) = ???
-    //      if (standardCaseClass) q"new $ownerTpe(..$args)"
-    //      else q"$typedCompanion.apply[..${ownerTpe.typeArgs}](..$args)"
-  }
-
-  def applyUnapplyFor[T](using quotes: Quotes): Option[ApplyUnapply] = summonFrom {
-    case m: Mirror.SumOf[T] =>
-    case _ => None
-  }
-  typedCompanionOf[T].flatMap(comp => applyUnapplyFor[T](comp))
-
-  def applyUnapplyFor[T](using quotes: Quotes)(typedCompanion: quotes.reflect.Tree): Option[ApplyUnapply] = ???
-
-  //    val dtpe = tpe.dealias
-  //    val ts = dtpe.typeSymbol.asType
-  //    val caseClass = ts.isClass && ts.asClass.isCaseClass
-  //
-  //    def params(methodSig: Type): List[TermSymbol] =
-  //      methodSig.paramLists.head.map(_.asTerm)
-  //
-  //    // Seq is a weird corner case where technically an apply/unapplySeq pair exists but is recursive
-  //    val applyUnapplyPairs =
-  //      if (typedCompanion.symbol == SeqCompanionSym) Nil
-  //      else for {
-  //        apply <- alternatives(typedCompanion.tpe.member(TermName("apply")))
-  //        unapplyName = if (isFirstListVarargs(apply)) "unapplySeq" else "unapply"
-  //        unapply <- alternatives(typedCompanion.tpe.member(TermName(unapplyName)))
-  //      } yield (apply, unapply)
-  //
-  //    def setTypeArgs(sig: Type) = sig match {
-  //      case PolyType(params, resultType) => resultType.substituteTypes(params, dtpe.typeArgs)
-  //      case _ => sig
-  //    }
-  //
-  //    def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
-  //      val expected = dtpe.typeArgs.length
-  //      apply.typeSignature.typeParams.length == expected && unapply.typeSignature.typeParams.length == expected
-  //    }
-  //
-  //    if (caseClass && applyUnapplyPairs.isEmpty) { // case classes with more than 22 fields
-  //      val constructor = primaryConstructorOf(dtpe)
-  //      Some(ApplyUnapply(dtpe, typedCompanion, constructor, NoSymbol, params(constructor.typeSignatureIn(dtpe))))
-  //    } else {
-  //      val applicableResults = applyUnapplyPairs.flatMap {
-  //        case (apply, unapply) if caseClass && apply.isSynthetic && unapply.isSynthetic =>
-  //          val constructor = primaryConstructorOf(dtpe)
-  //          Some(ApplyUnapply(dtpe, typedCompanion, constructor, unapply, params(constructor.typeSignatureIn(dtpe))))
-  //        case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-  //          val applySig =
-  //            setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
-  //          val unapplySig =
-  //            setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
-  //          if (matchingApplyUnapply(dtpe, applySig, unapplySig))
-  //            Some(ApplyUnapply(dtpe, typedCompanion, apply, unapply, params(applySig)))
-  //          else None
-  //        case _ => None
-  //      }
-  //
-  //      def choose(results: List[ApplyUnapply]): Option[ApplyUnapply] = results match {
-  //        case Nil => None
-  //        case List(result) => Some(result)
-  //        case multiple if multiple.exists(_.synthetic) =>
-  //          // prioritize non-synthetic apply/unapply pairs
-  //          choose(multiple.filterNot(_.synthetic))
-  //        case _ => None
-  //      }
-  //
-  //      choose(applicableResults)
-  //    }
-  //  }
-  //
-  //  def singleValueFor(tpe: Type): Option[Tree] = measure("singleValueFor")(tpe match {
-  //    case ThisType(sym) if enclosingClasses.contains(sym) =>
-  //      Some(This(sym))
-  //    case ThisType(sym) if sym.isModuleClass =>
-  //      singleValueFor(internal.thisType(sym.owner)).map(pre => Select(pre, tpe.termSymbol))
-  //    case ThisType(sym) =>
-  //      Some(This(sym))
-  //    case SingleType(NoPrefix, sym) =>
-  //      Some(Ident(sym))
-  //    case SingleType(pre, sym) =>
-  //      singleValueFor(pre).map(prefix => Select(prefix, sym))
-  //    case ConstantType(value) =>
-  //      Some(Literal(value))
-  //    case TypeRef(pre, sym, Nil) if sym.isModuleClass =>
-  //      singleValueFor(pre).map(prefix => Select(prefix, sym.asClass.module))
-  //    case _ =>
-  //      None
-  //  })
-  //
-  def typedCompanionOf[T](using quotes: Quotes): Option[quotes.reflect.Tree] = ???
-
-  //    val result = tpe match {
-  //      case TypeRef(pre, sym, _) if sym.companion != NoSymbol =>
-  //        singleValueFor(pre).map(Select(_, sym.companion)) orElse singleValueFor(tpe.companion)
-  //      case TypeRef(NoPrefix, sym, _) =>
-  //        // apparently, sym.companion returns NoSymbol for local classes, so we have to find the companion manually
-  //        val companionRef = Ident(sym.name.toTermName)
-  //        typecheck(companionRef, silent = true) match {
-  //          case EmptyTree => None
-  //          case tree if tree.symbol.isModule => Some(tree)
-  //          case _ => None
-  //        }
-  //      case _ =>
-  //        singleValueFor(tpe.companion)
-  //    }
-  //    result.map(typecheck(_))
-  //  }
-  //
-  //  def typeOfTypeSymbol(sym: TypeSymbol): Type = sym.toType match {
-  //    case t@TypeRef(pre, s, Nil) if t.takesTypeArgs =>
-  //      internal.typeRef(pre, s, t.typeParams.map(ts => internal.typeRef(NoPrefix, ts, Nil)))
-  //    case t => t
-  //  }
-  //
-  //  def isSealedHierarchyRoot(sym: Symbol): Boolean = {
-  //    sym.info // force loading of type information, sometimes it may be missing when loading from classfile
-  //    sym.isClass && sym.isAbstract && sym.asClass.isSealed
-  //  }
-  //
-  //  def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
-  //    sym.asClass.knownDirectSubclasses.flatMap { s =>
-  //      if (isSealedHierarchyRoot(s)) knownNonAbstractSubclasses(s) else Set(s)
-  //    }
-  //
-  //  def allCurrentlyKnownSubclasses(sym: Symbol): Set[Symbol] =
-  //    if (sym.isClass) {
-  //      val directSubclasses = sym.asClass.knownDirectSubclasses
-  //      directSubclasses.flatMap(allCurrentlyKnownSubclasses) + sym
-  //    } else Set.empty
-  //
-  //  private val ownersCache = new mutable.HashMap[Symbol, List[Symbol]]
-  //
-  //  def ownersOf(sym: Symbol): List[Symbol] =
-  //    ownersCache.getOrElseUpdate(sym, Iterator.iterate(sym)(_.owner).takeWhile(_ != NoSymbol).toList.reverse)
-  //
-  //  private val positionCache = new mutable.HashMap[Symbol, Int]
-  //
   final def positionPoint(using quotes: Quotes)(sym: quotes.reflect.Symbol): Int =
     import quotes.reflect.*
     if Position.ofMacroExpansion == sym.pos then sym.pos.get.start
@@ -1491,6 +1337,64 @@ trait MacroCommons[Q <: Quotes](using protected val quotes: Q) {
 
 }
 
-object MacroCommons {
-  private val positionCache = new mutable.HashMap[Any, Int]
+private val positionCache = new mutable.HashMap[Any, Int]
+
+inline def defaultValue[T]: List[Option[() => Any]] = ${ defaultValueImpl[T] }
+private def defaultValueImpl[T: Type](using quotes: Quotes): Expr[List[Option[() => Any]]] = {
+  import quotes.reflect.*
+  val tpe = TypeRepr.of[T].typeSymbol
+  val terms = tpe.primaryConstructor.paramSymss.flatten
+    .filter(_.isValDef)
+    .zipWithIndex
+    .map { (field, i) =>
+      val defaultMethodName = s"$$lessinit$$greater$$default$$${i + 1}"
+      tpe.companionClass
+        .declaredMethod(defaultMethodName)
+        .headOption
+        .map { defaultMethod =>
+          val callDefault = {
+            val base = Ident(tpe.companionModule.termRef).select(defaultMethod)
+            val tParams = defaultMethod.paramSymss.headOption.filter(_.forall(_.isType))
+            tParams match
+              case Some(tParams) => TypeApply(base, tParams.map(TypeTree.ref))
+              case _ => base
+          }
+          defaultMethod.tree match
+            case tree: DefDef => tree.rhs.getOrElse(callDefault)
+            case _ => callDefault
+        }
+        .map(_.asExprOf[Any]) match
+        case Some(ex) => '{ Some(() => $ex) }
+        case None => '{ None }
+    }
+  Expr.ofList(terms)
 }
+
+inline def repeated[T]: List[Boolean] = ${ repeatedImpl[T] }
+def repeatedImpl[T: Type](using quotes: Quotes): Expr[List[Boolean]] = {
+  import quotes.reflect.*
+  val tpe = TypeRepr.of[T]
+
+  Expr {
+    if tpe.typeSymbol.isNoSymbol then Nil
+    else
+      tpe.typeSymbol.primaryConstructor.paramSymss.flatten
+        .map(tpe.memberType)
+        .map {
+          case AnnotatedType(_, annot) => annot.tpe.typeSymbol == defn.RepeatedAnnot
+          case _ => false
+        }
+  }
+}
+
+inline def types[T <: Tuple]: List[Type[?]] = ${ typesImpl[T] }
+private def typesImpl[T <: Tuple: Type](using quotes: Quotes): Expr[List[Type[?]]] = {
+  def loop[tuple <: Tuple: Type]: List[Expr[Type[?]]] = Type.of[tuple] match
+    case '[EmptyTuple] => Nil
+    case '[t *: ts] => Expr.summon[Type[t]].get :: loop[ts]
+
+  Expr.ofList(loop[T])
+}
+
+inline def typeOf[T]: Type[T] = ${ typeOfImpl[T] }
+private def typeOfImpl[T: Type](using quotes: Quotes): Expr[Type[T]] = Expr.summon[Type[T]].get

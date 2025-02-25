@@ -211,34 +211,34 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   final case class MissingField(typeRepr: String, fieldName: String)
-      extends ReadFailure(s"Cannot read $typeRepr, field $fieldName is missing in decoded data")
+    extends ReadFailure(s"Cannot read $typeRepr, field $fieldName is missing in decoded data")
 
   final case class UnknownCase(typeRepr: String, caseName: String)
-      extends ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
+    extends ReadFailure(s"Cannot read $typeRepr, unknown case: $caseName")
 
   final case class MissingCase(typeRepr: String, caseFieldName: String, fieldToRead: Opt[String])
-      extends ReadFailure(fieldToRead match
-        case Opt(fr) => s"Cannot read field $fr of $typeRepr before $caseFieldName field is read"
-        case Opt.Empty => s"Cannot read $typeRepr, $caseFieldName field is missing",
-      )
+    extends ReadFailure(fieldToRead match
+      case Opt(fr) => s"Cannot read field $fr of $typeRepr before $caseFieldName field is read"
+      case Opt.Empty => s"Cannot read $typeRepr, $caseFieldName field is missing",
+    )
 
   final case class NotSingleField(typeRepr: String, empty: Boolean)
-      extends ReadFailure(
-        s"Cannot read $typeRepr, expected object with exactly one field but got " +
-          (if empty then "empty object" else "more than one"),
-      )
+    extends ReadFailure(
+      s"Cannot read $typeRepr, expected object with exactly one field but got " +
+        (if empty then "empty object" else "more than one"),
+    )
 
   final case class CaseReadFailed(typeRepr: String, caseName: String, cause: Throwable)
-      extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
+    extends ReadFailure(s"Failed to read case $caseName of $typeRepr", cause)
 
   final case class FieldReadFailed(typeRepr: String, fieldName: String, cause: Throwable)
-      extends ReadFailure(s"Failed to read field $fieldName of $typeRepr", cause)
+    extends ReadFailure(s"Failed to read field $fieldName of $typeRepr", cause)
 
   final case class ListElementReadFailed(idx: Int, cause: Throwable)
-      extends ReadFailure(s"Failed to read list element at index $idx", cause)
+    extends ReadFailure(s"Failed to read list element at index $idx", cause)
 
   final case class MapFieldReadFailed(fieldName: String, cause: Throwable)
-      extends ReadFailure(s"Failed to read map field $fieldName", cause)
+    extends ReadFailure(s"Failed to read map field $fieldName", cause)
 
   open class WriteFailure(msg: String, cause: Throwable) extends RuntimeException(msg, cause) {
     def this(msg: String) = this(msg, null)
@@ -247,22 +247,22 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   }
 
   final case class UnknownWrittenCase[T](typeRepr: String, value: T)
-      extends WriteFailure(s"Failed to write $typeRepr: value $value does not match any of known subtypes")
+    extends WriteFailure(s"Failed to write $typeRepr: value $value does not match any of known subtypes")
 
   final case class UnapplyFailed(typeRepr: String)
-      extends WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
+    extends WriteFailure(s"Could not write $typeRepr, unapply/unapplySeq returned false or empty value")
 
   final case class CaseWriteFailed(typeRepr: String, caseName: String, cause: Throwable)
-      extends WriteFailure(s"Failed to write case $caseName of $typeRepr", cause)
+    extends WriteFailure(s"Failed to write case $caseName of $typeRepr", cause)
 
   final case class FieldWriteFailed(typeRepr: String, fieldName: String, cause: Throwable)
-      extends WriteFailure(s"Failed to write field $fieldName of $typeRepr", cause)
+    extends WriteFailure(s"Failed to write field $fieldName of $typeRepr", cause)
 
   final case class ListElementWriteFailed(idx: Int, cause: Throwable)
-      extends WriteFailure(s"Failed to write list element at index $idx", cause)
+    extends WriteFailure(s"Failed to write list element at index $idx", cause)
 
   final case class MapFieldWriteFailed(fieldName: String, cause: Throwable)
-      extends WriteFailure(s"Failed to write map field $fieldName", cause)
+    extends WriteFailure(s"Failed to write map field $fieldName", cause)
 
   final class Deferred[T] extends DeferredInstance[GenCodec[T]] with GenCodec[T] {
     def read(input: Input): T = underlying.read(input)
@@ -365,7 +365,7 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
   object OOOFieldsObjectCodec {
     // this was introduced so that transparent wrapper cases are possible in flat sealed hierarchies
     final class Transformed[A, B](val wrapped: OOOFieldsObjectCodec[B], onWrite: A => B, onRead: B => A)
-        extends OOOFieldsObjectCodec[A] {
+      extends OOOFieldsObjectCodec[A] {
       def size(value: A): Int =
         wrapped.size(onWrite(value))
 
@@ -395,10 +395,8 @@ object GenCodec extends RecursiveAutoCodecs with TupleGenCodecs {
     def write(output: Output, value: A): Unit = {
       val wrappedValue =
         try onWrite(value)
-        catch
-          case NonFatal(cause) =>
-            throw new WriteFailure(s"onWrite conversion failed", cause)
-            wrapped.write(output, wrappedValue)
+        catch case NonFatal(cause) => throw new WriteFailure(s"onWrite conversion failed", cause)
+      wrapped.write(output, wrappedValue)
     }
   }
 
