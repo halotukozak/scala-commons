@@ -7,7 +7,7 @@ import com.avsystem.commons.macros.TestMacros.nameFor
 import com.avsystem.commons.misc.TypeString
 import com.avsystem.commons.misc.macros.{ApplyUnapply, TypeClassDerivation, typeStringImpl}
 
-import scala.quoted.{Expr, Quotes, ToExpr, Type}
+import scala.quoted.{Expr, Quotes, ToExpr, Type, quotes}
 
 private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivationTest.TC] {
 
@@ -30,7 +30,7 @@ private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivati
       au.params.map { case ApplyUnapply.Param(label, index, tpe, repeated, dv) =>
         val name = Expr(label)
         val tc = tpe match
-          case '[t] => materializeImpl[t]
+          case '[t] => Expr.summon[TC[t]].get
         val defaultValueOpt = dv match
           case Some(value) => '{ Some(DefVal($value())) }
           case None => '{ None }

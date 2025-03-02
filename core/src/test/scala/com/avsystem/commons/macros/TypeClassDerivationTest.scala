@@ -75,7 +75,7 @@ object TypeClassDerivationTest {
   }
 
   trait ImplicitMaterializers { this: TC.type =>
-    implicit def materializeImplicitly[T](using allow: AllowImplicitMacro[TC[T]]): TC[T] = ???
+    given materializeImplicitly[T](using allow: AllowImplicitMacro[TC[T]]): TC[T] = materialize
   }
 }
 

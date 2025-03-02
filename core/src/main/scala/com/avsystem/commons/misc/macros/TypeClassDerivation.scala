@@ -1,12 +1,12 @@
 package com.avsystem.commons
 package misc.macros
 
+import derivation.DeferredInstance
 import meta.OptionLike
 
-import com.avsystem.commons.derivation.DeferredInstance
+import com.avsystem.commons.macros.RecursiveImplicitMarker
 
 import scala.compiletime.summonInline
-import scala.deriving.Mirror
 import scala.quoted.*
 
 trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
@@ -188,7 +188,7 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
 //    ApplyParam(idx, s, defaultValue, dependency[T](nonOptionalType, s), optionLike)
 //  }
 
-  def materializeFor[T: Type](using quotes: Quotes, tpe: Type[TC]): Expr[TC[T]] = {
+  private def materializeFor[T: Type](using quotes: Quotes, tpe: Type[TC]): Expr[TC[T]] = {
     import quotes.reflect.*
     def singleTypeTc: Option[Expr[TC[T]]] =
       singleValueForImpl[T] match
@@ -213,12 +213,17 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
     singleTypeTc orElse applyUnapplyTc orElse sealedHierarchyTc getOrElse forUnknown
   }
 
-  def withRecursiveImplicitGuard[T: Type](using quotes: Quotes, tpe: Type[TC])(unguarded: Expr[TC[T]]): Expr[TC[T]] = {
+  private def withRecursiveImplicitGuard[T: Type](using quotes: Quotes, tpe: Type[TC])(
+    unguarded: Expr[TC[T]],
+  ): Expr[TC[T]] = {
     import quotes.reflect.*
 
-    val withDummyImplicit: Expr[TC[T]] = '{
-      implicit def deferred: (DeferredInstance[TC[T]] & TC[T]) = ???
-      $unguarded
+    def withDummyImplicit: Expr[TC[T]] = {
+      report.info("dummy")
+      '{
+        given marker: RecursiveImplicitMarker[TC[T]] = RecursiveImplicitMarker.mark
+        $unguarded
+      }
     }
 
     def guarded: Expr[TC[T]] = '{
@@ -228,13 +233,22 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
       underlying
     }
 
-    withDummyImplicit.asTerm match
-      case Inlined(_, _, Block(deferredDef :: Nil, typedUnguarded))
-          if !typedUnguarded.symbol.children.exists(_ == deferredDef.symbol) =>
-        typedUnguarded.asExprOf[TC[T]]
-      case _ =>
+    Implicits.search(TypeRepr.of[RecursiveImplicitMarker[TC[T]]]) match
+      case success: ImplicitSearchSuccess =>
+        report.info("deferred instance already exists")
         guarded
+      case _ =>
+        withDummyImplicit
+
+//    Expr.summon[RecursiveImplicitMarker[TC[T]]] match
+//      case Some(deff) =>
+//        report.info("deferred instance already exists")
+//        guarded
+//      case None =>
+////        report.info("no deferred instance")
+//        withDummyImplicit
   }
 
-  def materializeImpl[T: Type](using Quotes, Type[TC]): Expr[TC[T]] = withRecursiveImplicitGuard[T](materializeFor[T])
+  def materializeImpl[T: Type](using Quotes, Type[TC]): Expr[TC[T]] =
+    withRecursiveImplicitGuard[T](materializeFor[T])
 }

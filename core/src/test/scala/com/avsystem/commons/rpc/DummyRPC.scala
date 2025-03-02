@@ -1,13 +1,10 @@
-package com.avsystem.commons
-package rpc
-
 //package com.avsystem.commons
 //package rpc
 //
-//import com.avsystem.commons.meta.{MacroInstances, TypedMetadata, annotated, checked, composite, infer, multi, reifyAnnot, reifyName}
-//import com.avsystem.commons.misc.TypeString
-//import com.avsystem.commons.serialization.GenCodec
-//import com.avsystem.commons.serialization.json.{JsonStringInput, JsonStringOutput}
+//import meta.*
+//import misc.TypeString
+//import serialization.GenCodec
+//import serialization.json.{JsonStringInput, JsonStringOutput}
 //
 //class namedArgs extends StaticAnnotation
 //

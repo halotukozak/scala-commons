@@ -127,9 +127,10 @@ object Commons extends ProjectGroup("commons") {
       "-experimental",
       "-Xno-enrich-error-messages",
       "-explain-cyclic",
+      "-Xprint:postInlining"
     ),
     Compile / scalacOptions ++= {
-      if scalaBinaryVersion.value == "2.13" then Seq("-Xnon-strict-patmat-analysis", "-Xlint:-strict-unsealed-patmat")
+      if (scalaBinaryVersion.value == "2.13") Seq("-Xnon-strict-patmat-analysis", "-Xlint:-strict-unsealed-patmat")
       else Seq.empty
     },
     Test / scalacOptions := (Compile / scalacOptions).value,
@@ -240,7 +241,7 @@ object Commons extends ProjectGroup("commons") {
   )
 
   def sameNameAs(proj: Project) =
-    if forIdeaImport then Seq.empty
+    if (forIdeaImport) Seq.empty
     else Seq(name := (proj / name).value)
 
   lazy val macros = mkSubProject.settings(jvmCommonSettings)
@@ -260,7 +261,7 @@ object Commons extends ProjectGroup("commons") {
   lazy val `core-js` = mkSubProject
     .in(core.base / "js")
     .enablePlugins(ScalaJSPlugin)
-    .configure(p => if forIdeaImport then p.dependsOn(core) else p)
+    .configure(p => if (forIdeaImport) p.dependsOn(core) else p)
     .dependsOn(macros)
     .settings(
       jsCommonSettings,

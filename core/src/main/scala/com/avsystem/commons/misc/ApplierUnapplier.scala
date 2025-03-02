@@ -20,7 +20,7 @@ object Applier {
 
       override def productElement(n: Int): Any = values(n)
 
-      override def canEqual(that: Any): Boolean = that.isInstanceOf[T] || ???
+      override def canEqual(that: Any): Boolean = that.isInstanceOf[T]
     })
   }
 }
@@ -58,7 +58,7 @@ object ApplierUnapplier {
 
           override def productElement(n: Int): Any = values(n)
 
-          override def canEqual(that: Any): Boolean = that.isInstanceOf[T] || ???
+          override def canEqual(that: Any): Boolean = that.isInstanceOf[T]
         })
       }
 

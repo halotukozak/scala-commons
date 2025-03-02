@@ -4,7 +4,7 @@ package serialization.cbor
 import org.scalactic.source.Position
 import org.scalatest.funsuite.AnyFunSuite
 
-class HFloatTest extends AnyFunSuite {
+class HFloatTest extends AnyFunSuite:
   def testConv(name: String)(floatBits: Int, hfloatBits: Int, roundedBits: Int)(using Position): Unit = {
     val float = java.lang.Float.intBitsToFloat(floatBits)
     test(name) {
@@ -34,4 +34,3 @@ class HFloatTest extends AnyFunSuite {
   testConv("subnormal")(mkFloat(-15, 0), mkHFloat(-15, 0x200), mkFloat(-15, 0))
   testConv("subnormal with rounding")(mkFloat(-16, 0x7fe000), mkHFloat(-15, 0x200), mkFloat(-15, 0))
   testConv("subnormal with exp rounding")(mkFloat(-15, 0x7fe000), mkHFloat(-14, 0), mkFloat(-14, 0))
-}

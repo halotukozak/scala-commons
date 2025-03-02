@@ -1,6 +1,3 @@
-package com.avsystem.commons
-package rpc
-
 //package com.avsystem.commons
 //package rpc
 //

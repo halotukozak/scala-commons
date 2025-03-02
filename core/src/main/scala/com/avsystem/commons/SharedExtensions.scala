@@ -285,7 +285,7 @@ trait SharedExtensions {
     /**
      * Converts this `Option` into `Opt`. Because `Opt` cannot hold `null`, `Some(null)` is translated to `Opt.Empty`.
      */
-    inline def toOpt: Opt[A] = if option.isEmpty then Opt.Empty else Opt(option.get)
+    def toOpt: Opt[A] = if option.isEmpty then Opt.Empty else Opt(option.get)
 
     /**
      * Converts this `Option` into `OptRef`, changing the element type into boxed representation if necessary (e.g.
