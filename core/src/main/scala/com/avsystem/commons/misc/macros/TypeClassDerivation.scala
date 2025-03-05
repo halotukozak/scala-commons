@@ -215,38 +215,15 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
 
   private def withRecursiveImplicitGuard[T: Type](using quotes: Quotes, tpe: Type[TC])(
     unguarded: Expr[TC[T]],
-  ): Expr[TC[T]] = {
-    import quotes.reflect.*
-
-    def withDummyImplicit: Expr[TC[T]] = {
-      report.info("dummy")
+  ): Expr[TC[T]] = RecursiveImplicitMarker.mark[TC[T]] {
+    case true =>
       '{
-        given marker: RecursiveImplicitMarker[TC[T]] = RecursiveImplicitMarker.mark
-        $unguarded
+        given deferred: (DeferredInstance[TC[T]] & TC[T]) = ${ implementDeferredInstance[T] }
+        val underlying = $unguarded
+        deferred.underlying = underlying
+        underlying
       }
-    }
-
-    def guarded: Expr[TC[T]] = '{
-      given deferred: (DeferredInstance[TC[T]] & TC[T]) = ${ implementDeferredInstance[T] }
-      val underlying = $unguarded
-      deferred.underlying = underlying
-      underlying
-    }
-
-    Implicits.search(TypeRepr.of[RecursiveImplicitMarker[TC[T]]]) match
-      case success: ImplicitSearchSuccess =>
-        report.info("deferred instance already exists")
-        guarded
-      case _ =>
-        withDummyImplicit
-
-//    Expr.summon[RecursiveImplicitMarker[TC[T]]] match
-//      case Some(deff) =>
-//        report.info("deferred instance already exists")
-//        guarded
-//      case None =>
-////        report.info("no deferred instance")
-//        withDummyImplicit
+    case false => unguarded
   }
 
   def materializeImpl[T: Type](using Quotes, Type[TC]): Expr[TC[T]] =

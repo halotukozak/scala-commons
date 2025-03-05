@@ -49,9 +49,31 @@ def applyUnapplyForImpl[T: Type](using quotes: Quotes): Option[ApplyUnapply[T]] 
   def isFirstListVarargs(sym: Symbol) =
     sym.paramSymss.headOption.flatMap(_.lastOption).exists(_.isRepeatedParam)
 
+  def defaultValue(i: Int): Option[Expr[() => Any]] = {
+    val defaultMethodName = s"$$lessinit$$greater$$default$$${i + 1}"
+    comp
+      .declaredMethod(defaultMethodName)
+      .headOption
+      .map { defaultMethod =>
+        def callDefault = {
+          val base = Ident(comp.termRef).select(defaultMethod)
+          val tParams = defaultMethod.paramSymss.headOption.filter(_.forall(_.isType))
+          tParams match
+            case Some(tParams) => TypeApply(base, tParams.map(TypeTree.ref))
+            case _ => base
+        }
+
+        defaultMethod.tree match
+          case tree: DefDef => tree.rhs.getOrElse(callDefault)
+          case _ => callDefault
+      }
+      .map(_.asExprOf[Any])
+      .map(expr => '{ () => $expr })
+  }
+
   def params(methodSig: DefDef): List[ApplyUnapply.Param] =
-    methodSig.termParamss.flatMap(_.params).zipWithIndex.map { case (param: ValDef, idx) =>
-      ApplyUnapply.Param(param.name, idx, param.tpt.tpe.widen.asType, param.symbol.isRepeatedParam, param.rhs.map(_.asExprOf[() => Any]))
+    methodSig.termParamss.flatMap(_.params).zipWithIndex.map { case (param, idx) =>
+      ApplyUnapply.Param(param.name, idx, param.tpt.tpe.widen.asType, param.symbol.isRepeatedParam, defaultValue(idx))
     }
 
   def typeParamsMatch(apply: Symbol, unapply: Symbol) = {
@@ -68,35 +90,21 @@ def applyUnapplyForImpl[T: Type](using quotes: Quotes): Option[ApplyUnapply[T]] 
         unapply <- comp.methodMember(unapplyName)
       yield (apply, unapply)
 
-  if isCaseClass && applyUnapplyPairs.isEmpty then { // case classes with more than 22 fields
+  val applicableResults = applyUnapplyPairs.flatMap:
+    case (apply, unapply) if isCaseClass && apply.isSynthetic && unapply.isSynthetic =>
+      val constructor = tpe.classSymbol.get.primaryConstructor
+      Some(ApplyUnapply(Type.of[T], params(constructor.tree.asInstanceOf[DefDef])))
+    case (apply, unapply) if typeParamsMatch(apply, unapply) =>
+      Some(ApplyUnapply(Type.of[T], params(apply.tree.asInstanceOf[DefDef])))
+    case _ => None
 
-    ???
-    val constructor = tpe.classSymbol.get.primaryConstructor
-    Some(ApplyUnapply(Type.of[T], params(constructor.tree.asInstanceOf[DefDef])))
-  } else {
-    val applicableResults = applyUnapplyPairs.flatMap {
-      case (apply, unapply) if isCaseClass && apply.isSynthetic && unapply.isSynthetic =>
-        val constructor = tpe.classSymbol.get.primaryConstructor
-        Some(ApplyUnapply(Type.of[T], params(constructor.tree.asInstanceOf[DefDef])))
-      case (apply, unapply) if typeParamsMatch(apply, unapply) =>
-//        val applySig =
-//          setTypeArgs(apply.typeSignatureIn(typedCompanion.tpe))
-//        val unapplySig =
-//          setTypeArgs(unapply.typeSignatureIn(typedCompanion.tpe))
-//        if matchingApplyUnapply(dtpe, applySig, unapplySig) then
-        Some(ApplyUnapply(Type.of[T], params(apply.tree.asInstanceOf[DefDef])))
-//        else None
-      case _ => None
-    }
+  @tailrec def choose(results: List[ApplyUnapply[T]]): Option[ApplyUnapply[T]] = results match
+    case Nil => None
+    case result :: Nil => Some(result)
+    case multiple if multiple.exists(_.synthetic) =>
+      // prioritize non-synthetic apply/unapply pairs
+      choose(multiple.filterNot(_.synthetic))
+    case _ => None
 
-    @tailrec def choose(results: List[ApplyUnapply[T]]): Option[ApplyUnapply[T]] = results match
-      case Nil => None
-      case result :: Nil => Some(result)
-      case multiple if multiple.exists(_.synthetic) =>
-        // prioritize non-synthetic apply/unapply pairs
-        choose(multiple.filterNot(_.synthetic))
-      case _ => None
-
-    choose(applicableResults)
-  }
+  choose(applicableResults)
 }

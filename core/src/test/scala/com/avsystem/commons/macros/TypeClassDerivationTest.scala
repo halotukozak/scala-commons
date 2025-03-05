@@ -1,12 +1,10 @@
 package com.avsystem.commons
 package macros
 
-import com.avsystem.commons.derivation.{AllowImplicitMacro, DeferredInstance}
-import com.avsystem.commons.macros.TestMacros.materialize
+import derivation.{AllowImplicitMacro, DeferredInstance}
+import macros.TestMacros.{materialize, materializeImpl}
 import com.avsystem.commons.misc.TypeString
 import org.scalatest.funsuite.AnyFunSuite
-
-import scala.quoted.{Expr, Quotes, Type}
 
 object TypeClassDerivationTest {
   inline def typeRepr[T]: String = TypeString.of[T]
@@ -35,8 +33,8 @@ object TypeClassDerivationTest {
   }
 
   case class SingletonTC[T](tpe: String, value: T) extends TC[T]
-
-  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[?], Option[DefVal])]) extends TC[T]
+  case class ApplyUnapplyTC[T](tpe: String, subs: List[(name: String, tc: TC[?], defaultValue: Option[DefVal])])
+    extends TC[T]
 
   case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[?])]) extends TC[T]
 
@@ -68,14 +66,12 @@ object TypeClassDerivationTest {
     }
 
     given forInt: TC[Int] = UnknownTC(typeRepr[Int])
-
     given forString: TC[String] = UnknownTC(typeRepr[String])
-
-    implicit def forList[T](using tct: TC[T]): TC[List[T]] = ForList(tct)
+    given forList[T](using tct: TC[T]): TC[List[T]] = ForList(tct)
   }
 
   trait ImplicitMaterializers { this: TC.type =>
-    given materializeImplicitly[T](using allow: AllowImplicitMacro[TC[T]]): TC[T] = materialize
+    given materializeImplicitly[T](using AllowImplicitMacro[TC[T]]): TC[T] = materialize
   }
 }
 
@@ -88,7 +84,7 @@ final class TypeClassDerivationTest extends AnyFunSuite {
   }
 
   object SomeSingleton {
-    given tc: TC[SomeSingleton.type] = materialize[SomeSingleton.type]
+    given tc: TC[SomeSingleton.type] = materialize
   }
 
   test("singleton test") {
@@ -98,7 +94,7 @@ final class TypeClassDerivationTest extends AnyFunSuite {
   case class Whatever(str: String, int: Int = 42)
 
   object Whatever {
-    given tc: TC[Whatever] = materialize[Whatever]
+    given tc: TC[Whatever] = materialize
   }
 
   test("case class test") {
@@ -121,7 +117,7 @@ final class TypeClassDerivationTest extends AnyFunSuite {
   case class SubSealedCase(i: Int, w: Whatever) extends SubRoot
 
   object SealedRoot {
-    given tc: TC[SealedRoot] = materialize[SealedRoot]
+    given tc: TC[SealedRoot] = materialize
   }
 
   test("sealed hierarchy test") {
@@ -143,7 +139,7 @@ final class TypeClassDerivationTest extends AnyFunSuite {
   case class Recursive(str: String, next: Recursive)
 
   object Recursive {
-    given tc: TC[Recursive] = materialize[Recursive]
+    given tc: TC[Recursive] = materialize
   }
 
   test("recursive case class test") {
@@ -158,7 +154,7 @@ final class TypeClassDerivationTest extends AnyFunSuite {
   case class IndiRec(children: List[IndiRec])
 
   object IndiRec {
-    given tc: TC[IndiRec] = materialize[IndiRec]
+    given tc: TC[IndiRec] = materialize
   }
 
   test("indirectly recursive case class test") {
@@ -172,7 +168,7 @@ final class TypeClassDerivationTest extends AnyFunSuite {
   case class Branch[T](left: Tree[T], right: Tree[T]) extends Tree[T]
 
   object Tree {
-    given tc[A: TC]: TC[Tree[A]] = materialize[Tree[A]]
+    given tc[A: TC]: TC[Tree[A]] = materialize
   }
 
   test("recursive GADT test") {
