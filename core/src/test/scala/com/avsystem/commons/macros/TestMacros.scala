@@ -5,7 +5,7 @@ import macros.TypeClassDerivationTest.{DefVal, TC}
 
 import com.avsystem.commons.macros.TestMacros.nameFor
 import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.misc.macros.{ApplyUnapply, TypeClassDerivation, typeStringImpl}
+import com.avsystem.commons.misc.macros.{ApplyUnapply, TypeClassDerivation}
 
 import scala.compiletime.summonInline
 import scala.quoted.{Expr, Quotes, ToExpr, Type, quotes}
@@ -38,82 +38,30 @@ private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivati
         '{ ($name, $tc, $defaultValueOpt) }
       }
     }
-    val name = nameForExpr(using au.ownerTpe)
-    '{ TypeClassDerivationTest.ApplyUnapplyTC[T]($name, $deps) }
+    au.ownerTpe match
+      case '[t] =>
+        '{ TypeClassDerivationTest.ApplyUnapplyTC[T](nameFor[t], $deps) }
   }
 
   override def forSealedHierarchy[T: Type](
-    subtypes: List[KnownSubtype[T]],
+    subtypes: List[KnownSubtype[?]],
   )(using Quotes): Expr[TypeClassDerivationTest.SealedHierarchyTC[T]] = {
-    val deps = Expr.ofList {
+    val deps: Expr[List[(String, TC[? <: T])]] = Expr.ofList {
       subtypes.map { case KnownSubtype(_, st, tree) =>
-        val name = nameForExpr(using st)
-        '{ ($name, $tree) }
+        st match
+          case '[TC[t]] =>
+            Expr.ofTuple(('{ nameFor[t] }, tree.asExprOf[TC[? <: T]]))
       }
     }
-    val name = typeStringImpl[T]
-    '{ TypeClassDerivationTest.SealedHierarchyTC[T]($name.value, $deps) }
+    '{ TypeClassDerivationTest.SealedHierarchyTC[T](nameFor[T], $deps) }
   }
 
   override def forUnknown[T: Type](using Quotes): Expr[TypeClassDerivationTest.UnknownTC[T]] =
     '{ TypeClassDerivationTest.UnknownTC[T](nameFor[T]) }
 
-  //    assertSameTypes(weakTypeOf[R], computedResultType)
-  //  }
-  //
-  //  def applierUnapplierImpl[T: Type F : Type](using quotes: Quotes) = ???
-  //
-  //  val au = applyUnapplyFor(ttpe)
-  //    .getOrElse(reporter.abort(c.enclosingPosition,
-  //      s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
-  //
-  //  val companion = au.unapply.owner.asClass.module
-  //
-  //  val expectedTpe = au.params match {
-  //    case Nil => typeOf[Unit]
-  //    case List(single) => single.typeSignature
-  //    case _ => getType(tq"(..${au.params.map(_.typeSignature)})")
-  //      assertSameTypes(expectedTpe, ftpe)
-  //
-  //      val applyParams = au.params match {
-  //        case List(_) => List(Ident(TermName("f")))
-  //        case _ => au.params.indices.map(i => q"f.${TermName(s"_${i + 1}")}")
-  //      }
-  //
-  //      val unapplyResult = au.params match {
-  //        case Nil => q"()"
-  //        case _ => q"$companion.unapply(t).get"
-  //      }
-  //
-  //      q"""
-  //         new $ApplierUnapplierCls[$ttpe,$ftpe] {
-  //           def apply(f: $ftpe): $ttpe = $companion.apply(..$applyParams)
-  //           def unapply(t: $ttpe): $ftpe = $unapplyResult
-  //         }
-  //       """
-  //  }
-  //
-  //  private def stringLiteral(tree: Tree): String = tree match
-  //    case StringLiteral(str) => str
-  //    case Select(StringLiteral(str), TermName("stripMargin")) => str.stripMargin
-  //    case _ => abort(s"expected string literal, got $tree")
-  //
-  //      def typeErrorImpl(code: Tree): Tree = {
-  //        val codeTree = c.parse(stringLiteral(code))
-  //        try {
-  //          c.typecheck(codeTree)
-  //          abort("expected typechecking error, none was raised")
-  //        } catch {
-  //          case TypecheckException(_, msg) => q"$msg"
-  //        }
-  //      }
-
   inline def materialize[T]: TC[T] = ${ materializeImpl[T] }
 
   inline def nameFor[T]: String = TypeString.of[T]
-
-  def nameForExpr[T: Type](using Quotes): Expr[String] = typeStringImpl[T] match
-    case '{ $ts: TypeString[T] } => '{ $ts.value }
 
   inline def testTreeForType(tpeRepr: String) = assert(scala.compiletime.testing.typeChecks(tpeRepr))
 }

@@ -2,9 +2,8 @@ package com.avsystem.commons
 package misc.macros
 
 import derivation.DeferredInstance
+import macros.RecursiveImplicitMarker
 import meta.OptionLike
-
-import com.avsystem.commons.macros.RecursiveImplicitMarker
 
 import scala.compiletime.summonInline
 import scala.quoted.*
@@ -58,34 +57,6 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
 
   def allowOptionalParams: Boolean = false
 
-//  /**
-//   * Contains metadata extracted from `apply` method of companion object of some record (case-class like) type.
-//   *
-//   * @param sym
-//   * symbol of the `apply` method parameter or case class constructor parameter (if `apply` is auto-generated for case
-//   * class companion object)
-//   * @param defaultValue
-//   * tree that evaluates to default value of the `apply` parameter or `EmptyTree`
-//   * @param instance
-//   * tree that evaluates to type class instance for type of this parameter
-//   * @param optionLike
-//   * if the parameter is annotated as optional, an instance of `OptionLike` for its type
-//   */
-//  case class ApplyParam[T](
-//    idx: Int,
-//    sym: Symbol,
-//    defaultValue: Option[Expr[TC[T]]],
-//    instance: Expr[TC[T]],
-//    optionLike: Option[? /*CachedImplicit*/ ],
-//  ) {
-//    val repeated: Boolean = sym.isRepeatedParam
-//
-//    def valueType = sym.actualParamType
-//
-//    def asArgument(tree: Tree): Tree = ???
-//    //      if (repeated) '{ $tree _: *} else tree
-//  }
-
   /**
    * Contains metadata extracted from one of the case subtypes in a sealed hierarchy.
    *
@@ -94,9 +65,7 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
    * @param instance
    *   tree that evaluates to type class instance for this subtype
    */
-  case class KnownSubtype[T](idx: Int, tpe: Type[T], instance: Expr[TC[T]]) {
-    //    def sym: Symbol = TypeRepr.of(using tpe).typeSymbol
-  }
+  case class KnownSubtype[T](idx: Int, tpe: Type[TC[T]], instance: Expr[TC[T]])
 
   /**
    * Derives type class instance for singleton type (i.e. an `object` or `this`)
@@ -128,7 +97,7 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
    * @param subtypes
    *   metadata for all direct non-abstract subtypes of this sealed class/trait
    */
-  def forSealedHierarchy[T: Type](subtypes: List[KnownSubtype[T]])(using Quotes): Expr[TC[T]]
+  def forSealedHierarchy[T: Type](subtypes: List[KnownSubtype[?]])(using Quotes): Expr[TC[T]]
 
   /**
    * Derives type class instance for arbitrary type which is neither a singleton, record nor union type. Usually, you
@@ -180,14 +149,6 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
         report.errorAndAbort(s"Cannot materialize ${tcTpe.show} because of problem with parameter ${param.name}:\n")
   }
 
-//  def applyParams[T: Type](au: ApplyUnapply[T]): List[ApplyUnapply.Param] = au.params.zipWithIndex.map { case (s, idx) =>
-//    val defaultValue = au.defaultValueFor(s, idx)
-//    val paramType = s.actualParamType
-//    val optionLike = getOptionLike(s)
-//    val nonOptionalType = getNonOptionalType(s, optionLike)
-//    ApplyParam(idx, s, defaultValue, dependency[T](nonOptionalType, s), optionLike)
-//  }
-
   private def materializeFor[T: Type](using quotes: Quotes, tpe: Type[TC]): Expr[TC[T]] = {
     import quotes.reflect.*
     def singleTypeTc: Option[Expr[TC[T]]] =
@@ -202,10 +163,10 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
       case Nil => report.errorAndAbort(s"Could not find any subtypes for ${Type.show[T]}")
       case subtypes =>
         val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
-          val depTree = Implicits.search(TypeRepr.of(using dependencyType(using depTpe))) match
-            case failure: ImplicitSearchFailure => materializeImpl[T]
-            case success: ImplicitSearchSuccess => success.tree.asExprOf[TC[T]]
-          KnownSubtype[T](idx, depTpe, depTree)
+          depTpe match
+            case '[sub] =>
+              val depTree = materializeFor[sub]
+              KnownSubtype[sub](idx, Type.of[TC[sub]], depTree)
         }
         forSealedHierarchy[T](dependencies)
     }

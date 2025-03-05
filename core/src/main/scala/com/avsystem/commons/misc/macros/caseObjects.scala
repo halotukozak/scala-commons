@@ -28,12 +28,12 @@ def caseObjectsForImpl[T: Type](using quotes: Quotes): Expr[List[T]] = {
       )
 }
 
-def knownSubtypes[T: Type](ordered: Boolean = false)(using quotes: Quotes): Option[List[Type[T]]] = {
+def knownSubtypes[T: Type](ordered: Boolean = false)(using quotes: Quotes): Option[List[Type[? <: T]]] = {
   import quotes.reflect.*
 
   val dtpe = TypeTree.of[T]
   val tpeSym: Symbol = dtpe match
-    case Refined(List(single: TypeTree), _) => single.tpe.typeSymbol
+    case Refined(single: TypeTree, _) => single.tpe.typeSymbol
     case _ => dtpe.symbol
 
   def sort(subclasses: List[Symbol]): List[Symbol] =
@@ -42,7 +42,7 @@ def knownSubtypes[T: Type](ordered: Boolean = false)(using quotes: Quotes): Opti
     else subclasses
 
   def isSealedHierarchyRoot(sym: Symbol): Boolean =
-    sym.isClassDef && sym.flags.is(Flags.Abstract) && sym.flags.is(Flags.Sealed)
+    sym.isClassDef && sym.flags.is(Flags.Sealed)
 
   def knownNonAbstractSubclasses(sym: Symbol): Set[Symbol] =
     collectKnownSubtypes(sym.typeRef).flatMap { s =>
@@ -52,7 +52,7 @@ def knownSubtypes[T: Type](ordered: Boolean = false)(using quotes: Quotes): Opti
   Option(tpeSym).filter(isSealedHierarchyRoot).map { sym =>
     sort(knownNonAbstractSubclasses(sym).toList)
       .filter(_.typeRef <:< TypeRepr.of[T])
-      .map(_.typeRef.asType.asInstanceOf[Type[T]])
+      .map(_.typeRef.asType.asInstanceOf[Type[? <: T]])
   }
 }
 
@@ -70,38 +70,25 @@ private def singleValueForImpl[T: Type](using quotes: Quotes): Expr[Option[Value
           '{ Some(scala.ValueOf($singleton)) }
         case _ =>
           '{ None }
-    case None => '{ None }
+    case None
+        if tpe.typeSymbol.flags.is(Flags.Case & Flags.Final & Flags.Lazy & Flags.Module & Flags.StableRealizable) =>
+      printTypeReprInfo(tpe.classSymbol.get.companionModule.termRef)
+      tpe.classSymbol.get.companionModule.termRef match
+        case (tref) =>
+          println(tref.termSymbol.tree.asInstanceOf[ValDef].tpt.asExprOf[T])
+          val singleton = tref.termSymbol.tree.asExprOf[T]
+          '{ Some(scala.ValueOf($singleton)) }
+        case x =>
+          printTypeReprInfo(x)
+          ???
+    case _ => '{ None }
 }
-//def singleValueFor(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): Option[quotes.reflect.TypeRepr] = {
-//  import quotes.reflect.*
-//  Some(tpe.valueOrAbort)
-//  tpe match {
-////    case ThisType(tpe) if enclosingClasses.contains(tpe) =>
-////      Some(This(tpe.typeSymbol))
-//    case ThisType(sym) if sym.classSymbol.exists(_.flags.is(Flags.Module)) =>
-//      singleValueFor(sym.classSymbol.get.owner.typeRef)
-//        .map(pre => Select(pre, tpe.termSymbol))
-//    case ThisType(sym) =>
-//      Some(This(sym.typeSymbol))
-//    case SingleType(NoPrefix, sym) =>
-//      Some(Ident(sym.typeSymbol))
-//    case SingleType(pre, sym) =>
-//      singleValueFor(pre.typeSymbol).map(prefix => Select(prefix, sym))
-//    case ConstantType(value) =>
-//      Some(Literal(value))
-//    case TypeRef(pre, sym, Nil) if sym.isModuleClass =>
-//      singleValueFor(pre).map(prefix => Select(prefix, sym.asClass.module))
-//    case _ =>
-//      None
-//  }
-//}
 
 private def collectKnownSubtypes(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): Set[quotes.reflect.Symbol] = {
   import quotes.reflect.*
   val children: List[Symbol] = tpe.classSymbol.get.children
   children.flatMap { s =>
     if s.flags.is(Flags.Sealed & Flags.Trait) then {
-      println("sealed trait " + s)
       val childTpe: TypeTree = TypeIdent(s)
       val childType: TypeRepr = childTpe.tpe
       collectKnownSubtypes(using quotes)(childType) + s

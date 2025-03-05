@@ -3,7 +3,9 @@ package macros
 
 import derivation.{AllowImplicitMacro, DeferredInstance}
 import macros.TestMacros.{materialize, materializeImpl}
+
 import com.avsystem.commons.misc.TypeString
+import com.avsystem.commons.misc.macros.printTree
 import org.scalatest.funsuite.AnyFunSuite
 
 object TypeClassDerivationTest {
@@ -36,7 +38,7 @@ object TypeClassDerivationTest {
   case class ApplyUnapplyTC[T](tpe: String, subs: List[(name: String, tc: TC[?], defaultValue: Option[DefVal])])
     extends TC[T]
 
-  case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[?])]) extends TC[T]
+  case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[? <: T])]) extends TC[T]
 
   case class UnknownTC[T](tpe: String) extends TC[T]
 

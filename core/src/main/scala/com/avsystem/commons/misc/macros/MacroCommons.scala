@@ -27,7 +27,7 @@ trait MacroCommons {
         case e :: Nil => e
         case _ => report.errorAndAbort(s"Symbol $symbol has multiple method members $other")
     }
-        
+
     def safeSingleMethodMember(other: String): Option[quotes.reflect.Symbol] =
       symbol.methodMember(other) match
         case Nil => None

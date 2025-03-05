@@ -3,6 +3,8 @@ package misc
 
 import misc.macros.{javaClassName, typeStringImpl}
 
+import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
+
 import scala.quoted.Type
 
 /**
@@ -29,12 +31,12 @@ final class TypeString[T](val value: String) extends AnyVal {
 }
 
 object TypeString {
-  //  given keyCodec: GenKeyCodec[TypeString[_]] =
-  //    GenKeyCodec.create[TypeString[_]](new TypeString(_), _.value)
-  //
-  //  given codec: GenCodec[TypeString[_]] =
-  //    GenCodec.nonNullSimple[TypeString[_]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
-  //
+  given keyCodec: GenKeyCodec[TypeString[?]] =
+    GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
+
+  given codec: GenCodec[TypeString[?]] =
+    GenCodec.nonNullSimple[TypeString[?]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
+
   inline def apply[T](using ts: TypeString[T]): TypeString[T] = ts
 
   inline def of[T: TypeString]: String = TypeString[T].value
@@ -93,9 +95,10 @@ object JavaClassName extends JavaClassNameLowPrio {
 
   given CharClassName: JavaClassName[Char] = new JavaClassName("char")
 
-  //  given keyCodec: GenKeyCodec[JavaClassName[_]] = GenKeyCodec.create[JavaClassName[_]](new JavaClassName(_), _.value)
-  //
-  //  given codec: GenCodec[JavaClassName[_]] = GenCodec.nonNullSimple[JavaClassName[_]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
+  given keyCodec: GenKeyCodec[JavaClassName[?]] = GenKeyCodec.create[JavaClassName[?]](new JavaClassName(_), _.value)
+
+  given codec: GenCodec[JavaClassName[?]] =
+    GenCodec.nonNullSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
 
   inline def apply[T](using ts: JavaClassName[T]): JavaClassName[T] = ts
 

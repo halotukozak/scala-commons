@@ -14,9 +14,15 @@ object Obj {
 
     def valueOfThis: this.type = ValueOf[this.type]
   }
+
+  case object CaseObject
+
+  sealed trait Sealed
+  case object SealedObj extends Sealed
 }
 
 final class ValueOfTest extends AnyFunSuite:
+
   test("object") {
     assert(ValueOf[Obj.type] == Obj)
   }
@@ -34,4 +40,12 @@ final class ValueOfTest extends AnyFunSuite:
   test("this") {
     val i = new Obj.Inner
     assert(i.valueOfThis == i)
+  }
+
+  test("case object") {
+    assert(ValueOf[Obj.CaseObject.type] == Obj.CaseObject)
+  }
+
+  test("sealed object") {
+    assert(ValueOf[Obj.SealedObj.type] == Obj.SealedObj)
   }
