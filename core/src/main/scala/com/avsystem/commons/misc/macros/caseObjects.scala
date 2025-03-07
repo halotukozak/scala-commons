@@ -72,16 +72,20 @@ private def singleValueForImpl[T: Type](using quotes: Quotes): Expr[Option[Value
           '{ None }
     case None
         if tpe.typeSymbol.flags.is(Flags.Case & Flags.Final & Flags.Lazy & Flags.Module & Flags.StableRealizable) =>
-      printTypeReprInfo(tpe.classSymbol.get.companionModule.termRef)
-      tpe.classSymbol.get.companionModule.termRef match
-        case (tref) =>
-          println(tref.termSymbol.tree.asInstanceOf[ValDef].tpt.asExprOf[T])
-          val singleton = tref.termSymbol.tree.asExprOf[T]
-          '{ Some(scala.ValueOf($singleton)) }
-        case x =>
-          printTypeReprInfo(x)
-          ???
-    case _ => '{ None }
+      val tref = tpe.classSymbol.get.companionModule.termRef
+      val singleton = Ident(tref).asExprOf[T]
+      '{ Some(scala.ValueOf($singleton)) }
+    case _ =>
+      '{ None }
+}
+
+def mkValueOfImpl[T: Type](using quotes: Quotes): Expr[ValueOf[T]] = {
+  import quotes.reflect.*
+
+  singleValueForImpl[T] match
+    case '{ Some($value: ValueOf[T]) } => value
+    case '{ None } =>
+      report.errorAndAbort(s"Could not find an implicitly or generate ValueOf instance for ${Type.show[T]}")
 }
 
 private def collectKnownSubtypes(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr): Set[quotes.reflect.Symbol] = {

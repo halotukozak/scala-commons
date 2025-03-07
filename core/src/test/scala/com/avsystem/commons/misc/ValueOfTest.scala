@@ -49,3 +49,7 @@ final class ValueOfTest extends AnyFunSuite:
   test("sealed object") {
     assert(ValueOf[Obj.SealedObj.type] == Obj.SealedObj)
   }
+
+  test("wrong") {
+    assertDoesNotCompile("ValueOf[Obj.Sealed]")
+  }
