@@ -16,18 +16,13 @@ object SealedUtils {
    * [[OrderedEnum]]. Otherwise, the order may be arbitrary.
    */
   @explicitGenerics
-  inline def caseObjectsFor[T]: List[T] = ???
-
-  @explicitGenerics
-  inline def caseObjectsFor[T](using m: Mirror.Of[T]): List[T] =
-    summonAll[m.MirroredElemTypes].asInstanceOf[List[T]]
+  inline def caseObjectsFor[T]: List[? <: T] = ${ caseObjectsForImpl[T] }
 
   /**
    * Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
    */
   @explicitGenerics
-  inline def instancesFor[TC[_], T](using m: Mirror.Of[T]): List[TC[T]] =
-    summonAll[Tuple.Map[m.MirroredElemTypes, TC]].asInstanceOf[List[TC[T]]]
+  inline def instancesFor[TC[_], T]: List[TC[T]] = ???
 
   inline private def summonAll[T <: Tuple]: List[Any] = inline erasedValue[T] match
     case _: EmptyTuple => Nil
@@ -77,7 +72,7 @@ trait SealedEnumCompanion[T] {
    * is consistent with declaration order in source file. However, if the enum is not an [[OrderedEnum]], the order may
    * be arbitrary.
    */
-  protected inline def caseObjects: List[T] = SealedUtils.caseObjectsFor[T]
+  protected inline def caseObjects: List[? <: T] = SealedUtils.caseObjectsFor[T]
 }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]
@@ -199,5 +194,5 @@ object OrderedEnum {
 }
 
 abstract class AbstractNamedEnumCompanion[T <: NamedEnum]
-    extends AbstractSealedEnumCompanion[T]
+  extends AbstractSealedEnumCompanion[T]
     with NamedEnumCompanion[T]

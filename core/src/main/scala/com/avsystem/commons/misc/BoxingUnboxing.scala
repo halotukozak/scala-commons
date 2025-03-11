@@ -4,7 +4,7 @@ package misc
 final case class Boxing[-A, +B](fun: A => B) extends AnyVal
 
 object Boxing extends LowPrioBoxing {
-  def fromImplicitConv[A, B](implicit conv: A => B): Boxing[A, B] = Boxing(conv)
+  def fromImplicitConv[A, B](using conv: A => B): Boxing[A, B] = Boxing(conv)
 
   given BooleanBoxing: Boxing[Boolean, JBoolean] = fromImplicitConv
 

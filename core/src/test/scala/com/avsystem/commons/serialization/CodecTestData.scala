@@ -198,7 +198,7 @@ object CodecTestData {
   )
 
   object CaseClassWithAutoOptionalFields
-      extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
+    extends HasGenCodecWithDeps[AutoOptionalParams.type, CaseClassWithAutoOptionalFields]
 
   class CaseClassLike(val str: String, val intList: List[Int]) extends Wrapper[CaseClassLike](str, intList)
 

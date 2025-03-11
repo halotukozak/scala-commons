@@ -1,20 +1,18 @@
 package com.avsystem.commons
 package macros
 
+import macros.TestMacros.nameFor
 import macros.TypeClassDerivationTest.{DefVal, TC}
-
-import com.avsystem.commons.macros.TestMacros.nameFor
-import com.avsystem.commons.misc.TypeString
-import com.avsystem.commons.misc.macros.{ApplyUnapply, TypeClassDerivation}
+import misc.TypeString
+import misc.macros.{ApplyUnapply, TypeClassDerivation}
 
 import scala.compiletime.summonInline
-import scala.quoted.{Expr, Quotes, ToExpr, Type, quotes}
+import scala.quoted.*
 
 private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivationTest.TC] {
 
   override def typeClassInstance[T: Type](using Quotes): Type[TC[T]] =
     Type.of[TC[T]]
-  //    TypeRepr.of[TypeClassDerivationTest.TC[?]].appliedTo(tpe).asType.asInstanceOf[Type[TC[T]]]
 
   override def implementDeferredInstance[T: Type](using Quotes): Expr[TypeClassDerivationTest.TC.Deferred[T]] =
     '{ new TypeClassDerivationTest.TC.Deferred[T] }
