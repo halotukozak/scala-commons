@@ -1,8 +1,9 @@
 package com.avsystem.commons
 package misc
 
+import misc.ValueOf.materialize
+
 import org.scalatest.funsuite.AnyFunSuite
-import ValueOf.mkValueOf
 
 object Obj {
   val x: String = "fuu"

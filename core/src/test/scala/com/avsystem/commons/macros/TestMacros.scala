@@ -1,7 +1,6 @@
 package com.avsystem.commons
 package macros
 
-import macros.TestMacros.nameFor
 import macros.TypeClassDerivationTest.{DefVal, TC}
 import misc.TypeString
 import misc.macros.{ApplyUnapply, TypeClassDerivation}
@@ -17,14 +16,13 @@ private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivati
   override def implementDeferredInstance[T: Type](using Quotes): Expr[TypeClassDerivationTest.TC.Deferred[T]] =
     '{ new TypeClassDerivationTest.TC.Deferred[T] }
 
-  override def forSingleton[T: Type](singleValue: Expr[ValueOf[T]])(using
-    Quotes,
-  ): Expr[TypeClassDerivationTest.SingletonTC[T]] =
-    '{ TypeClassDerivationTest.SingletonTC[T](nameFor[T], $singleValue.value) }
+  override def forSingleton[T: Type](singleValue: Expr[T])(using Quotes): Expr[TypeClassDerivationTest.SingletonTC[T]] =
+    '{ TypeClassDerivationTest.SingletonTC[T](nameFor[T], $singleValue) }
 
   override def forApplyUnapply[T: Type](
     au: ApplyUnapply[T],
-  )(using Quotes): Expr[TypeClassDerivationTest.ApplyUnapplyTC[T]] = {
+  )(using quotes: Quotes): Expr[TypeClassDerivationTest.ApplyUnapplyTC[T]] = {
+    import quotes.reflect.*
     val deps = Expr.ofList {
       au.params.map { case ApplyUnapply.Param(label, index, tpe, repeated, dv) =>
         val name = Expr(label)
@@ -43,12 +41,14 @@ private[commons] object TestMacros extends TypeClassDerivation[TypeClassDerivati
 
   override def forSealedHierarchy[T: Type](
     subtypes: List[KnownSubtype[?]],
-  )(using Quotes): Expr[TypeClassDerivationTest.SealedHierarchyTC[T]] = {
+  )(using quotes: Quotes): Expr[TypeClassDerivationTest.SealedHierarchyTC[T]] = {
+    import quotes.reflect.*
     val deps: Expr[List[(String, TC[? <: T])]] = Expr.ofList {
       subtypes.map { case KnownSubtype(_, st, tree) =>
         st match
           case '[TC[t]] =>
-            Expr.ofTuple(('{ nameFor[t] }, tree.asExprOf[TC[? <: T]]))
+            val name = Expr(TypeRepr.of[t].show(using Printer.TypeReprShortCode))
+            Expr.ofTuple((name, tree.asExprOf[TC[? <: T]]))
       }
     }
     '{ TypeClassDerivationTest.SealedHierarchyTC[T](nameFor[T], $deps) }

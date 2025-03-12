@@ -33,7 +33,7 @@ def typeStringImpl[T: Type](using quotes: Quotes): Expr[TypeString[T]] = {
 
       history.addOne("TermRef")
       s"${generatePath(tpe).mkString(".")}.type"
-    case tpe if tpe.isSingleton =>
+    case tpe if tpe.isSingleton || tpe.isCaseObject =>
       history.addOne("Singleton")
       s"${simpleName(tpe)}.type"
     case Refinement(parent, name, info) =>

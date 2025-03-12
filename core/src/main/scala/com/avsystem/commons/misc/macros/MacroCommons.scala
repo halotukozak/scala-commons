@@ -86,6 +86,13 @@ trait MacroCommons {
     }
   }
 
+  extension (using quotes: Quotes)(tpe: quotes.reflect.TypeRepr) {
+    def isCaseObject: Boolean = {
+      import quotes.reflect.*
+      tpe.typeSymbol.flags.is(Flags.Case & Flags.Final & Flags.Lazy & Flags.Module & Flags.StableRealizable)
+    }
+  }
+
   //  final lazy val MapSym = TypeRepr.of[scala.collection.immutable.Map[?, ?]].typeSymbol
   //  final lazy val FutureSym = TypeRepr.of[scala.concurrent.Future[?]].typeSymbol
   //  final lazy val OptionClass = defn.OptionClass

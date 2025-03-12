@@ -2,7 +2,6 @@ package com.avsystem.commons
 package misc.macros
 
 import derivation.DeferredInstance
-import macros.RecursiveImplicitMarker
 import meta.OptionLike
 
 import scala.compiletime.summonInline
@@ -75,7 +74,7 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
    * @param singleValueTree
    *   a tree that evaluates to the sole value of the singleton type
    */
-  def forSingleton[T: Type](singleValue: Expr[ValueOf[T]])(using Quotes): Expr[TC[T]]
+  def forSingleton[T: Type](singleValue: Expr[T])(using Quotes): Expr[TC[T]]
 
   /**
    * Derives type class instance for record type. Record type is a class/trait whose companion object has matching
@@ -153,8 +152,8 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
     import quotes.reflect.*
     def singleTypeTc: Option[Expr[TC[T]]] =
       singleValueForImpl[T] match
-        case '{ Some($singleValue: ValueOf[T]) } => Some(forSingleton[T](singleValue))
-        case _ => None
+        case '{ Some($singleValue: T) } => Some(forSingleton[T](singleValue))
+        case '{ None } => None
 
     def applyUnapplyTc: Option[Expr[TC[T]]] =
       applyUnapplyForImpl[T].map(forApplyUnapply)
@@ -165,7 +164,7 @@ trait TypeClassDerivation[TC[_]] extends HasMacroUtils {
         val dependencies = subtypes.zipWithIndex.map { case (depTpe, idx) =>
           depTpe match
             case '[sub] =>
-              val depTree = materializeFor[sub]
+              val depTree = materializeImpl[sub]
               KnownSubtype[sub](idx, Type.of[TC[sub]], depTree)
         }
         forSealedHierarchy[T](dependencies)

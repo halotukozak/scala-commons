@@ -43,12 +43,12 @@ object Commons extends ProjectGroup("commons") {
   // for binary compatibility checking
   val previousCompatibleVersions: Set[String] = Set("2.2.4")
 
-  override def globalSettings: Seq[Def.Setting[_]] = Seq(
+  override def globalSettings: Seq[Def.Setting[?]] = Seq(
     cancelable := true,
     excludeLintKeys ++= Set(ideExcludedDirectories, ideOutputDirectory, ideBasePackages, ideSkipProject),
   )
 
-  override def buildSettings: Seq[Def.Setting[_]] = Seq(
+  override def buildSettings: Seq[Def.Setting[?]] = Seq(
     organization := "com.avsystem.commons",
     homepage := Some(url("https://github.com/AVSystem/scala-commons")),
     organizationName := "AVSystem",
@@ -127,7 +127,7 @@ object Commons extends ProjectGroup("commons") {
       "-experimental",
       "-Xno-enrich-error-messages",
       "-explain-cyclic",
-      "-Xprint:postInlining"
+      "-Xprint:postInlining",
     ),
     Compile / scalacOptions ++= {
       if (scalaBinaryVersion.value == "2.13") Seq("-Xnon-strict-patmat-analysis", "-Xlint:-strict-unsealed-patmat")
@@ -192,7 +192,7 @@ object Commons extends ProjectGroup("commons") {
       ScalaUnidoc / unidoc / unidocProjectFilter :=
         inAnyProject -- inProjects(
           //          analyzer,
-          macros,
+          //          macros,
           `core-js`,
           //          comprof,
         ),
@@ -202,7 +202,7 @@ object Commons extends ProjectGroup("commons") {
     .in(file(".jvm"))
     .aggregate(
       //      analyzer,
-      macros,
+      //      macros,
       core,
       //      jetty,
       //      mongo,
@@ -247,7 +247,6 @@ object Commons extends ProjectGroup("commons") {
   lazy val macros = mkSubProject.settings(jvmCommonSettings)
 
   lazy val core = mkSubProject
-    .dependsOn(macros)
     .settings(
       jvmCommonSettings,
       sourceDirsSettings(_ / "jvm"),

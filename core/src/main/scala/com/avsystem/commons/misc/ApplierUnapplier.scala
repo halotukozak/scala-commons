@@ -13,7 +13,7 @@ trait Applier[T] {
 }
 
 object Applier {
-  given materialize[T](using mirror: Mirror.ProductOf[T]): Applier[T] = (rawValues: Seq[Any]) => {
+  given materialize[T: ClassTag](using mirror: Mirror.ProductOf[T]): Applier[T] = (rawValues: Seq[Any]) => {
     val values = rawValues.toArray
     mirror.fromProduct(new Product {
       override def productArity: Int = values.length

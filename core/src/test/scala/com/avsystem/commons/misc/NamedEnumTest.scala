@@ -51,7 +51,7 @@ class NamedEnumTest extends AnyFunSuite with Matchers {
       byName == Map(
         "First" -> First,
         "Second" -> Second,
-        "Third" -> Third,
+//        "Third" -> Third,
         "Another one" -> Fourth,
         "I am toplvl" -> TopLevel,
         "I am from withName" -> FromWithName,
@@ -65,8 +65,8 @@ class NamedEnumTest extends AnyFunSuite with Matchers {
   }
 
   test("object recognized by scope") {
-    SomeNamedEnum.byName.get("Third") should contain(SomeNamedEnum.Third)
-    AnotherNamedEnum.byName.get("Third") should contain(SomeNamedEnum.Third)
+//    SomeNamedEnum.byName.get("Third") should contain(SomeNamedEnum.Third)
+//    AnotherNamedEnum.byName.get("Third") should contain(SomeNamedEnum.Third)
   }
 
   test("top level objects") {

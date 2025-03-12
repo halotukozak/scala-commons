@@ -9,4 +9,4 @@ import scala.annotation.implicitNotFound
 object ValueOf:
   def apply[T](using vof: ValueOf[T]): T = vof.value
 
-  inline given mkValueOf[T]: ValueOf[T] = ${ mkValueOfImpl[T] }
+  inline given materialize[T]: ValueOf[T] = ${ mkValueOfImpl[T] }

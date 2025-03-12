@@ -46,17 +46,14 @@ def knownSubtypes[T: Type](ordered: Boolean = false)(using quotes: Quotes): Opti
   }
 
   def knownNonAbstractSubclasses[U: Type]: Set[Type[? <: U]] =
-    collectKnownSubtypes[U].flatMap { s =>
-      if isSealedHierarchyRoot(using s) then knownNonAbstractSubclasses(using s) else Set(s)
+    collectKnownDirectSubtypes[U].flatMap { s =>
+      if isSealedHierarchyRoot(using s) then knownNonAbstractSubclasses(using s)
+      else Set(s)
     }
 
-  val res = Option.when(isSealedHierarchyRoot[T]) {
+  Option.when(isSealedHierarchyRoot[T]) {
     sort(knownNonAbstractSubclasses[T].toList)
-//      .filter(_.typeRef <:< TypeRepr.of[T])
-//      .map(_.asType.asInstanceOf[Type[? <: T]])
   }
-  println(res.map(_.map(_.show)))
-  res
 }
 
 inline def valueOfValueFor[T]: Option[ValueOf[T]] = ${ valueOfForImpl[T] }
@@ -96,10 +93,9 @@ private def singleValueForImpl[T: Type](using quotes: Quotes): Expr[Option[T]] =
           '{ Some($singleton) }
         case _ =>
           '{ None }
-    case None
-        if tpe.typeSymbol.flags.is(Flags.Case & Flags.Final & Flags.Lazy & Flags.Module & Flags.StableRealizable) =>
+    case None if tpe.isCaseObject =>
       val tref = tpe.classSymbol.get.companionModule.termRef
-      val singleton = Ident(tref).asExprOf[T]
+      val singleton = Ref.term(tref).asExprOf[T]
       '{ Some($singleton) }
     case _ =>
       '{ None }
@@ -111,16 +107,15 @@ def mkValueOfImpl[T: Type](using quotes: Quotes): Expr[ValueOf[T]] = {
   valueOfForImpl[T] match
     case '{ Some($value: ValueOf[T]) } => value
     case '{ None } =>
-      report.errorAndAbort(s"Could not find an implicitly or generate ValueOf instance for ${Type.show[T]}")
+      report.errorAndAbort(s"Could not find implicitly or generate ValueOf instance for ${Type.show[T]}")
 }
 
-private def collectKnownSubtypes[T: Type](using quotes: Quotes): Set[Type[? <: T]] = {
+private def collectKnownDirectSubtypes[T: Type](using quotes: Quotes): Set[Type[? <: T]] = {
   import quotes.reflect.*
   val tpe: TypeRepr = TypeRepr.of[T]
   val children: List[Symbol] = tpe.classSymbol.get.children
-  println(children)
   children
-    .flatMap { s =>
+    .map { s =>
       val classDef = s.tree match
         case valDef: ValDef => valDef.tpt.tpe.typeSymbol.tree.asInstanceOf[ClassDef] // todo: maybe can be simplified
         case classDef: ClassDef => classDef
@@ -137,17 +132,11 @@ private def collectKnownSubtypes[T: Type](using quotes: Quotes): Set[Type[? <: T
               case Nil =>
                 s.termRef.asType
               case _ =>
-                s.typeRef.appliedTo(tpe.typeArgs).asType
+                report.errorAndAbort("GADT is not currently supported")
         }
         .get
 
-      if s.flags.is(Flags.Sealed & Flags.Trait) then {
-        childType match
-          case '[t] =>
-            collectKnownSubtypes[t].asInstanceOf[Set[Type[? <: T]]] + childType.asInstanceOf[Type[? <: T]]
-      } else {
-        childType :: Nil
-      }
+      childType
     }
     .toSet
     .asInstanceOf[Set[Type[? <: T]]]

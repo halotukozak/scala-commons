@@ -3,8 +3,6 @@ package misc
 
 import misc.macros.{annotationOf, selfAnnotations}
 
-import com.avsystem.commons.macros
-
 import scala.annotation.implicitNotFound
 
 /**
