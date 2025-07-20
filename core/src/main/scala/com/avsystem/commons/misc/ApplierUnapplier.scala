@@ -11,7 +11,7 @@ trait Applier[T] {
   def apply(rawValues: Seq[Any]): T
 }
 object Applier {
-  implicit def materialize[T]: Applier[T] = macro macros.misc.MiscMacros.applier[T]
+  implicit def materialize[T]: Applier[T] = ??? // macro macros.misc.MiscMacros.applier[T]
 }
 
 /**
@@ -23,7 +23,7 @@ trait Unapplier[T] {
   def unapply(value: T): Seq[Any]
 }
 object Unapplier {
-  implicit def materialize[T]: Unapplier[T] = macro macros.misc.MiscMacros.unapplier[T]
+  implicit def materialize[T]: Unapplier[T] = ???// macro macros.misc.MiscMacros.unapplier[T]
 }
 
 class ProductUnapplier[T <: Product] extends Unapplier[T] {
@@ -34,5 +34,5 @@ abstract class ProductApplierUnapplier[T <: Product] extends ProductUnapplier[T]
 @implicitNotFound("cannot materialize ApplierUnapplier: ${T} is not a case class or case class like type")
 trait ApplierUnapplier[T] extends Applier[T] with Unapplier[T]
 object ApplierUnapplier {
-  implicit def materialize[T]: ApplierUnapplier[T] = macro macros.misc.MiscMacros.applierUnapplier[T]
+  implicit def materialize[T]: ApplierUnapplier[T] = ???// macro macros.misc.MiscMacros.applierUnapplier[T]
 }

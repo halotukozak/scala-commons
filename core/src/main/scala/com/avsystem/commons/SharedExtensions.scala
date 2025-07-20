@@ -135,33 +135,33 @@ object SharedExtensionsUtils extends SharedExtensions {
       * Prints AST of the prefix in a compilation error.
       * Useful for debugging macros.
       */
-    def showAst: A = macro macros.UniversalMacros.showAst[A]
+    def showAst: A = ??? // macro macros.UniversalMacros.showAst[A]
 
     /**
       * Prints raw AST of the prefix in a compilation error.
       * Useful for debugging macros.
       */
-    def showRawAst: A = macro macros.UniversalMacros.showRawAst[A]
+    def showRawAst: A = ??? // macro macros.UniversalMacros.showRawAst[A]
 
-    def showSymbol: A = macro macros.UniversalMacros.showSymbol[A]
+    def showSymbol: A = ??? // macro macros.UniversalMacros.showSymbol[A]
 
-    def showSymbolFullName: A = macro macros.UniversalMacros.showSymbolFullName[A]
+    def showSymbolFullName: A = ??? // macro macros.UniversalMacros.showSymbolFullName[A]
 
-    def showType: A = macro macros.UniversalMacros.showType[A]
+    def showType: A = ??? // macro macros.UniversalMacros.showType[A]
 
-    def showRawType: A = macro macros.UniversalMacros.showRawType[A]
+    def showRawType: A = ??? // macro macros.UniversalMacros.showRawType[A]
 
-    def showTypeSymbol: A = macro macros.UniversalMacros.showTypeSymbol[A]
+    def showTypeSymbol: A = ??? // macro macros.UniversalMacros.showTypeSymbol[A]
 
-    def showTypeSymbolFullName: A = macro macros.UniversalMacros.showTypeSymbolFullName[A]
+    def showTypeSymbolFullName: A = ??? // macro macros.UniversalMacros.showTypeSymbolFullName[A]
 
     /**
       * Returns source code of the prefix expression as string, exactly as in the source file.
       * Strips common indentation. Requires -Yrangepos enabled.
       */
-    def sourceCode: String = macro macros.UniversalMacros.sourceCode
+    def sourceCode: String = ??? // macro macros.UniversalMacros.sourceCode
 
-    def withSourceCode: (A, String) = macro macros.UniversalMacros.withSourceCode
+    def withSourceCode: (A, String) = ??? // macro macros.UniversalMacros.withSourceCode
 
     def debugMacro: A = a
   }
@@ -465,7 +465,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     /**
       * Apply side-effect only if Try is a failure. The provided `action` function will be called with the
       * throwable from the failure case, allowing you to perform operations like logging or error handling.
-      * 
+      *
       * Non-fatal exceptions thrown by the `action` function are caught and ignored, ensuring that this method
       * always returns the original Try instance regardless of what happens in the action.
       *
@@ -703,10 +703,10 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def collectWhileDefined[B](pf: PartialFunction[A, B]): Iterator[B] =
       new AbstractIterator[B] {
-        private[this] var fetched = false
-        private[this] var value: NOpt[B] = _
+        private var fetched = false
+        private var value: NOpt[B] = scala.compiletime.uninitialized
 
-        private[this] def fetch(): Unit =
+        private def fetch(): Unit =
           if (it.hasNext) {
             value = pf.applyNOpt(it.next())
           } else {
@@ -737,10 +737,11 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def distinctBy[B](f: A => B): Iterator[A] =
       new AbstractIterator[A] {
-        private[this] val seen = new MHashSet[B]
-        private[this] var nextDistinct = NOpt.empty[A]
+        private val seen = new MHashSet[B]
+        private var nextDistinct = NOpt.empty[A]
 
-        @tailrec override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
+//        @tailrec 
+        override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
           nextDistinct = NOpt.some(it.next()).filter(a => seen.add(f(a)))
           hasNext
         }
@@ -759,8 +760,8 @@ object SharedExtensionsUtils extends SharedExtensions {
   object IteratorCompanionOps {
     def untilEmpty[T](elem: => Opt[T]): Iterator[T] =
       new AbstractIterator[T] {
-        private[this] var fetched = false
-        private[this] var value = Opt.empty[T]
+        private var fetched = false
+        private var value = Opt.empty[T]
 
         def hasNext: Boolean = {
           if (!fetched) {
@@ -786,8 +787,8 @@ object SharedExtensionsUtils extends SharedExtensions {
 
     def iterateUntilEmpty[T](start: Opt[T])(nextFun: T => Opt[T]): Iterator[T] =
       new AbstractIterator[T] {
-        private[this] var fetched = true
-        private[this] var value = start
+        private var fetched = true
+        private var value = start
 
         def hasNext: Boolean = {
           if (!fetched) {

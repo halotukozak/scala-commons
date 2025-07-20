@@ -28,5 +28,5 @@ case class SourceInfo(
 object SourceInfo {
   def apply()(implicit si: SourceInfo): SourceInfo = si
 
-  implicit def here: SourceInfo = macro macros.misc.MiscMacros.sourceInfo
+  implicit def here: SourceInfo = ??? // macro macros.misc.MiscMacros.sourceInfo
 }

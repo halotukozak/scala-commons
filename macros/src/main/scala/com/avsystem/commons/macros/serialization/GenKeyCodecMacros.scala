@@ -5,7 +5,7 @@ import scala.reflect.macros.blackbox
 
 class GenKeyCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final def GenKeyCodecObj: Tree = q"$SerializationPkg.GenKeyCodec"
   final def GenKeyCodecCls: Tree = tq"$SerializationPkg.GenKeyCodec"

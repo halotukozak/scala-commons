@@ -6,11 +6,11 @@ import com.avsystem.commons.macros.misc.{Fail, FailMsg, Ok, Res}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-private[commons] trait RpcMappings { this: RpcMacroCommons with RpcSymbols =>
+private[commons] trait RpcMappings { this: RpcMacroCommons & RpcSymbols =>
 
-  import c.universe._
+  import c.universe.{_, given}
 
-  def collectMethodMappings[Raw <: RealMethodTarget with AritySymbol, M](
+  def collectMethodMappings[Raw <: RealMethodTarget & AritySymbol, M](
     rawSymbols: List[Raw], errorBase: String, realMethods: List[RealMethod], allowIncomplete: Boolean
   )(createMapping: (Raw, MatchedMethod) => Res[M]): List[M] = {
 

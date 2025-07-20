@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final val SELECTOR_DUMMY: TermName = TermName("<unapply-selector>")
   final val UNAPPLY: TermName = TermName("unapply")
@@ -64,7 +64,7 @@ class BidirectionalMacro(ctx: blackbox.Context) extends AbstractMacroCommons(ctx
   }
 
   def impl[A: WeakTypeTag, B: WeakTypeTag](pf: Tree): Tree = {
-    val AnonPartialFunction(cases) = pf
+    val AnonPartialFunction(cases) = pf: @unchecked
 
     def patternToExpr(pattern: Tree): Tree = pattern match {
       case Apply(tt@TypeTree(), args) if tt.original != null =>

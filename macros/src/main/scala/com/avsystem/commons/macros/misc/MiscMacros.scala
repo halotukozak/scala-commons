@@ -10,7 +10,7 @@ import scala.util.control.NoStackTrace
 
 final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   lazy val MaterializeWithAT: Type = getType(tq"$CommonsPkg.meta.MacroInstances.materializeWith")
 
@@ -398,34 +398,34 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
               q"$resultCompanion.materialize"
           }
 
-        val instTpeTree = treeForType(sig.finalResultType)
-        if (!m.isGetter) {
-          val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
-          val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
-          val argss = sig.paramLists match {
-            case List(Nil) => Nil
-            case paramss => paramss.filterNot(_.exists(_.isImplicit)).map(_.map(s => q"${s.name.toTermName}"))
-          }
-          q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $materializer(...$argss)"
+      val instTpeTree = treeForType(sig.finalResultType)
+      if (!m.isGetter) {
+        val tparamDefs = sig.typeParams.map(typeSymbolToTypeDef(_, forMethod = true))
+        val paramDefs = sig.paramLists.map(_.map(paramSymbolToValDef))
+        val argss = sig.paramLists match {
+          case List(Nil) => Nil
+          case paramss => paramss.filterNot(_.exists(_.isImplicit)).map(_.map(s => q"${s.name.toTermName}"))
         }
-        else if (m.isVar || m.setter != NoSymbol)
-          q"var ${m.name}: $instTpeTree = $materializer"
-        else
-          q"val ${m.name}: $instTpeTree = $materializer"
+        q"def ${m.name}[..$tparamDefs](...$paramDefs): $instTpeTree = $materializer(...$argss)"
       }
+      else if (m.isVar || m.setter != NoSymbol)
+        q"var ${m.name}: $instTpeTree = $materializer"
+      else
+        q"val ${m.name}: $instTpeTree = $materializer"
+    }
 
-      val implicitsName = c.freshName(TermName("implicits"))
-      def implicitImports(tpe: Type, expr: Tree): List[Tree] = {
-        val dtpe = tpe.dealias
-        if (dtpe =:= typeOf[Unit]) Nil
-        else if (definitions.TupleClass.seq.contains(dtpe.typeSymbol))
-          dtpe.typeArgs.zipWithIndex.flatMap {
-            case (ctpe, idx) => implicitImports(ctpe, q"$expr.${TermName(s"_${idx + 1}")}")
-          }
-        else List(q"import $expr._")
-      }
+    val implicitsName = c.freshName(TermName("implicits"))
+    def implicitImports(tpe: Type, expr: Tree): List[Tree] = {
+      val dtpe = tpe.dealias
+      if (dtpe =:= typeOf[Unit]) Nil
+      else if (definitions.TupleClass.seq.contains(dtpe.typeSymbol))
+        dtpe.typeArgs.zipWithIndex.flatMap {
+          case (ctpe, idx) => implicitImports(ctpe, q"$expr.${TermName(s"_${idx + 1}")}")
+        }
+      else List(q"import $expr._")
+    }
 
-      q"""
+    q"""
         new $resultTpe {
           def apply($implicitsName: $implicitsTpe, $CompanionParamName: Any): $instancesTpe = {
             ..${implicitImports(implicitsTpe, Ident(implicitsName))}
@@ -433,139 +433,139 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
           }
         }
        """
-    }
-
-    //If full implementation doesn't typecheck, find the first problematic typeclass and limit
-    //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
-    val fullImpl = impl(None)
-    debug(show(fullImpl))
-    val result = c.typecheck(fullImpl, silent = true) match {
-      case EmptyTree =>
-        instancesMethods.iterator.map(m => impl(Some(m)))
-          .find(t => c.typecheck(t, silent = true) == EmptyTree)
-          .getOrElse(fullImpl)
-      case t => t
-    }
-
-    enclosingConstructorCompanion match {
-      case NoSymbol => result
-      case companionSym =>
-        // Replace references to companion object being constructed with casted reference to
-        // `companion` parameter. All this horrible wiring is to workaround stupid overzealous Scala validation of
-        // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
-        // We're going to replace some parts of already typechecked tree. This means we must insert already
-        // typechecked replacements.
-
-        val replacementDecl = result.find {
-          case ValDef(mods, CompanionParamName, _, EmptyTree) => mods.hasFlag(Flag.PARAM)
-          case _ => false
-        }
-        val replacementSym = replacementDecl.fold(NoSymbol)(_.symbol)
-
-        // must construct tree which is already fully typechecked
-        def replacementTree(orig: Tree): Tree = {
-          val replacementIdent = internal.setType(
-            internal.setSymbol(Ident(CompanionParamName), replacementSym),
-            internal.singleType(NoPrefix, replacementSym)
-          )
-          val asInstanceOfMethod = definitions.AnyTpe.member(TermName("asInstanceOf"))
-          val asInstanceOfSelect = internal.setType(
-            internal.setSymbol(Select(replacementIdent, asInstanceOfMethod), asInstanceOfMethod),
-            asInstanceOfMethod.info
-          )
-          val typeAppliedCast = internal.setType(
-            internal.setSymbol(TypeApply(asInstanceOfSelect, List(TypeTree(orig.tpe))), asInstanceOfMethod),
-            orig.tpe
-          )
-          typeAppliedCast
-        }
-
-        object replacer extends Transformer {
-          override def transform(tree: Tree): Tree = tree match {
-            case This(_) if tree.symbol == companionSym.asModule.moduleClass => replacementTree(tree)
-            case _ if tree.symbol == companionSym => replacementTree(tree)
-            case _ => super.transform(tree)
-          }
-        }
-
-        replacer.transform(result)
-    }
   }
 
-  def posPoint: Tree =
-    q"${c.enclosingPosition.point}"
-
-  def applyUnapplyOrFail(tpe: Type): ApplyUnapply =
-    applyUnapplyFor(tpe).getOrElse(abort(
-      s"$tpe is not a case class or case-class like type: no matching apply/unapply pair found"))
-
-  def applyBody(rawValuesName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
-    val args = au.params.zipWithIndex.map { case (param, idx) =>
-      val res = q"$rawValuesName($idx).asInstanceOf[${actualParamType(param.typeSignature)}]"
-      if (isRepeated(param)) q"$res: _*" else res
-    }
-    au.mkApply(args)
+  //If full implementation doesn't typecheck, find the first problematic typeclass and limit
+  //compilation errors to that one in order to not overwhelm the user but rather report errors gradually
+  val fullImpl = impl(None)
+  debug(show(fullImpl))
+  val result = c.typecheck(fullImpl, silent = true) match {
+    case EmptyTree =>
+      instancesMethods.iterator.map(m => impl(Some(m)))
+        .find(t => c.typecheck(t, silent = true) == EmptyTree)
+        .getOrElse(fullImpl)
+    case t => t
   }
 
-  def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
-    if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map(param => q"$valueName.$param")})"
-    else {
-      val companion = typedCompanionOf(tpe).getOrElse(EmptyTree)
-      val unapplyRes = q"$companion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
-      au.params match {
-        case Nil => q"$ScalaPkg.Seq.empty[$ScalaPkg.Any]"
-        case List(_) => q"$ScalaPkg.Seq($unapplyRes.get)"
-        case _ =>
-          val resName = c.freshName(TermName("res"))
-          val elems = au.params.indices.map(i => q"$resName.${TermName(s"_${i + 1}")}")
-          q"""
+  enclosingConstructorCompanion match {
+    case NoSymbol => result
+    case companionSym =>
+      // Replace references to companion object being constructed with casted reference to
+      // `companion` parameter. All this horrible wiring is to workaround stupid overzealous Scala validation of
+      // self-reference being passed to super constructor parameter (https://github.com/scala/bug/issues/7666)
+      // We're going to replace some parts of already typechecked tree. This means we must insert already
+      // typechecked replacements.
+
+      val replacementDecl = result.find {
+        case ValDef(mods, CompanionParamName, _, EmptyTree) => mods.hasFlag(Flag.PARAM)
+        case _ => false
+      }
+      val replacementSym = replacementDecl.fold(NoSymbol)(_.symbol)
+
+      // must construct tree which is already fully typechecked
+      def replacementTree(orig: Tree): Tree = {
+        val replacementIdent = internal.setType(
+          internal.setSymbol(Ident(CompanionParamName), replacementSym),
+          internal.singleType(NoPrefix, replacementSym)
+        )
+        val asInstanceOfMethod = definitions.AnyTpe.member(TermName("asInstanceOf"))
+        val asInstanceOfSelect = internal.setType(
+          internal.setSymbol(Select(replacementIdent, asInstanceOfMethod), asInstanceOfMethod),
+          asInstanceOfMethod.info
+        )
+        val typeAppliedCast = internal.setType(
+          internal.setSymbol(TypeApply(asInstanceOfSelect, List(TypeTree(orig.tpe))), asInstanceOfMethod),
+          orig.tpe
+        )
+        typeAppliedCast
+      }
+
+      object replacer extends Transformer {
+        override def transform(tree: Tree): Tree = tree match {
+          case This(_) if tree.symbol == companionSym.asModule.moduleClass => replacementTree(tree)
+          case _ if tree.symbol == companionSym => replacementTree(tree)
+          case _ => super.transform(tree)
+        }
+      }
+
+      replacer.transform(result)
+  }
+}
+
+def posPoint: Tree =
+  q"${c.enclosingPosition.point}"
+
+def applyUnapplyOrFail(tpe: Type): ApplyUnapply =
+  applyUnapplyFor(tpe).getOrElse(abort(
+    s"$tpe is not a case class or case-class like type: no matching apply/unapply pair found"))
+
+def applyBody(rawValuesName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
+  val args = au.params.zipWithIndex.map { case (param, idx) =>
+    val res = q"$rawValuesName($idx).asInstanceOf[${actualParamType(param.typeSignature)}]"
+    if (isRepeated(param)) q"$res: _*" else res
+  }
+  au.mkApply(args)
+}
+
+def unapplyBody(valueName: TermName, tpe: Type, au: ApplyUnapply): Tree = {
+  if (au.standardCaseClass) q"$ScalaPkg.Array(..${au.params.map(param => q"$valueName.$param")})"
+  else {
+    val companion = typedCompanionOf(tpe).getOrElse(EmptyTree)
+    val unapplyRes = q"$companion.${au.unapply}[..${tpe.typeArgs}]($valueName)"
+    au.params match {
+      case Nil => q"$ScalaPkg.Seq.empty[$ScalaPkg.Any]"
+      case List(_) => q"$ScalaPkg.Seq($unapplyRes.get)"
+      case _ =>
+        val resName = c.freshName(TermName("res"))
+        val elems = au.params.indices.map(i => q"$resName.${TermName(s"_${i + 1}")}")
+        q"""
              val $resName = $unapplyRes.get
              $CollectionPkg.immutable.ArraySeq.unsafeWrapArray($ArrayObj[$ScalaPkg.Any](..$elems))
            """
-      }
     }
   }
+}
 
-  def applier[T: WeakTypeTag]: Tree = instrument {
-    val tpe = weakTypeOf[T].dealias
-    val rawValuesName = c.freshName(TermName("rawValues"))
-    q"""
+def applier[T: WeakTypeTag]: Tree = instrument {
+  val tpe = weakTypeOf[T].dealias
+  val rawValuesName = c.freshName(TermName("rawValues"))
+  q"""
       new $MiscPkg.Applier[$tpe] {
         def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
           ${applyBody(rawValuesName, tpe, applyUnapplyOrFail(tpe))}
       }
     """
-  }
+}
 
-  def unapplier[T: WeakTypeTag]: Tree = instrument {
-    val tpe = weakTypeOf[T].dealias
-    val valueName = c.freshName(TermName("value"))
-    val au = applyUnapplyOrFail(tpe)
-    if (au.standardCaseClass && tpe <:< ProductTpe)
-      q"new $MiscPkg.ProductUnapplier[$tpe]"
-    else
-      q"""
+def unapplier[T: WeakTypeTag]: Tree = instrument {
+  val tpe = weakTypeOf[T].dealias
+  val valueName = c.freshName(TermName("value"))
+  val au = applyUnapplyOrFail(tpe)
+  if (au.standardCaseClass && tpe <:< ProductTpe)
+    q"new $MiscPkg.ProductUnapplier[$tpe]"
+  else
+    q"""
         new $MiscPkg.Unapplier[$tpe] {
           def unapply($valueName: $tpe): $ScalaPkg.Seq[$ScalaPkg.Any] =
             ${unapplyBody(valueName, tpe, au)}
         }
       """
-  }
+}
 
-  def applierUnapplier[T: WeakTypeTag]: Tree = instrument {
-    val tpe = weakTypeOf[T].dealias
-    val rawValuesName = c.freshName(TermName("rawValues"))
-    val valueName = c.freshName(TermName("value"))
-    val au = applyUnapplyOrFail(tpe)
-    if (au.standardCaseClass && tpe <:< ProductTpe)
-      q"""
+def applierUnapplier[T: WeakTypeTag]: Tree = instrument {
+  val tpe = weakTypeOf[T].dealias
+  val rawValuesName = c.freshName(TermName("rawValues"))
+  val valueName = c.freshName(TermName("value"))
+  val au = applyUnapplyOrFail(tpe)
+  if (au.standardCaseClass && tpe <:< ProductTpe)
+    q"""
         new $MiscPkg.ProductApplierUnapplier[$tpe] {
           def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
             ${applyBody(rawValuesName, tpe, au)}
         }
        """
-    else
-      q"""
+  else
+    q"""
         new $MiscPkg.ApplierUnapplier[$tpe] {
           def apply($rawValuesName: $ScalaPkg.Seq[$ScalaPkg.Any]): $tpe =
             ${applyBody(rawValuesName, tpe, au)}
@@ -573,125 +573,125 @@ final class MiscMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) 
             ${unapplyBody(valueName, tpe, au)}
         }
       """
-  }
+}
 
-  def assertLocal(sym: Symbol): Symbol = {
-    if (sym.pos.source != c.enclosingPosition.source) {
-      abort(s"Macro inspection of $sym can only be done in the same source file where it is defined")
-    }
-    sym
+def assertLocal(sym: Symbol): Symbol = {
+  if (sym.pos.source != c.enclosingPosition.source) {
+    abort(s"Macro inspection of $sym can only be done in the same source file where it is defined")
   }
+  sym
+}
 
-  def safeAnnotTree(annot: Annot): Tree = {
-    if (containsInaccessibleThises(annot.tree)) {
-      abortAt(s"Reified annotation ${annot.tree} contains inaccessible this-references", annot.tree.pos)
-    }
-    c.untypecheck(annot.tree)
+def safeAnnotTree(annot: Annot): Tree = {
+  if (containsInaccessibleThises(annot.tree)) {
+    abortAt(s"Reified annotation ${annot.tree} contains inaccessible this-references", annot.tree.pos)
   }
+  c.untypecheck(annot.tree)
+}
 
-  def classSymbol(sym: Symbol): ClassSymbol = {
-    if (sym.isClass) sym.asClass
-    else abort(s"$sym is not a class")
-  }
+def classSymbol(sym: Symbol): ClassSymbol = {
+  if (sym.isClass) sym.asClass
+  else abort(s"$sym is not a class")
+}
 
-  def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val tpe = weakTypeOf[T]
-    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
-    val annot = findAnnotation(sym, atpe)
-      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
-    q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
-  }
+def annotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val tpe = weakTypeOf[T]
+  val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+  val annot = findAnnotation(sym, atpe)
+    .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
+  q"$MiscPkg.AnnotationOf(${safeAnnotTree(annot)})"
+}
 
-  def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val tpe = weakTypeOf[T]
-    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
-    val annotTree = findAnnotation(sym, atpe)
-      .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
-    q"$MiscPkg.OptAnnotationOf($annotTree)"
-  }
+def optAnnotationOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val tpe = weakTypeOf[T]
+  val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+  val annotTree = findAnnotation(sym, atpe)
+    .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
+  q"$MiscPkg.OptAnnotationOf($annotTree)"
+}
 
-  def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val tpe = weakTypeOf[T]
-    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
-    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
-    q"$MiscPkg.AnnotationsOf($ListObj(..$annots))"
-  }
+def annotationsOf[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val tpe = weakTypeOf[T]
+  val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+  val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
+  q"$MiscPkg.AnnotationsOf($ListObj(..$annots))"
+}
 
-  def hasAnnotation[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val tpe = weakTypeOf[T]
-    val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
-    if (findAnnotation(sym, atpe).nonEmpty)
-      q"$MiscPkg.HasAnnotation.create[$atpe, $tpe]"
-    else
-      abort(s"No annotation of type $atpe found on $sym")
-  }
+def hasAnnotation[A: WeakTypeTag, T: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val tpe = weakTypeOf[T]
+  val sym = assertLocal(classSymbol(tpe.dealias.typeSymbol))
+  if (findAnnotation(sym, atpe).nonEmpty)
+    q"$MiscPkg.HasAnnotation.create[$atpe, $tpe]"
+  else
+    abort(s"No annotation of type $atpe found on $sym")
+}
 
-  def classBeingConstructed: Symbol = {
-    val ownerConstr = c.internal.enclosingOwner
-    if (!ownerConstr.isConstructor) {
-      abort(s"${c.macroApplication.symbol} can only be used as super constructor argument")
-    }
-    classSymbol(ownerConstr.owner)
+def classBeingConstructed: Symbol = {
+  val ownerConstr = c.internal.enclosingOwner
+  if (!ownerConstr.isConstructor) {
+    abort(s"${c.macroApplication.symbol} can only be used as super constructor argument")
   }
+  classSymbol(ownerConstr.owner)
+}
 
-  def selfAnnotation[A: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val sym = classBeingConstructed
-    val annot = findAnnotation(sym, atpe)
-      .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
-    q"$MiscPkg.SelfAnnotation(${safeAnnotTree(annot)})"
-  }
+def selfAnnotation[A: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val sym = classBeingConstructed
+  val annot = findAnnotation(sym, atpe)
+    .getOrElse(abort(s"No annotation of type $atpe found on $sym"))
+  q"$MiscPkg.SelfAnnotation(${safeAnnotTree(annot)})"
+}
 
-  def selfOptAnnotation[A: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val sym = classBeingConstructed
-    val annotTree = findAnnotation(sym, atpe)
-      .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
-    q"$MiscPkg.SelfOptAnnotation($annotTree)"
-  }
+def selfOptAnnotation[A: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val sym = classBeingConstructed
+  val annotTree = findAnnotation(sym, atpe)
+    .fold[Tree](q"$CommonsPkg.Opt.Empty")(a => q"$CommonsPkg.Opt(${safeAnnotTree(a)})")
+  q"$MiscPkg.SelfOptAnnotation($annotTree)"
+}
 
-  def selfAnnotations[A: WeakTypeTag]: Tree = instrument {
-    val atpe = weakTypeOf[A]
-    val sym = classBeingConstructed
-    val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
-    q"$MiscPkg.SelfAnnotations($ListObj(..$annots))"
-  }
+def selfAnnotations[A: WeakTypeTag]: Tree = instrument {
+  val atpe = weakTypeOf[A]
+  val sym = classBeingConstructed
+  val annots = allAnnotations(sym, atpe).map(safeAnnotTree)
+  q"$MiscPkg.SelfAnnotations($ListObj(..$annots))"
+}
 
-  def selfInstance[C: WeakTypeTag]: Tree = instrument {
-    val TypeRef(pre, constrSym, _) = weakTypeOf[C].typeConstructor
-    val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
-    q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
-  }
+def selfInstance[C: WeakTypeTag]: Tree = instrument {
+  val TypeRef(pre, constrSym, _) = weakTypeOf[C].typeConstructor: @unchecked
+  val instance = internal.typeRef(pre, constrSym, List(classBeingConstructed.asType.toType))
+  q"$MiscPkg.SelfInstance($ImplicitsObj.infer[$instance])"
+}
 
-  def aggregatedAnnots: Tree = {
-    val aggregatedMethod = c.internal.enclosingOwner
-    if (!aggregatedMethod.overrides.contains(AggregatedMethodSym)) {
-      abort("reifyAggregated macro must only be used to implement AnnotationAggregate.aggregated method")
-    }
-    if (aggregatedMethod.asMethod.isGetter || !aggregatedMethod.isFinal) {
-      abort("AnnotationAggregate.aggregated method implemented with reifyAggregated macro must be a final def")
-    }
-    val annotTrees = rawAnnotations(aggregatedMethod)
-      .filter(_.tree.tpe <:< StaticAnnotationTpe).map(a => c.untypecheck(a.tree))
-    if (annotTrees.isEmpty) {
-      warning("no aggregated annotations found on enclosing method")
-    }
-    q"$ListObj(..$annotTrees)"
+def aggregatedAnnots: Tree = {
+  val aggregatedMethod = c.internal.enclosingOwner
+  if (!aggregatedMethod.overrides.contains(AggregatedMethodSym)) {
+    abort("reifyAggregated macro must only be used to implement AnnotationAggregate.aggregated method")
   }
+  if (aggregatedMethod.asMethod.isGetter || !aggregatedMethod.isFinal) {
+    abort("AnnotationAggregate.aggregated method implemented with reifyAggregated macro must be a final def")
+  }
+  val annotTrees = rawAnnotations(aggregatedMethod)
+    .filter(_.tree.tpe <:< StaticAnnotationTpe).map(a => c.untypecheck(a.tree))
+  if (annotTrees.isEmpty) {
+    warning("no aggregated annotations found on enclosing method")
+  }
+  q"$ListObj(..$annotTrees)"
+}
 
-  def simpleClassName[T: WeakTypeTag]: Tree = instrument {
-    val sym = classSymbol(weakTypeOf[T].dealias.typeSymbol)
-    q"$MiscPkg.SimpleClassName(${sym.name.decodedName.toString})"
-  }
+def simpleClassName[T: WeakTypeTag]: Tree = instrument {
+  val sym = classSymbol(weakTypeOf[T].dealias.typeSymbol)
+  q"$MiscPkg.SimpleClassName(${sym.name.decodedName.toString})"
+}
 }
 
 final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   lazy val WhenAbsentAT: Type = staticType(tq"$CommonsPkg.serialization.whenAbsent[_]")
 
@@ -736,7 +736,7 @@ final class WhiteMiscMacros(ctx: whitebox.Context) extends AbstractMacroCommons(
         echo(msg)
       }
 
-    val StringLiteral(tprefStr) = tpref
+    val StringLiteral(tprefStr) = tpref: @unchecked
     val quantified = new ListBuffer[Symbol]
 
     print(show(value.tpe))

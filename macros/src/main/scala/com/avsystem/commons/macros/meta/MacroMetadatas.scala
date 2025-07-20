@@ -7,7 +7,7 @@ import scala.annotation.{StaticAnnotation, tailrec}
 
 private[commons] trait MacroMetadatas extends MacroSymbols {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final def ParamPositionObj: Tree = q"$MetaPackage.ParamPosition"
   final def MethodPositionObj: Tree = q"$MetaPackage.MethodPosition"

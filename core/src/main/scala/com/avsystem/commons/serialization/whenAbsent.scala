@@ -38,5 +38,5 @@ object whenAbsent {
     * This is useful when you want the default value to be collectible by macros (e.g. `OpenApiMetadata` for REST).
     * which is possible only with default value in annotation.
     */
-  def value[T]: T = macro macros.misc.WhiteMiscMacros.whenAbsentValue
+  def value[T]: T = ??? // macro macros.misc.WhiteMiscMacros.whenAbsentValue
 }

@@ -29,13 +29,13 @@ object TypeString {
   def apply[T](implicit ts: TypeString[T]): TypeString[T] = ts
   def of[T: TypeString]: String = TypeString[T].value
 
-  implicit def materialize[T]: TypeString[T] = macro macros.misc.MiscMacros.typeString[T]
+  implicit def materialize[T]: TypeString[T] = ??? // macro macros.misc.MiscMacros.typeString[T]
 
-  implicit val keyCodec: GenKeyCodec[TypeString[_]] =
-    GenKeyCodec.create[TypeString[_]](new TypeString(_), _.value)
+  implicit val keyCodec: GenKeyCodec[TypeString[?]] =
+    GenKeyCodec.create[TypeString[?]](new TypeString(_), _.value)
 
-  implicit val codec: GenCodec[TypeString[_]] =
-    GenCodec.nonNullSimple[TypeString[_]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
+  implicit val codec: GenCodec[TypeString[?]] =
+    GenCodec.nonNullSimple[TypeString[?]](i => new TypeString(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 
 /**
@@ -81,12 +81,12 @@ object JavaClassName extends JavaClassNameLowPrio {
     new JavaClassName("[" + elementName)
   }
 
-  implicit val keyCodec: GenKeyCodec[JavaClassName[_]] =
-    GenKeyCodec.create[JavaClassName[_]](new JavaClassName(_), _.value)
+  implicit val keyCodec: GenKeyCodec[JavaClassName[?]] =
+    GenKeyCodec.create[JavaClassName[?]](new JavaClassName(_), _.value)
 
-  implicit val codec: GenCodec[JavaClassName[_]] =
-    GenCodec.nonNullSimple[JavaClassName[_]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
+  implicit val codec: GenCodec[JavaClassName[?]] =
+    GenCodec.nonNullSimple[JavaClassName[?]](i => new JavaClassName(i.readString()), (o, ts) => o.writeString(ts.value))
 }
 trait JavaClassNameLowPrio { this: JavaClassName.type =>
-  implicit def materialize[T]: JavaClassName[T] = macro macros.misc.MiscMacros.javaClassName[T]
+  implicit def materialize[T]: JavaClassName[T] = ??? // macro macros.misc.MiscMacros.javaClassName[T]
 }

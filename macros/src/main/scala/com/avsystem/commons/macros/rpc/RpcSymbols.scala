@@ -8,7 +8,7 @@ import scala.collection.mutable
 
 private[commons] trait RpcSymbols extends MacroSymbols { this: RpcMacroCommons =>
 
-  import c.universe._
+  import c.universe.{_, given}
 
   case class MatchedMethod(
     real: RealMethod,

@@ -11,7 +11,7 @@ import scala.reflect.macros.blackbox
   */
 final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   def RpcPackage: Tree = q"$CommonsPkg.rpc"
   lazy val RPCFrameworkType: Type = staticType(tq"$RpcPackage.RPCFramework")
@@ -56,7 +56,7 @@ final class RPCFrameworkMacros(ctx: blackbox.Context) extends AbstractMacroCommo
     * for ScalaJS DCE to do its job properly.
     */
   def typeClassFromFullInfo: Tree = {
-    val TypeRef(frameworkTpe, _, List(rpcTpe)) = c.prefix.actualType.baseType(RPCCompanionSym)
+    val TypeRef(frameworkTpe, _, List(rpcTpe)) = c.prefix.actualType.baseType(RPCCompanionSym): @unchecked
     q"(${c.prefix}.fullRpcInfo: $frameworkTpe#FullRPCInfo[$rpcTpe]).${c.macroApplication.symbol.name.toTermName}"
   }
 }

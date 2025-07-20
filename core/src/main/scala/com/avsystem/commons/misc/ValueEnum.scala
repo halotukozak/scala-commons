@@ -88,10 +88,10 @@ sealed trait EnumCtx extends Any {
 trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { companion =>
   type Value = T
 
-  private[this] val registryBuilder = IIndexedSeq.newBuilder[T]
-  private[this] var currentOrdinal: Int = 0
-  private[this] var finished: Boolean = false
-  private[this] var awaitingRegister: Boolean = false
+  private val registryBuilder = IIndexedSeq.newBuilder[T]
+  private var currentOrdinal: Int = 0
+  private var finished: Boolean = false
+  private var awaitingRegister: Boolean = false
 
   /**
     * Holds an indexed sequence of all enum values, ordered by their ordinal
@@ -114,7 +114,7 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     }
     awaitingRegister = true
 
-    private[this] var registered = false
+    private var registered = false
 
     override def register(value: ValueEnum): Unit = companion.synchronized {
       if (finished)
@@ -130,11 +130,11 @@ trait ValueEnumCompanion[T <: ValueEnum] extends NamedEnumCompanion[T] { compani
     }
   }
 
-  protected[this] final class ValName(val valName: String)
+  protected final class ValName(val valName: String)
 
-  protected[this] implicit def valName: ValName = macro macros.misc.MiscMacros.enumValName
+  protected implicit def valName: ValName = ??? // macro macros.misc.MiscMacros.enumValName
 
-  protected[this] implicit def enumCtx(implicit valName: ValName): EnumCtx =
+  protected implicit def enumCtx(implicit valName: ValName): EnumCtx =
     new Ctx(valName.valName, currentOrdinal)
 }
 

@@ -41,7 +41,7 @@ trait RPCFramework {
     * to invocations of actual methods on `rpcImpl`. Method arguments and results are serialized and deserialized
     * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
-  def materializeAsRaw[T]: AsRawRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
+  def materializeAsRaw[T]: AsRawRPC[T] = ??? // macro macros.rpc.RPCFrameworkMacros.asRawImpl[T]
 
   type AsRealRPC[RealRPC] = AsReal[RawRPC, RealRPC]
   object AsRealRPC {
@@ -53,18 +53,18 @@ trait RPCFramework {
     * by forwarding them to `rawRpc`. Method arguments and results are serialized and deserialized
     * from/to [[RawValue]] using [[Reader]] and [[Writer]] typeclasses.
     */
-  def materializeAsReal[T]: AsRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
+  def materializeAsReal[T]: AsRealRPC[T] = ??? // macro macros.rpc.RPCFrameworkMacros.asRealImpl[T]
 
   type AsRawRealRPC[RealRPC] = AsRawReal[RawRPC, RealRPC]
   object AsRawRealRPC {
     @inline def apply[RealRPC](implicit AsRawRealRPC: AsRawRealRPC[RealRPC]): AsRawRealRPC[RealRPC] = AsRawRealRPC
   }
 
-  def materializeAsRawReal[T]: AsRawRealRPC[T] = macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]
+  def materializeAsRawReal[T]: AsRawRealRPC[T] = ??? // macro macros.rpc.RPCFrameworkMacros.AsRawRealImpl[T]
 
   trait Signature {
     @reifyName def name: String
-    @multi @rpcParamMetadata def paramMetadata: List[ParamMetadata[_]]
+    @multi @rpcParamMetadata def paramMetadata: List[ParamMetadata[?]]
     @reifyAnnot
     @multi def annotations: List[MetadataAnnotation]
   }
@@ -75,7 +75,7 @@ trait RPCFramework {
     @infer typeMetadata: ParamTypeMetadata[T]
   ) extends TypedMetadata[T]
 
-  def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.metadataImpl[RealRPC]
+  def materializeMetadata[RealRPC]: RPCMetadata[RealRPC] = ??? // macro macros.rpc.RPCFrameworkMacros.metadataImpl[RealRPC]
 
   /**
     * Base trait for traits or classes "implementing" [[FullRPCInfo]] in various RPC frameworks.
@@ -102,7 +102,7 @@ trait RPCFramework {
     */
   type FullRPCInfo[RealRPC] <: BaseFullRPCInfo[RealRPC]
 
-  implicit def materializeFullInfo[T]: FullRPCInfo[T] = macro macros.rpc.RPCFrameworkMacros.fullInfoImpl[T]
+  implicit def materializeFullInfo[T]: FullRPCInfo[T] = ??? // macro macros.rpc.RPCFrameworkMacros.fullInfoImpl[T]
 
   /**
     * Convenience abstract class for companion objects of RPC interfaces. Makes sure all three RPC type classes
@@ -131,8 +131,9 @@ trait RPCFramework {
     // We can, but this prevents ScalaJS optimizer's DCE from distinguishing between `FullRPCInfo` traits/classes
     // of different RPC frameworks. This is important in cross-compiled code where any of these three typeclasses
     // may be completely unused on the JS side and we want to make sure that DCE gets rid of them.
-    implicit def asRealRPC: AsRealRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def asRawRPC: AsRawRPC[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def metadata: RPCMetadata[RealRPC] = macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def asRealRPC: AsRealRPC[RealRPC] = ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def asRawRPC: AsRawRPC[RealRPC] = ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def metadata: RPCMetadata[RealRPC]
+    ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
   }
 }

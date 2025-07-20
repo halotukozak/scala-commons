@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 class SamMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   def validateSam[T: WeakTypeTag, F: WeakTypeTag]: Tree = {
     validateSam(weakTypeOf[T], weakTypeOf[F])

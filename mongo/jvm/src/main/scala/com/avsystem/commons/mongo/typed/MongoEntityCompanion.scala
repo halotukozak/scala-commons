@@ -13,8 +13,8 @@ trait MongoAdtInstances[T] {
   def format: MongoAdtFormat[T]
 }
 
-trait MongoEntityInstances[E <: BaseMongoEntity] extends MongoAdtInstances[E] {
-  def meta: MongoEntityMeta[E]
+trait MongoEntityInstances[IDType, E <: BaseMongoEntity.Aux[IDType]] extends MongoAdtInstances[E] {
+  def meta: MongoEntityMeta[IDType, E]
 }
 
 /**
@@ -47,14 +47,14 @@ abstract class AbstractMongoDataCompanion[Implicits, E](implicits: Implicits)(
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
 }
 
-abstract class AbstractMongoEntityCompanion[Implicits, E <: BaseMongoEntity](implicits: Implicits)(
-  implicit instances: MacroInstances[Implicits, MongoEntityInstances[E]]
+abstract class AbstractMongoEntityCompanion[Implicits, IDType, E <: BaseMongoEntity.Aux[IDType]](implicits: Implicits)(
+  implicit instances: MacroInstances[Implicits, MongoEntityInstances[IDType, E]]
 ) extends BaseMongoCompanion[E] {
   implicit val codec: GenObjectCodec[E] = instances(implicits, this).codec
   implicit val format: MongoAdtFormat[E] = instances(implicits, this).format
-  implicit val meta: MongoEntityMeta[E] = instances(implicits, this).meta
+  implicit val meta: MongoEntityMeta[IDType, E] = instances(implicits, this).meta
 
-  type ID = E#IDType
+  type ID = IDType
 
   final val IdRef: Ref[ID] = meta.idRef
 }
@@ -76,6 +76,6 @@ abstract class MongoDataCompanion[E](
   * Entities may be case classes or sealed hierarchies with `@flatten` annotation.
   * They must extend [[MongoEntity]].
   */
-abstract class MongoEntityCompanion[E <: BaseMongoEntity](
-  implicit instances: MacroInstances[BsonGenCodecs.type, MongoEntityInstances[E]]
-) extends AbstractMongoEntityCompanion[BsonGenCodecs.type, E](BsonGenCodecs)
+abstract class MongoEntityCompanion[IDType, E <: BaseMongoEntity.Aux[IDType]](
+  implicit instances: MacroInstances[BsonGenCodecs.type, MongoEntityInstances[IDType, E]]
+) extends AbstractMongoEntityCompanion[BsonGenCodecs.type, IDType, E](BsonGenCodecs)

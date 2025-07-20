@@ -37,8 +37,10 @@ abstract class HasCborCodecWithDeps[D, T](implicit
   * the CBOR field key used for discriminator field. Note: this annotation automatically applies [[flatten]] annotation
   * on the sealed trait/class.
   */
-class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] = infer.value) extends AnnotationAggregate {
-  val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(codec)
+class cborDiscriminator[T](discriminatorFieldKey: T,
+  //  @infer codec: GenCodec[T] = infer.value,
+) extends AnnotationAggregate {
+  val rawKey: RawCbor = CborOutput.writeRawCbor(discriminatorFieldKey)(using ???)
 
   @flatten
   final def aggregated: List[StaticAnnotation] = reifyAggregated
@@ -65,8 +67,10 @@ class cborDiscriminator[T](discriminatorFieldKey: T, @infer codec: GenCodec[T] =
   *   object Base extends HasCborCodec[Base]
   * }}}
   */
-class cborKey[T](key: T, @infer codec: GenCodec[T] = infer.value) extends StaticAnnotation {
-  val rawKey: RawCbor = CborOutput.writeRawCbor(key)(codec)
+class cborKey[T](key: T,
+  //  @infer codec: GenCodec[T] = infer.value,
+) extends StaticAnnotation {
+  val rawKey: RawCbor = CborOutput.writeRawCbor(key)(using ???)
 }
 
 sealed trait CborAdtMetadata[T] extends TypedMetadata[T] {
@@ -78,7 +82,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   final class CborKeyInfo[T](
     @reifyName val sourceName: String,
     @optional @reifyAnnot val nameAnnot: Opt[name],
-    @optional @reifyAnnot val cborKey: Opt[cborKey[_]]
+    @optional @reifyAnnot val cborKey: Opt[cborKey[?]]
   ) {
     val stringKey: String = nameAnnot.fold(sourceName)(_.name)
     val rawKey: RawCbor = cborKey.fold(CborOutput.writeRawCbor(stringKey))(_.rawKey)
@@ -87,15 +91,15 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   @positioned(positioned.here)
   final class Union[T](
     @reifyName val sourceName: String,
-    @optional @reifyAnnot val discriminator: Opt[cborDiscriminator[_]],
+    @optional @reifyAnnot val discriminator: Opt[cborDiscriminator[?]],
     @optional @reifyAnnot val flattenAnnot: Opt[flatten],
-    @multi @adtCaseMetadata val cases: List[Case[_]],
+    @multi @adtCaseMetadata val cases: List[Case[?]],
   ) extends CborAdtMetadata[T] { union =>
     private val caseNamesKeyCodec =
       new MappingCborKeyCodec(cases.map(_.keyInfo))
 
     private val discriminatorKeyCodec =
-      (discriminator zip flattenAnnot)
+      (discriminator `zip` flattenAnnot)
         .map({ case (disc, flatten) => new DiscriminatorCborKeyCodec(flatten.caseFieldName, disc.rawKey) })
 
     def adjustCodec(codec: GenObjectCodec[T]): GenObjectCodec[T] = codec match {
@@ -107,10 +111,10 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             nestedCodec.caseNames,
             nestedCodec.cases
           ) {
-            def caseDependencies: Array[GenCodec[_]] =
+            def caseDependencies: Array[GenCodec[?]] =
               (nestedCodec.caseDependencies.iterator zip union.cases.iterator)
                 .map {
-                  case (caseCodec: ApplyUnapplyCodec[Any@unchecked], theCase: CborAdtMetadata.Record[Any@unchecked]) =>
+                  case (caseCodec: ApplyUnapplyCodec[Any @unchecked], theCase: CborAdtMetadata.Record[Any @unchecked]) =>
                     theCase.adjustCodec(caseCodec)
                   case (codec, _) =>
                     codec
@@ -140,12 +144,12 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
             override protected def doReadCaseName(input: Input): String =
               input.readCustom(RawCbor).map(caseNamesKeyCodec.strKeys).getOrElse(super.doReadCaseName(input))
 
-            def oooDependencies: Array[GenCodec[_]] = flatCodec.oooDependencies
+            def oooDependencies: Array[GenCodec[?]] = flatCodec.oooDependencies
 
-            def caseDependencies: Array[GenCodec.OOOFieldsObjectCodec[_]] =
+            def caseDependencies: Array[GenCodec.OOOFieldsObjectCodec[?]] =
               (flatCodec.caseDependencies.iterator zip union.cases.iterator)
                 .map {
-                  case (caseCodec: ApplyUnapplyCodec[Any@unchecked], theCase: CborAdtMetadata.Record[Any@unchecked]) =>
+                  case (caseCodec: ApplyUnapplyCodec[Any @unchecked], theCase: CborAdtMetadata.Record[Any @unchecked]) =>
                     theCase.adjustFlatCaseCodec(caseCodec)
                   case (codec, _) =>
                     codec
@@ -180,7 +184,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
   @positioned(positioned.here)
   final class Record[T](
     @composite val keyInfo: CborKeyInfo[T],
-    @multi @adtParamMetadata val fields: List[Field[_]]
+    @multi @adtParamMetadata val fields: List[Field[?]]
   ) extends Case[T] {
     private val keyCodec = new MappingCborKeyCodec(fields.map(_.keyInfo))
 
@@ -222,7 +226,7 @@ object CborAdtMetadata extends AdtMetadataCompanion[CborAdtMetadata] {
     def validate(): Unit = ()
   }
 
-  private class MappingCborKeyCodec(keyInfos: List[CborKeyInfo[_]]) extends CborKeyCodec {
+  private class MappingCborKeyCodec(keyInfos: List[CborKeyInfo[?]]) extends CborKeyCodec {
     val rawKeys: Map[String, RawCbor] =
       keyInfos.mkMap(_.stringKey, _.rawKey)
     val strKeys: Map[RawCbor, String] =

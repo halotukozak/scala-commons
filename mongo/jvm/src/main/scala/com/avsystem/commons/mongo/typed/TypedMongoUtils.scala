@@ -7,6 +7,7 @@ import monix.reactive.Observable
 import org.reactivestreams.Publisher
 
 trait TypedMongoUtils {
+
   import com.avsystem.commons.mongo.reactive.ReactiveMongoExtensions._
 
   protected final def empty(publisher: Publisher[Void]): Task[Unit] = publisher.completedL
@@ -22,5 +23,6 @@ trait TypedMongoUtils {
     * Reduces boilerplate associated with calling overloaded methods from Mongo ReactiveStreams driver that
     * may or may not take `ClientSession` as its first argument (non-nullable).
     */
-  protected def optionalizeFirstArg[T](expr: T): T = macro MiscMacros.optionalizeFirstArg
+  protected def optionalizeFirstArg[T](expr: T): T =
+  ??? // macro MiscMacros.optionalizeFirstArg
 }

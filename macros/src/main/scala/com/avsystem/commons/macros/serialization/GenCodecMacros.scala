@@ -8,7 +8,7 @@ import scala.reflect.macros.blackbox
 
 class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with TypeClassDerivation {
 
-  import c.universe._
+  import c.universe.{*, given}
 
   private def IgnoreTransientDefaultMarkerObj: Tree = q"$SerializationPkg.IgnoreTransientDefaultMarker"
 
@@ -410,7 +410,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
       if (symbols.exists(_.isClass)) "Subclasses"
       else "Parameters or members"
     symbols.groupBy(st => targetName(st)).map {
-      case (targetName, List(sym)) => (sym, targetName)
+      case (targetName, List(sym: Symbol)) => (sym, targetName)
       case (targetName, syms) =>
         abort(s"$paramsOrSubclasses ${syms.map(_.name).mkString(", ")} have the same @name: $targetName")
     }
@@ -614,7 +614,7 @@ class GenCodecMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) with 
     val deps = new mutable.ListBuffer[Tree]
 
     ttpe.members.iterator.foreach { getter =>
-      if(getter.isMethod && isJavaGetter(getter.asMethod)) {
+      if (getter.isMethod && isJavaGetter(getter.asMethod)) {
         val propType = getter.typeSignatureIn(ttpe).finalResultType
         val getterName = getter.name.decodedName.toString
         val setterName = getterName.replaceFirst("^(get|is)", "set")

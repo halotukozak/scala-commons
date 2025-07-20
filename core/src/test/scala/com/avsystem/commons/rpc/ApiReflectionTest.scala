@@ -9,7 +9,7 @@ class cool extends StaticAnnotation
 
 case class ApiInfo[T](
   @infer ts: TypeString[T],
-  @multi @mangleOverloads @rpcMethodMetadata methods: List[MethodInfo[_]]
+  @multi @mangleOverloads @rpcMethodMetadata methods: List[MethodInfo[?]]
 ) extends TypedMetadata[T] {
   def repr = s"${ts.value} {${methods.map(m => "\n  " + m.repr).mkString}\n}"
 }
@@ -22,12 +22,12 @@ case class MethodInfo[T](
   @isAnnotated[cool] cool: Boolean,
   @reifyParamListCount paramListCount: Int,
   @multi @rpcTypeParamMetadata typeParams: List[TypeParamInfo],
-  @multi @rpcParamMetadata params: List[ParamInfo[_]],
-  @forTypeParams @infer resultTs: List[TypeString[_]] => TypeString[T]
+  @multi @rpcParamMetadata params: List[ParamInfo[?]],
+  @forTypeParams @infer resultTs: List[TypeString[?]] => TypeString[T]
 ) extends TypedMetadata[T] {
 
-  val paramLists: List[List[ParamInfo[_]]] = {
-    def extract(listIdx: Int, params: List[ParamInfo[_]]): List[List[ParamInfo[_]]] =
+  val paramLists: List[List[ParamInfo[?]]] = {
+    def extract(listIdx: Int, params: List[ParamInfo[?]]): List[List[ParamInfo[?]]] =
       if (listIdx == paramListCount) Nil
       else params.span(_.pos.indexOfList == listIdx) match {
         case (nextList, rest) =>
@@ -48,14 +48,14 @@ case class MethodInfo[T](
 case class TypeParamInfo(
   @reifyName name: String
 ) {
-  def typeString: TypeString[_] = new TypeString(name)
+  def typeString: TypeString[?] = new TypeString(name)
 }
 
 case class ParamInfo[T](
   @reifyName name: String,
   @reifyPosition pos: ParamPosition,
   @reifyFlags flags: ParamFlags,
-  @forTypeParams @infer ts: List[TypeString[_]] => TypeString[T]
+  @forTypeParams @infer ts: List[TypeString[?]] => TypeString[T]
 ) extends TypedMetadata[T] {
   def repr(tparams: List[TypeParamInfo]): String = {
     val implicitMod = if (pos.indexInList == 0 && flags.isImplicit) "implicit " else ""

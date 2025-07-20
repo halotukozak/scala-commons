@@ -11,7 +11,7 @@ import scala.reflect.macros.blackbox
   */
 class LazyLoggingMacros(val c: blackbox.Context) extends MacroCommons {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   val DelegationCls = tq"$MiscPkg.Delegation"
 

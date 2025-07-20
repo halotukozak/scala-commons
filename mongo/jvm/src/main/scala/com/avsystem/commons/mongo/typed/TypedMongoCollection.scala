@@ -14,27 +14,27 @@ import org.bson.codecs.configuration.CodecRegistry
 import org.bson.{BsonDocument, BsonValue}
 import org.reactivestreams.Publisher
 
-class TypedMongoCollection[E <: BaseMongoEntity] private(
+class TypedMongoCollection[IDType, E <: BaseMongoEntity.Aux[IDType]] private(
   /** The native (Reactive Streams driver) collection */
   val nativeCollection: MongoCollection[E],
   docCollection: MongoCollection[BsonDocument],
   val clientSession: Opt[TypedClientSession],
 )(implicit
-  meta: MongoEntityMeta[E],
+  meta: MongoEntityMeta[IDType, E],
 ) extends DataTypeDsl[E] with TypedMongoUtils {
 
   def this(
     rawCollection: MongoCollection[_],
     clientSession: OptArg[TypedClientSession] = OptArg.Empty,
   )(implicit
-    meta: MongoEntityMeta[E],
+    meta: MongoEntityMeta[IDType, E],
   ) = this(
-    TypedMongoCollection.mkNativeCollection[E](rawCollection),
+    TypedMongoCollection.mkNativeCollection[IDType, E](rawCollection),
     rawCollection.withDocumentClass(classOf[BsonDocument]),
     clientSession.toOpt,
   )
 
-  type ID = E#IDType
+  type ID = IDType
 
   val format: MongoAdtFormat[E] = meta.format
 
@@ -43,7 +43,7 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
 
   private val sessionOrNull = clientSession.map(_.nativeSession).orNull
 
-  def withSession(session: TypedClientSession): TypedMongoCollection[E] =
+  def withSession(session: TypedClientSession): TypedMongoCollection[IDType, E] =
     new TypedMongoCollection(nativeCollection, docCollection, session.opt)
 
   def namespace: MongoNamespace = nativeCollection.getNamespace
@@ -51,21 +51,21 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
   def readConcern: ReadConcern = nativeCollection.getReadConcern
   def readPreference: ReadPreference = nativeCollection.getReadPreference
 
-  def withWriteConcern(writeConcern: WriteConcern): TypedMongoCollection[E] =
+  def withWriteConcern(writeConcern: WriteConcern): TypedMongoCollection[IDType, E] =
     new TypedMongoCollection(
       nativeCollection.withWriteConcern(writeConcern),
       docCollection.withWriteConcern(writeConcern),
       clientSession,
     )
 
-  def withReadConcern(readConcern: ReadConcern): TypedMongoCollection[E] =
+  def withReadConcern(readConcern: ReadConcern): TypedMongoCollection[IDType, E] =
     new TypedMongoCollection(
       nativeCollection.withReadConcern(readConcern),
       docCollection.withReadConcern(readConcern),
       clientSession,
     )
 
-  def withReadPreference(readPreference: ReadPreference): TypedMongoCollection[E] =
+  def withReadPreference(readPreference: ReadPreference): TypedMongoCollection[IDType, E] =
     new TypedMongoCollection(
       nativeCollection.withReadPreference(readPreference),
       docCollection.withReadPreference(readPreference),
@@ -356,17 +356,17 @@ class TypedMongoCollection[E <: BaseMongoEntity] private(
   }
 
   @bincompat private[typed] def this(rawCollection: MongoCollection[_], format: MongoAdtFormat[E]) =
-    this(rawCollection)(MongoEntityMeta.bincompatMeta(format))
+    this(rawCollection)(using MongoEntityMeta.bincompatMeta[IDType,E](format))
 
-  @bincompat private[typed] def this(rawCollection: MongoCollection[_], meta: MongoEntityMeta[E]) =
-    this(rawCollection)(meta)
+  @bincompat private[typed] def this(rawCollection: MongoCollection[_], meta: MongoEntityMeta[IDType, E]) =
+    this(rawCollection)(using meta)
 }
 
 object TypedMongoCollection {
-  private def mkNativeCollection[E <: BaseMongoEntity : MongoEntityMeta](
+  private def mkNativeCollection[IDType, E <: BaseMongoEntity.Aux[IDType]](
     rawCollection: MongoCollection[_],
   )(implicit
-    meta: MongoEntityMeta[E],
+    meta: MongoEntityMeta[IDType, E],
   ): MongoCollection[E] = {
     import meta.format._
     val codecRegistry: CodecRegistry = GenCodecRegistry.create[E](rawCollection.getCodecRegistry)

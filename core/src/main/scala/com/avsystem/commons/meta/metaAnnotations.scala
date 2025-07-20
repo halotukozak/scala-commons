@@ -211,7 +211,7 @@ object infer {
   /**
     * Can be used as default value of `@infer` annotation parameters.
     */
-  def value[T]: T = macro macros.misc.WhiteMiscMacros.inferValue
+  def value[T]: T = ??? // macro macros.misc.WhiteMiscMacros.inferValue
 }
 
 /**

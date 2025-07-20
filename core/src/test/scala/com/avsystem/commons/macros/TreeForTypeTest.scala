@@ -2,7 +2,8 @@ package com.avsystem.commons
 package macros
 
 object TreeForTypeTest {
-  def testTreeForType(tpeRepr: String): Nothing = macro com.avsystem.commons.macros.TestMacros.testTreeForType
+  def testTreeForType(tpeRepr: String): Nothing =
+    ??? // macro com.avsystem.commons.macros.TestMacros.testTreeForType
 
   val x = "x"
 

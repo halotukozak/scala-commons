@@ -29,8 +29,8 @@ class JsonStringInput(
   reader: JsonReader, options: JsonOptions = JsonOptions.Default, callback: AfterElement = AfterElementNothing
 ) extends InputAndSimpleInput with AfterElement {
 
-  private[this] val startIdx: Int = reader.parseValue()
-  private[this] var endIdx: Int = _
+  private val startIdx: Int = reader.parseValue()
+  private var endIdx: Int = scala.compiletime.uninitialized
 
   reader.jsonType match {
     case JsonType.list | JsonType.`object` =>
@@ -198,7 +198,7 @@ final class JsonStringFieldInput(
 final class JsonListInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
   extends ListInput with AfterElement {
 
-  private[this] var end = false
+  private var end = false
 
   prepareForNext(first = true)
 
@@ -221,12 +221,12 @@ final class JsonListInput(reader: JsonReader, options: JsonOptions, callback: Af
 final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: AfterElement)
   extends ObjectInput with AfterElement {
 
-  private[this] var end = false
+  private var end = false
 
   prepareForNext(first = true)
 
-  private[this] var peekIdx = if (end) -1 else reader.index
-  private[this] var peekedFields: CrossUtils.NativeDict[Int] = _
+  private var peekIdx = if (end) -1 else reader.index
+  private var peekedFields: CrossUtils.NativeDict[Int] = scala.compiletime.uninitialized
 
   private def prepareForNext(first: Boolean): Unit = {
     reader.skipWs()
@@ -305,9 +305,9 @@ final class JsonObjectInput(reader: JsonReader, options: JsonOptions, callback: 
 final class JsonReader(val json: String) {
   json.checkNotNull("null JSON string")
 
-  private[this] var i: Int = 0
-  private[this] var value: Any = _
-  private[this] var tpe: JsonType = _
+  private var i: Int = 0
+  private var value: Any = scala.compiletime.uninitialized
+  private var tpe: JsonType = scala.compiletime.uninitialized
 
   def index: Int = i
   def currentValue: Any = value

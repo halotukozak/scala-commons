@@ -12,7 +12,7 @@ import scala.util.matching.Regex
 
 abstract class AbstractMacroCommons(val c: blackbox.Context) extends MacroCommons
 
-trait MacroCommons extends CompatMacroCommons { bundle =>
+trait MacroCommons extends CompatMacroCommons with CompilationDummies { bundle =>
   val c: blackbox.Context
 
   import c.universe._
@@ -50,8 +50,8 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
   final def ImplicitsObj: Tree = q"$MiscPkg.Implicits"
   final def ImplicitNotFoundCls: Tree = tq"$MiscPkg.ImplicitNotFound"
   final def ConcurrentPkg: Tree = q"$ScalaPkg.concurrent"
-  final lazy val MapSym = typeOf[scala.collection.immutable.Map[_, _]].typeSymbol
-  final lazy val FutureSym = typeOf[scala.concurrent.Future[_]].typeSymbol
+  final lazy val MapSym = typeOf[scala.collection.immutable.Map[?, ?]].typeSymbol
+  final lazy val FutureSym = typeOf[scala.concurrent.Future[?]].typeSymbol
   final lazy val OptionClass = definitions.OptionClass
   final lazy val AnnotationAggregateType = staticType(tq"$CommonsPkg.annotation.AnnotationAggregate")
   final lazy val DefaultsToNameAT = staticType(tq"$CommonsPkg.annotation.defaultsToName")
@@ -120,7 +120,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
     result
   }
 
-  private[this] var measureStack = List.empty[String]
+  private var measureStack = List.empty[String]
 
   def measure[T](what: String)(expr: => T): T =
     if (!statsEnabled || measureStack.contains(what)) expr else {
@@ -263,7 +263,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
       tpe.typeSymbol.asClass
 
     lazy val argsByName: Map[Name, Tree] = {
-      val Apply(_, args) = tree
+      val Apply(_, args) = tree: @unchecked
       val paramNames = primaryConstructorOf(tpe).typeSignature.paramLists.head.map(_.name)
       (paramNames zip args).toMap
     }
@@ -961,7 +961,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
         case ts: TypeSymbol => typeSymbolToTypeDef(ts)
         case ms: MethodSymbol if ms.isGetter => getterSymbolToValDef(ms)
         case ms: MethodSymbol => methodSymbolToDefDef(ms)
-      }.toList
+      }.toList.asInstanceOf[List[Tree]]
       CompoundTypeTree(Template(parents.map(treeForType), noSelfType, defns))
     case ExistentialType(quantified, underlying) =>
       ExistentialTypeTree(treeForType(underlying), quantified.map {
@@ -1357,7 +1357,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
                 }
                 else TypeTree(arg)
 
-              tparamMapping(s) = newArgTree
+              tparamMapping(s) = newArgTree.asInstanceOf[Tree]
               matchBaseArgs(tail)
             case Nil =>
               val subargs = subclass.typeParams.map(tp => tparamMapping.getOrElse(tp, Ident(tp)))
@@ -1394,7 +1394,7 @@ trait MacroCommons extends CompatMacroCommons { bundle =>
       // while typechecking case body and not after that. Therefore we need a macro which will inject itself exactly
       // into that moment.
       val fakeMatch =
-      q"""
+        q"""
           import scala.language.experimental.macros
           def $normName(tpref: $StringCls, value: $ScalaPkg.Any): $ScalaPkg.Any =
             macro $CommonsPkg.macros.misc.WhiteMiscMacros.normalizeGadtSubtype

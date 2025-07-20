@@ -10,5 +10,5 @@ package annotation
   */
 class positioned(val point: Int) extends StaticAnnotation
 object positioned {
-  def here: Int = macro macros.misc.MiscMacros.posPoint
+  def here: Int = ???// macro macros.misc.MiscMacros.posPoint
 }

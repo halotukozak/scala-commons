@@ -31,9 +31,9 @@ object GenKeyCodec {
     * The generated codec uses object name by default as key value.
     * This can be adjusted with `@name` annotation.
     */
-  def forSealedEnum[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
+  def forSealedEnum[T]: GenKeyCodec[T] = ???// macro macros.serialization.GenKeyCodecMacros.forSealedEnum[T]
 
-  def forTransparentWrapper[T]: GenKeyCodec[T] = macro macros.serialization.GenKeyCodecMacros.forTransparentWrapper[T]
+  def forTransparentWrapper[T]: GenKeyCodec[T] = ???// macro macros.serialization.GenKeyCodecMacros.forTransparentWrapper[T]
 
   @explicitGenerics
   def read[T](key: String)(implicit keyCodec: GenKeyCodec[T]): T = keyCodec.read(key)
@@ -87,7 +87,7 @@ object GenKeyCodec {
   implicit def jEnumKeyCodec[E <: Enum[E]](implicit ct: ClassTag[E]): GenKeyCodec[E] =
     GenKeyCodec.create(
       string => Enum.valueOf(ct.runtimeClass.asInstanceOf[Class[E]], string),
-      enum => enum.name()
+      `enum` => `enum`.name()
     )
 
   // Warning! Changing the order of implicit params of this method causes divergent implicit expansion (WTF?)

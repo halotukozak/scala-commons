@@ -6,7 +6,7 @@ import scala.reflect.macros.{TypecheckException, blackbox}
 private[commons]
 class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   val TestObj = q"$CommonsPkg.macros.TypeClassDerivationTest"
   val SingletonTCObj = q"$TestObj.SingletonTC"
@@ -44,9 +44,9 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
   }
 
   def testTreeForType(tpeRepr: Tree): Tree = {
-    val Literal(Constant(repr)) = tpeRepr
+    val Literal(Constant(repr)) = tpeRepr: @unchecked
 
-    val Typed(_, tpt) = c.parse(s"(??? : $repr)")
+    val Typed(_, tpt) = c.parse(s"(??? : $repr)"): @unchecked
     val tpe = getType(tpt)
     val newTree = treeForType(tpe)
     val newTpe = getType(newTree)

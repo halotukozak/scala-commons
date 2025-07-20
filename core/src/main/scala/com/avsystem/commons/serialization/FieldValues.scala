@@ -11,7 +11,7 @@ object FieldValues {
   private object NullMarker
 }
 final class FieldValues(
-  private val fieldNames: Array[String], codecs: Array[GenCodec[_]], ofWhat: OptArg[String] = OptArg.Empty
+  private val fieldNames: Array[String], codecs: Array[GenCodec[?]], ofWhat: OptArg[String] = OptArg.Empty
 ) {
 
   @tailrec private def fieldIndex(fieldName: String, idx: Int): Int =

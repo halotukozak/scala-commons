@@ -12,7 +12,7 @@ class SealedEnumTest extends AnyFunSuite {
     case object Fourth extends SomeEnum
 
     val values: List[SomeEnum] = caseObjects
-    val classTags: List[ClassTag[_ <: SomeEnum]] = SealedUtils.instancesFor[ClassTag, SomeEnum]
+    val classTags: List[ClassTag[? <: SomeEnum]] = SealedUtils.instancesFor[ClassTag, SomeEnum]
   }
 
   test("case objects listing") {

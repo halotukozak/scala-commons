@@ -19,7 +19,7 @@ trait RetryStrategy { self =>
     */
   def andThen(otherStrategy: RetryStrategy): RetryStrategy =
     RetryStrategy(self.nextRetry match {
-      case Opt((delay, nextStrat)) => Opt((delay, nextStrat andThen otherStrategy))
+      case Opt((delay, nextStrat)) => Opt((delay, nextStrat `andThen` otherStrategy))
       case Opt.Empty => otherStrategy.nextRetry
     })
 

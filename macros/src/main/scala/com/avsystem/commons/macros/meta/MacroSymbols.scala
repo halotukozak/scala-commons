@@ -10,7 +10,7 @@ import scala.collection.mutable.ListBuffer
 
 private[commons] trait MacroSymbols extends MacroCommons {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final def RpcPackage = q"$CommonsPkg.rpc"
   final def MetaPackage = q"$CommonsPkg.meta"
@@ -240,7 +240,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
     // @unchecked because "The outer reference in this type test cannot be checked at runtime"
     // Srsly scalac, from static types it should be obvious that outer references are the same
     def matchName(shortDescr: String, name: String): Res[Unit] = arity match {
-      case _: Arity.Single@unchecked | _: Arity.Optional@unchecked =>
+      case _: Arity.Single @unchecked | _: Arity.Optional @unchecked =>
         if (name == nameStr) Ok(())
         else Fail
       case _ => Ok(())
@@ -317,7 +317,7 @@ private[commons] trait MacroSymbols extends MacroCommons {
         val taggedAnnot = annot(getType(tq"$RpcPackage.tagged[_ <: $baseTagTpe]"))
         val requiredTagType = taggedAnnot.fold(baseTagTpe)(_.tpe.typeArgs.head)
         val whenUntagged = FallbackTag(taggedAnnot.map(_.findArg[Tree](WhenUntaggedArg, EmptyTree)).getOrElse(EmptyTree))
-        RequiredTag(baseTagTpe, requiredTagType, whenUntagged orElse fallbackTag)
+        RequiredTag(baseTagTpe, requiredTagType, whenUntagged `orElse` fallbackTag)
       }
       annots(TaggedAT).foreach { ann =>
         val requiredTagTpe = ann.tpe.typeArgs.head

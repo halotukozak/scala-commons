@@ -131,7 +131,8 @@ trait DataRefDsl[E, T] {
     * }}}
     *
     */
-  def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] = macro MongoMacros.refImpl
+  def ref[T0](fun: T => T0): MongoPropertyRef[E, T0] =
+  ??? // macro MongoMacros.refImpl
 
   /**
     * Given a MongoDB union data type (defined with a sealed hierarchy with `@flatten` annotation), you can
@@ -164,7 +165,8 @@ trait DataRefDsl[E, T] {
     * results of the query only to selected cases.
     */
   @explicitGenerics
-  def as[C <: T]: ThisRef[E, C] = macro MongoMacros.asSubtype[C]
+  def as[C <: T]: ThisRef[E, C] =
+  ??? // macro MongoMacros.asSubtype[C]
 
   /**
     * Macro for obtaining a [[MongoDocumentFilter]] (condition) which is satisfied only by some specific subtype
@@ -193,13 +195,15 @@ trait DataRefDsl[E, T] {
     * }}}
     */
   @explicitGenerics
-  def is[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isSubtype[C]
+  def is[C <: T]: MongoDocumentFilter[E] =
+  ??? // macro MongoMacros.isSubtype[C]
 
   /**
     * A negated version of [[is]].
     */
   @explicitGenerics
-  def isNot[C <: T]: MongoDocumentFilter[E] = macro MongoMacros.isNotSubtype[C]
+  def isNot[C <: T]: MongoDocumentFilter[E] = 
+  ??? // macro MongoMacros.isNotSubtype[C]
 }
 
 trait DataTypeDsl[T] extends DataRefDsl[T, T] {

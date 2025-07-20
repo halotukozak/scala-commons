@@ -53,5 +53,5 @@ object RpcUtils {
   def interceptDec[NewRaw, Raw, Real](asReal: AsReal[NewRaw, Real], interceptor: DecodingInterceptor[NewRaw, Raw]): AsReal[Raw, Real] =
     raw => asReal.asReal(interceptor.toNewRaw(raw))
 
-  def compilationError(error: String): Nothing = macro MiscMacros.compilationError
+  def compilationError(error: String): Nothing = ??? // macro MiscMacros.compilationError
 }

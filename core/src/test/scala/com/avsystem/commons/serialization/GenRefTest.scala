@@ -18,7 +18,7 @@ case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
 @transparent case class TransparentToplevel(toplevel: Toplevel)
 
 case class Wrappy(value: String) extends AnyVal
-object Wrappy extends StringWrapperCompanion[Wrappy]
+//object Wrappy extends StringWrapperCompanion[Wrappy]
 
 case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
 
@@ -48,8 +48,8 @@ class GenRefTest extends AnyFunSuite {
 
   test("gen ref composition") {
     val subRef = GenRef.create[TransparentToplevel].ref(_.toplevel.middle.get)
-    val ref1 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
-    val ref2 = subRef andThen GenRef.create[Middle].ref(_.bottom.mapa("str"))
+    val ref1 = subRef `andThen` GenRef.create[Middle].ref(_.bottom.mapa("str"))
+    val ref2 = subRef `andThen` GenRef.create[Middle].ref(_.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))
     assert(ref1(obj) == 42)
     assert(ref1.rawRef.normalize.toList == List("middle", "bot", "mapa", "str").map(RawRef.Field.apply))

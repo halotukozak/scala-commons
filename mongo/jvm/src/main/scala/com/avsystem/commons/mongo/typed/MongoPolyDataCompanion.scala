@@ -30,7 +30,7 @@ abstract class AbstractMongoPolyDataCompanion[Implicits, D[_]](implicits: Implic
     instances(implicits, this).format[T]
   }
 
-  implicit def isMongoAdtOrSubtype[C <: D[_]]: IsMongoAdtOrSubtype[C] = null
+  implicit def isMongoAdtOrSubtype[C <: D[Any]]: IsMongoAdtOrSubtype[C] = null
 
   implicit class macroDslExtensions[T](value: D[T]) {
     @explicitGenerics

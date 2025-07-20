@@ -174,7 +174,7 @@ class CborOutput(out: DataOutput, keyCodec: CborKeyCodec, sizePolicy: SizePolicy
         super.writeCustom(typeMarker, value)
     }
 
-  override def keepsMetadata(metadata: InputMetadata[_]): Boolean = metadata match {
+  override def keepsMetadata(metadata: InputMetadata[?]): Boolean = metadata match {
     case InitialByte | Tags => true
     case _ => super.keepsMetadata(metadata)
   }
@@ -185,8 +185,8 @@ sealed abstract class CborSequentialOutput(
   override val sizePolicy: SizePolicy
 ) extends BaseCborOutput(out) with SequentialOutput {
 
-  protected[this] var size: Int = -1
-  protected[this] var fresh: Boolean = true
+  protected var size: Int = -1
+  protected var fresh: Boolean = true
 
   protected final def ensureInitialWritten(major: MajorType): Unit =
     if (fresh) {
@@ -240,8 +240,8 @@ class CborObjectOutput(
   sizePolicy: SizePolicy
 ) extends CborSequentialOutput(out, sizePolicy) with ObjectOutput {
 
-  private[this] var forcedKeyCodec: CborKeyCodec = _
-  private[this] def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
+  private var forcedKeyCodec: CborKeyCodec = scala.compiletime.uninitialized
+  private def currentKeyCodec = if(forcedKeyCodec != null) forcedKeyCodec else keyCodec
 
   /**
     * Returns a [[CborOutput]] for writing an arbitrary CBOR map key.
@@ -297,7 +297,7 @@ sealed abstract class CborChunkedOutput(out: DataOutput) extends BaseCborOutput(
   protected def major: MajorType
   protected def doWriteChunk(chunk: Chunk): Unit
 
-  protected[this] var fresh = true
+  protected var fresh = true
 
   private def ensureInitialWritten(): Unit =
     if (fresh) {

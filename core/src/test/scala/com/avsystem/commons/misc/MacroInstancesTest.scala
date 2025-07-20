@@ -22,7 +22,8 @@ object ComplexInstancesTest {
   abstract class HasComplexInstances[T](
     implicit macroInstances: MacroInstances[DependencyImplicits.type, ComplexInstances[T]]
   ) {
-    val instances: ComplexInstances[T] = macroInstances(DependencyImplicits, this)
+    val instances: ComplexInstances[T]
+    ??? // macroInstances(DependencyImplicits, this)
   }
 }
 
@@ -59,7 +60,7 @@ object AnnotationReferringToEnclosingObjectTest {
     implicit val meta: Meta[T] = instances((), this).apply()
   }
 
-  @example(Rec("lol", 42))
+  //  @example(Rec("lol", 42))
   case class Rec(str: String, int: Int)
   object Rec extends HasMeta[Rec] {
     implicit val codec: GenCodec[Rec] = GenCodec.materialize

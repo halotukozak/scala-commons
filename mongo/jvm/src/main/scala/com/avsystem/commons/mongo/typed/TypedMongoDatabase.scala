@@ -36,8 +36,10 @@ class TypedMongoDatabase(
   def withReadConcern(readConcern: ReadConcern): TypedMongoDatabase =
     new TypedMongoDatabase(nativeDatabase.withReadConcern(readConcern), clientSession)
 
-  def getCollection[E <: BaseMongoEntity : MongoEntityMeta](name: String): TypedMongoCollection[E] =
-    new TypedMongoCollection[E](nativeDatabase.getCollection(name), clientSession)
+  def getCollection[IDType, E <: BaseMongoEntity.Aux[IDType]](name: String)(
+    using MongoEntityMeta[IDType, E]
+  ): TypedMongoCollection[IDType, E] =
+    new TypedMongoCollection[IDType, E](nativeDatabase.getCollection(name), clientSession)
 
   //TODO: `runCommand`
 
@@ -46,13 +48,10 @@ class TypedMongoDatabase(
 
   def listCollectionNames: Observable[String] =
     multi(optionalizeFirstArg(nativeDatabase.listCollectionNames(sessionOrNull)))
-
-  def listCollections: Observable[Document] =
-    multi(optionalizeFirstArg(nativeDatabase.listCollections(sessionOrNull)))
-
   def listCollections[T: GenCodec]: Observable[T] =
     listCollections.map(doc => BsonValueInput.read[T](doc.toBsonDocument))
-
+  def listCollections: Observable[Document] =
+    multi(optionalizeFirstArg(nativeDatabase.listCollections(sessionOrNull)))
   def createCollection(
     name: String,
     setupOptions: CreateCollectionOptions => CreateCollectionOptions = identity,

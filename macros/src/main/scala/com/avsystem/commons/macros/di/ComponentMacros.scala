@@ -8,7 +8,7 @@ import scala.reflect.macros.blackbox
 
 class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   def DiPkg = q"$CommonsPkg.di"
   def ComponentCls: Tree = tq"$DiPkg.Component"
@@ -90,7 +90,7 @@ class ComponentMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
       if (needsRetyping) c.untypecheck(transformedDefinition) else definition
 
     val asyncDefinition =
-      if(async) finalDefinition
+      if (async) finalDefinition
       else q"$DiPkg.Component.async($finalDefinition)"
 
     val result =

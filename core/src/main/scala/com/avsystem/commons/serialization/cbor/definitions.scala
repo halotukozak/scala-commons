@@ -70,7 +70,9 @@ object InitialByte extends InputMetadata[InitialByte] {
   * [[https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml]]
   */
 case class Tag(value: Int) extends AnyVal
-object Tag extends IntWrapperCompanion[Tag] {
+object Tag 
+//  extends IntWrapperCompanion[Tag] 
+  {
   final val StandardDateTime = Tag(0)
   final val EpochDateTime = Tag(1)
   final val PositiveBignum = Tag(2)

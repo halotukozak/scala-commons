@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 class SealedMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final lazy val OrderedEnumType: Type = staticType(tq"$MiscPkg.OrderedEnum")
 

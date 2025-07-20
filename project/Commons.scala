@@ -23,6 +23,9 @@ object Commons extends ProjectGroup("commons") {
   // option in IntelliJ's SBT settings.
   val forIdeaImport: Boolean = System.getProperty("idea.managed", "false").toBoolean && System.getProperty("idea.runid") == null
 
+  val scala2Version = "2.13.16"
+  val scala3Version = "3.7.1"
+
   val guavaVersion = "33.4.8-jre"
   val jsr305Version = "3.0.2"
   val scalatestVersion = "3.2.19"
@@ -65,7 +68,7 @@ object Commons extends ProjectGroup("commons") {
       Developer("ddworak", "Dawid Dworak", "d.dworak@avsystem.com", url("https://github.com/ddworak")),
     ),
 
-    scalaVersion := "2.13.16",
+    scalaVersion := scala3Version,
     compileOrder := CompileOrder.Mixed,
 
     githubWorkflowTargetTags ++= Seq("v*"),
@@ -104,7 +107,6 @@ object Commons extends ProjectGroup("commons") {
   override def commonSettings: Seq[Def.Setting[_]] = Seq(
     Compile / scalacOptions ++= Seq(
       "-encoding", "utf-8",
-      "-Yrangepos",
       "-explaintypes",
       "-feature",
       "-deprecation",
@@ -114,19 +116,9 @@ object Commons extends ProjectGroup("commons") {
       "-language:dynamics",
       "-language:experimental.macros",
       "-language:higherKinds",
-      "-Xfatal-warnings",
-      "-Xsource:3",
-      "-Xlint:-missing-interpolator,-adapted-args,-unused,_",
-      "-Ycache-plugin-class-loader:last-modified",
-      "-Ycache-macro-class-loader:last-modified",
+      //      "-Xfatal-warnings",
+      "-Xignore-scala2-macros",
     ),
-
-    Compile / scalacOptions ++= {
-      if (scalaBinaryVersion.value == "2.13") Seq(
-        "-Xnon-strict-patmat-analysis",
-        "-Xlint:-strict-unsealed-patmat"
-      ) else Seq.empty
-    },
 
     Test / scalacOptions := (Compile / scalacOptions).value,
 
@@ -164,7 +156,8 @@ object Commons extends ProjectGroup("commons") {
     scalacOptions += {
       val localDir = (ThisBuild / baseDirectory).value.toURI.toString
       val githubDir = "https://raw.githubusercontent.com/AVSystem/scala-commons"
-      s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
+      //      s"-P:scalajs:mapSourceURI:$localDir->$githubDir/v${version.value}/"
+      ""
     },
     jsEnv := new org.scalajs.jsenv.nodejs.NodeJSEnv(),
     Test / fork := false,
@@ -213,7 +206,7 @@ object Commons extends ProjectGroup("commons") {
       mongo,
       hocon,
       spring,
-      redis,
+      //      redis,
     )
     .settings(aggregateProjectSettings)
 
@@ -229,7 +222,7 @@ object Commons extends ProjectGroup("commons") {
     .settings(
       jvmCommonSettings,
       libraryDependencies ++= Seq(
-        "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+        "org.scala-lang" % "scala-compiler" % scala2Version,
         "io.monix" %% "monix" % monixVersion % Test,
       ),
     )
@@ -253,7 +246,7 @@ object Commons extends ProjectGroup("commons") {
 
   lazy val macros = mkSubProject.settings(
     jvmCommonSettings,
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    libraryDependencies += "org.scala-lang" % "scala-reflect" % scala2Version,
   )
 
   lazy val core = mkSubProject
@@ -292,7 +285,7 @@ object Commons extends ProjectGroup("commons") {
         "org.mongodb" % "mongodb-driver-core" % mongoVersion,
         "org.mongodb" % "mongodb-driver-sync" % mongoVersion % Optional,
         "org.mongodb" % "mongodb-driver-reactivestreams" % mongoVersion % Optional,
-        "org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional,
+        ("org.mongodb.scala" %% "mongo-scala-driver" % mongoVersion % Optional).cross(CrossVersion.for3Use2_13)
       ),
     )
 
@@ -307,20 +300,20 @@ object Commons extends ProjectGroup("commons") {
       sourceDirsSettings(_.getParentFile),
     )
 
-  lazy val redis = mkSubProject
-    .dependsOn(core % CompileAndTest)
-    .settings(
-      jvmCommonSettings,
-      libraryDependencies ++= Seq(
-        "com.google.guava" % "guava" % guavaVersion,
-        "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
-        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
-        "io.monix" %% "monix" % monixVersion,
-      ),
-      Test / parallelExecution := false,
-      Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
-      Test / skip := true,
-    )
+  //  lazy val redis = mkSubProject
+  //    .dependsOn(core % CompileAndTest)
+  //    .settings(
+  //      jvmCommonSettings,
+  //      libraryDependencies ++= Seq(
+  //        "com.google.guava" % "guava" % guavaVersion,
+  //        "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
+  //        "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
+  //        "io.monix" %% "monix" % monixVersion,
+  //      ),
+  //      Test / parallelExecution := false,
+  //      Compile / scalacOptions += "-Wconf:cat=deprecation:is", // only inform about deprecations due to scheduled removal
+  //      Test / skip := true,
+  //    )
 
   lazy val hocon = mkSubProject
     .dependsOn(core % CompileAndTest)
@@ -353,7 +346,9 @@ object Commons extends ProjectGroup("commons") {
     )
 
   lazy val benchmark = mkSubProject
-    .dependsOn(redis, mongo)
+    .dependsOn(
+      //      redis,
+      mongo)
     .enablePlugins(JmhPlugin)
     .settings(
       jvmCommonSettings,

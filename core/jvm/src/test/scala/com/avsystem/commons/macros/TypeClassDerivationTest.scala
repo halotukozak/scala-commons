@@ -8,7 +8,10 @@ import scala.reflect.runtime.{universe => ru}
 
 object TypeClassDerivationTest {
 
-  def materialize[T]: TC[T] = macro macros.TestMacros.materialize[T]
+  given [T]: ru.WeakTypeTag[T] = ???
+
+  def materialize[T]: TC[T] =
+    ??? // macro macros.TestMacros.materialize[T]
 
   def typeRepr[T: ru.WeakTypeTag] = ru.weakTypeOf[T].toString
 
@@ -32,8 +35,8 @@ object TypeClassDerivationTest {
       pf.isDefinedAt(this)
   }
   case class SingletonTC[T](tpe: String, value: T) extends TC[T]
-  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[_], Option[DefVal])]) extends TC[T]
-  case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[_])]) extends TC[T]
+  case class ApplyUnapplyTC[T](tpe: String, subs: List[(String, TC[?], Option[DefVal])]) extends TC[T]
+  case class SealedHierarchyTC[T](tpe: String, subs: List[(String, TC[?])]) extends TC[T]
   case class UnknownTC[T](tpe: String) extends TC[T]
   case class ForList[T](elementTc: TC[T]) extends TC[List[T]] {
     def tpe: String = s"List[${elementTc.tpe}]"
@@ -61,13 +64,14 @@ object TypeClassDerivationTest {
     implicit def forList[T](implicit tct: TC[T]): TC[List[T]] = ForList(tct)
   }
   trait ImplicitMaterializers { this: TC.type =>
-    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] = macro macros.TestMacros.materializeImplicitly[T]
+    implicit def materializeImplicitly[T](implicit allow: AllowImplicitMacro[TC[T]]): TC[T] =
+    ??? // macro macros.TestMacros.materializeImplicitly[T]
   }
 }
 
 class TypeClassDerivationTest extends AnyFunSuite {
 
-  import TypeClassDerivationTest._
+  import TypeClassDerivationTest.{_, given}
 
   test("unknown test") {
     assert(materialize[Int] == UnknownTC(typeRepr[Int]))

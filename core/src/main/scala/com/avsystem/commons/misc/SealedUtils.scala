@@ -11,13 +11,13 @@ object SealedUtils {
     * declaration order ONLY for enums extending [[OrderedEnum]]. Otherwise, the order may be arbitrary.
     */
   @explicitGenerics
-  def caseObjectsFor[T]: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
+  def caseObjectsFor[T]: List[T] = ??? // macro macros.misc.SealedMacros.caseObjectsFor[T]
 
   /**
     * Infers a list of instances of given typeclass `TC` for all non-abstract subtypes of a sealed hierarchy root `T`.
     */
   @explicitGenerics
-  def instancesFor[TC[_], T]: List[TC[_ <: T]] = macro macros.misc.SealedMacros.instancesFor[TC[_], T]
+  def instancesFor[TC[_], T]: List[TC[T]] = ??? // macro macros.misc.SealedMacros.instancesFor[TC[_], T]
 }
 
 /**
@@ -54,7 +54,7 @@ trait SealedEnumCompanion[T] {
     * Also, be aware that [[caseObjects]] macro guarantees well-defined order of elements only for
     * [[com.avsystem.commons.misc.OrderedEnum OrderedEnum]].
     */
-  val values: ISeq[T]
+  def values: ISeq[T]
 
   /**
     * A macro which reifies a list of all case objects of the sealed trait or class `T`.
@@ -62,7 +62,7 @@ trait SealedEnumCompanion[T] {
     * In such case, the order is consistent with declaration order in source file. However, if the enum is not an
     * [[OrderedEnum]], the order may be arbitrary.
     */
-  protected def caseObjects: List[T] = macro macros.misc.SealedMacros.caseObjectsFor[T]
+  protected def caseObjects: List[T] = ??? // macro macros.misc.SealedMacros.caseObjectsFor[T]
 }
 
 abstract class AbstractSealedEnumCompanion[T] extends SealedEnumCompanion[T]

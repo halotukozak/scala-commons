@@ -8,9 +8,9 @@ object Implicits {
     * Also, using `infer` lets you have more detailed control over implicit-not-found compilation error messages
     * through [[ImplicitNotFound]].
     */
-  def infer[T]: T = macro macros.misc.MiscMacros.infer[T]
-  def infer[T](clue: String): T = macro macros.misc.MiscMacros.clueInfer[T]
-  def inferNonMacro[T](clue: String): T = macro macros.misc.MiscMacros.inferNonMacro[T]
+  def infer[T]: T = ???// macro macros.misc.MiscMacros.infer[T]
+  def infer[T](clue: String): T = ???// macro macros.misc.MiscMacros.clueInfer[T]
+  def inferNonMacro[T](clue: String): T = ???// macro macros.misc.MiscMacros.inferNonMacro[T]
 }
 
 /**

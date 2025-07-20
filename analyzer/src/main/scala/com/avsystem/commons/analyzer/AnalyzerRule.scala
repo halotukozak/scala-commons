@@ -13,6 +13,8 @@ abstract class AnalyzerRule(val global: Global, val name: String, defaultLevel: 
   var level: Level = defaultLevel
   var argument: String = _
 
+  given [T]: TypeTag[T] = ???
+  
   protected def classType(fullName: String): Type =
     try rootMirror.staticClass(fullName).asType.toType.erasure catch {
       case _: ScalaReflectionException => NoType

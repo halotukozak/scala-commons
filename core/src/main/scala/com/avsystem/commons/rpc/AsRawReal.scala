@@ -23,14 +23,14 @@ object AsRaw extends FallbackAsRaw {
     forWrapped: AsRaw[Raw, Wrapped]
   ): AsRaw[Raw, Real] = real => forWrapped.asRaw(tw.unwrap(real))
 
-  def materialize[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
+  def materialize[Raw, Real]: AsRaw[Raw, Real] = ??? // macro macros.rpc.RpcMacros.rpcAsRaw[Raw, Real]
 
   /**
     * Like [[materialize]] but for arbitrary real type instead of RPC trait.
     * Scans all public methods of the real type (instead of abstract methods for RPC trait).
     * Methods can be manually excluded using [[com.avsystem.commons.meta.ignore ignore]] annotation.
     */
-  def materializeForApi[Raw, Real]: AsRaw[Raw, Real] = macro macros.rpc.RpcMacros.apiAsRaw[Raw, Real]
+  def materializeForApi[Raw, Real]: AsRaw[Raw, Real] = ??? // macro macros.rpc.RpcMacros.apiAsRaw[Raw, Real]
 
   implicit def identity[A]: AsRaw[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asRaw: AsRaw[Raw, Real]): AsRaw[Try[Raw], Try[Real]] =
@@ -62,7 +62,7 @@ object AsReal extends FallbackAsReal {
     forWrapped: AsReal[Raw, Wrapped]
   ): AsReal[Raw, Real] = raw => tw.wrap(forWrapped.asReal(raw))
 
-  def materialize[Raw, Real]: AsReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
+  def materialize[Raw, Real]: AsReal[Raw, Real] = ??? // macro macros.rpc.RpcMacros.rpcAsReal[Raw, Real]
 
   implicit def identity[A]: AsReal[A, A] = AsRawReal.identity[A]
   implicit def forTry[Raw, Real](implicit asReal: AsReal[Raw, Real]): AsReal[Try[Raw], Try[Real]] =
@@ -97,7 +97,7 @@ object AsRawReal extends AsRawRealLowPrio {
   implicit def identity[A]: AsRawReal[A, A] =
     reusableIdentity.asInstanceOf[AsRawReal[A, A]]
 
-  def materialize[Raw, Real]: AsRawReal[Raw, Real] = macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
+  def materialize[Raw, Real]: AsRawReal[Raw, Real] = ??? // macro macros.rpc.RpcMacros.rpcAsRawReal[Raw, Real]
 }
 trait AsRawRealLowPrio extends FallbackAsRawReal { this: AsRawReal.type =>
   implicit def fromSeparateAsRealAndRaw[Raw, Real](implicit
@@ -110,18 +110,18 @@ trait FallbackAsRawReal { this: AsRawReal.type =>
 }
 
 object RpcMetadata {
-  def materialize[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.rpcMetadata[Real]
+  def materialize[M[_], Real]: M[Real] = ??? // macro macros.rpc.RpcMacros.rpcMetadata[Real]
 
   /**
     * Like [[materialize]] but for arbitrary real type instead of RPC trait.
     * Scans all public methods of the real type (instead of abstract methods for RPC trait).
     * Methods can be manually excluded using [[com.avsystem.commons.meta.ignore ignore]] annotation.
     */
-  def materializeForApi[M[_], Real]: M[Real] = macro macros.rpc.RpcMacros.apiMetadata[Real]
+  def materializeForApi[M[_], Real]: M[Real] = ??? // macro macros.rpc.RpcMacros.apiMetadata[Real]
 
-  def auto[T]: T = macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata
+  def auto[T]: T = ??? // macro macros.misc.WhiteMiscMacros.autoAnnotationMetadata
 
-  def nextInstance[T](it: Iterator[_], description: String): T =
+  def nextInstance[T](it: Iterator[?], description: String): T =
     if (it.hasNext) it.next().asInstanceOf[T]
     else throw new NoSuchElementException(s"typeclass instance for $description was not provided")
 }

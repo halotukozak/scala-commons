@@ -10,7 +10,7 @@ trait Delegation[A, B] {
 
 object Delegation {
   implicit def materializeDelegation[A, B]: Delegation[A, B] =
-  macro com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
+    ??? // macro com.avsystem.commons.macros.misc.DelegationMacros.materializeDelegation[A, B]
 
   /**
     * Provides following syntax:
@@ -21,6 +21,6 @@ object Delegation {
   def apply[B] = new CurriedDelegation[B]
 
   class CurriedDelegation[B] {
-    def apply[A](source: A): B = macro com.avsystem.commons.macros.misc.DelegationMacros.delegate[A, B]
+    def apply[A](source: A): B = ??? // macro com.avsystem.commons.macros.misc.DelegationMacros.delegate[A, B]
   }
 }

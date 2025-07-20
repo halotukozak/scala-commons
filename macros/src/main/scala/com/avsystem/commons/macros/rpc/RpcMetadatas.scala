@@ -4,9 +4,9 @@ package macros.rpc
 import com.avsystem.commons.macros.meta.MacroMetadatas
 import com.avsystem.commons.macros.misc.{FailMsg, Ok, Res}
 
-private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons with RpcSymbols with RpcMappings =>
+private[commons] trait RpcMetadatas extends MacroMetadatas { this: RpcMacroCommons & RpcSymbols & RpcMappings =>
 
-  import c.universe._
+  import c.universe.{_, given}
 
   class MethodMetadataParam(owner: MetadataConstructor, symbol: Symbol)
     extends MetadataParam(owner, symbol) with RealMethodTarget with ArityParam {

@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 trait TypeClassDerivation extends MacroSymbols {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final def DeferredInstanceCls: Tree = tq"$CommonsPkg.derivation.DeferredInstance"
   final def AllowImplicitMacroCls: Tree = tq"$CommonsPkg.derivation.AllowImplicitMacro"

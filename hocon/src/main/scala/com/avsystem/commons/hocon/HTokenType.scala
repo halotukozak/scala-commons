@@ -40,7 +40,7 @@ final class HTokenRange(val allTokens: IndexedSeq[HToken], val start: Int, val e
 
   val pos: SourcePos =
     if (start == end) allTokens(start).pos.emptyStartPos else
-      allTokens(start).pos join allTokens(end - 1).pos
+      allTokens(start).pos `join` allTokens(end - 1).pos
 
   def input: SourceFile = pos.input
 
@@ -134,9 +134,9 @@ object HTokenType extends SealedEnumCompanion[HTokenType] {
 }
 
 class HLexer(input: SourceFile) {
-  private[this] val chars = input.contents
-  private[this] var tokenIdx = 0
-  private[this] var off = -1
+  private val chars = input.contents
+  private var tokenIdx = 0
+  private var off = -1
 
   def next(): HToken =
     if (off == -1) {

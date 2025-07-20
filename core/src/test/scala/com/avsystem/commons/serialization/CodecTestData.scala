@@ -3,7 +3,7 @@ package serialization
 
 import com.avsystem.commons.annotation.AnnotationAggregate
 import com.avsystem.commons.meta.{AutoOptionalParams, MacroInstances}
-import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion, TypedKey}
+import com.avsystem.commons.misc.{AutoNamedEnum, NamedEnumCompanion}
 
 import scala.annotation.meta.getter
 
@@ -94,7 +94,7 @@ object CodecTestData {
 
   @flatten sealed trait TransparentFlatSealedBase
   case class TransparentCaseWrap(thing: TransparentFlatThing) extends TransparentFlatSealedBase
-  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
+//  object TransparentCaseWrap extends TransparentWrapperCompanion[TransparentFlatThing, TransparentCaseWrap]
   object TransparentFlatSealedBase extends HasGenCodec[TransparentFlatSealedBase]
 
   case class TransparentFlatThing(num: Int, text: String)
@@ -132,7 +132,7 @@ object CodecTestData {
   }
 
   @transparent case class StringId(id: String)
-  object StringId extends TransparentWrapperCompanion[String, StringId]
+//  object StringId extends TransparentWrapperCompanion[String, StringId]
 
   trait HasSomeStr {
     @name("some.str") def str: String
@@ -143,12 +143,12 @@ object CodecTestData {
 
   case class Stuff[T](name: String)
   object Stuff {
-    implicit val codec: GenCodec[Stuff[_]] = GenCodec.create(
+    implicit val codec: GenCodec[Stuff[?]] = GenCodec.create(
       in => new Stuff[Any](in.readSimple().readString()),
       (out, value) => out.writeSimple().writeString(value.name)
     )
   }
-  case class CaseClassWithWildcard(stuff: Stuff[_])
+  case class CaseClassWithWildcard(stuff: Stuff[?])
   object CaseClassWithWildcard extends HasGenCodec[CaseClassWithWildcard]
 
   case class CaseClassWithOptionalFields(
@@ -252,7 +252,7 @@ object CodecTestData {
   object RecExpr {
     private def mkCodec[T <: RecBound[T] : GenCodec]: GenCodec[RecExpr[T]] = GenCodec.materialize
     implicit def codec[T: GenCodec]: GenCodec[RecExpr[T]] =
-      mkCodec[Nothing](GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
+      mkCodec[Nothing](using GenCodec[T].asInstanceOf[GenCodec[Nothing]]).asInstanceOf[GenCodec[RecExpr[T]]]
   }
 
   @flatten sealed trait PureGadtExpr[T]
@@ -287,13 +287,16 @@ object CodecTestData {
     implicit val codec: GenCodec[KeyEnumz] = GenCodec.forSealedEnum[KeyEnumz]
   }
 
-  sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
-  object SealedKey extends NamedEnumCompanion[SealedKey[_]] {
+  sealed abstract class SealedKey[T](implicit val valueCodec: GenCodec[T]) 
+    extends 
+//      TypedKey[T] with 
+      AutoNamedEnum
+  object SealedKey extends NamedEnumCompanion[SealedKey[?]] {
     case object StringKey extends SealedKey[String]
     case object IntKey extends SealedKey[Int]
     case object BooleanKey extends SealedKey[Boolean]
 
-    val values: List[SealedKey[_]] = caseObjects
+    val values: List[SealedKey[?]] = caseObjects
   }
 
   @flatten("kejs") sealed trait CustomizedSeal
@@ -357,7 +360,7 @@ object CodecTestData {
 
   @transparent
   case class ThingId(value: String)
-  object ThingId extends StringWrapperCompanion[ThingId]
+//  object ThingId extends StringWrapperCompanion[ThingId]
 
   locally {
     case class LocalStuff()

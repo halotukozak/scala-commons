@@ -7,7 +7,7 @@ import scala.reflect.macros.blackbox
 
 class DelegationMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final def DelegationCls: Tree = tq"$MiscPkg.Delegation"
 

@@ -10,7 +10,7 @@ import scala.reflect.macros.blackbox
 
 private[commons] class AdtMetadataMacros(ctx: blackbox.Context) extends AbstractMacroCommons(ctx) with MacroMetadatas {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   final lazy val AdtParamMetadataAT: Type = staticType(tq"$MetaPackage.adtParamMetadata")
   final lazy val AdtCaseMetadataAT: Type = staticType(tq"$MetaPackage.adtCaseMetadata")

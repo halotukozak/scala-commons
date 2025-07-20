@@ -11,10 +11,10 @@ object TestUtils {
   @macroPrivate
   def macroPrivateMethod = 42
 
-  def invokeMacroPrivateMethod: Int = macro invokeMacroPrivateMethodImpl
+  def invokeMacroPrivateMethod: Int = ???// macro invokeMacroPrivateMethodImpl
 
   def invokeMacroPrivateMethodImpl(c: blackbox.Context): c.Tree = {
-    import c.universe._
+    import c.universe.{_, given}
     q"${c.prefix}.macroPrivateMethod"
   }
 
@@ -27,5 +27,5 @@ object TestUtils {
   @explicitGenerics
   def genericMethod[T](arg: T): T = arg
   @explicitGenerics
-  def genericMacro[T](arg: T): T = macro genericMacroImpl[T]
+  def genericMacro[T](arg: T): T = ???// macro genericMacroImpl[T]
 }

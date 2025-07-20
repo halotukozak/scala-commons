@@ -11,6 +11,10 @@ sealed trait BaseMongoEntity {
   type IDType
 }
 
+object BaseMongoEntity {
+  type Aux[ID] = BaseMongoEntity{ type IDType = ID }
+}
+
 /**
   * Base trait for all MongoDB entities.
   * A MongoDB entity must be a case class or a sealed hierarchy with `@flatten` annotation.

@@ -7,11 +7,11 @@ import scala.reflect.macros.blackbox
 
 class GenRefMacros(ctx: blackbox.Context) extends CodecMacroCommons(ctx) {
 
-  import c.universe._
+  import c.universe.{_, given}
 
   val GenRefTpe: Type = getType(tq"$SerializationPkg.GenRef[_,_]")
-  val MapTpe: Type = typeOf[collection.Map[_, _]]
-  val JMapTpe: Type = typeOf[util.Map[_, _]]
+  val MapTpe: Type = typeOf[collection.Map[?, ?]]
+  val JMapTpe: Type = typeOf[util.Map[?, ?]]
   val MapApply: Symbol = MapTpe.member(TermName("apply"))
   val JMapGet: Symbol = JMapTpe.member(TermName("get"))
   val TransparentGets: Set[Symbol] = Set(

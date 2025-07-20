@@ -2,10 +2,10 @@ package com.avsystem.commons
 package mongo.typed
 
 import com.avsystem.commons.annotation.positioned
-import com.avsystem.commons.meta._
-import com.avsystem.commons.misc.{TypedMap, ValueOf}
+import com.avsystem.commons.meta.*
+import com.avsystem.commons.misc.ValueOf
 import com.avsystem.commons.mongo.{BsonValueInput, BsonValueOutput}
-import com.avsystem.commons.serialization._
+import com.avsystem.commons.serialization.*
 import org.bson.{BsonNull, BsonValue}
 
 import scala.annotation.tailrec
@@ -39,14 +39,14 @@ sealed trait MongoFormat[T] {
   }
 
   def assumeOptional[W]: MongoFormat.OptionalFormat[T, W] = this match {
-    case optional: MongoFormat.OptionalFormat[T@unchecked, W@unchecked] => optional
+    case optional: MongoFormat.OptionalFormat[T @unchecked, W @unchecked] => optional
     case _ => throw new IllegalArgumentException(
       "Encountered a non-optional MongoFormat for an Option-like type - " +
         "do you have a custom implicit MongoFormat for that type?")
   }
 
   def assumeTransparent[R]: MongoFormat.TransparentFormat[T, R] = this match {
-    case transparent: MongoFormat.TransparentFormat[T@unchecked, R@unchecked] => transparent
+    case transparent: MongoFormat.TransparentFormat[T @unchecked, R @unchecked] => transparent
     case _ => throw new IllegalArgumentException(
       "Encountered a non-transparent MongoFormat for a transparent wrapper type - " +
         "do you have a custom implicit MongoFormat for that type?")
@@ -68,11 +68,11 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     valueFormat: MongoFormat[V],
   ) extends MongoFormat[M[K, V]]
 
-  final case class TypedMapFormat[K[_]](
-    codec: GenCodec[TypedMap[K]],
-    keyCodec: GenKeyCodec[K[_]],
-    valueFormats: MongoFormatMapping[K],
-  ) extends MongoFormat[TypedMap[K]]
+  //  final case class TypedMapFormat[K[_]](
+  //    codec: GenCodec[TypedMap[K]],
+  //    keyCodec: GenKeyCodec[K[_]],
+  //    valueFormats: MongoFormatMapping[K],
+  //  ) extends MongoFormat[TypedMap[K]]
 
   final case class OptionalFormat[O, T](
     codec: GenCodec[O],
@@ -94,9 +94,9 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
     implicit mapCodec: GenCodec[M[K, V]], keyCodec: GenKeyCodec[K], valueFormat: MongoFormat[V],
   ): MongoFormat[M[K, V]] = DictionaryFormat(mapCodec, keyCodec, valueFormat)
 
-  implicit def typedMapFormat[K[_]](
-    implicit keyCodec: GenKeyCodec[K[_]], valueFormats: MongoFormatMapping[K],
-  ): MongoFormat[TypedMap[K]] = TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
+  //  implicit def typedMapFormat[K[_]](
+  //    implicit keyCodec: GenKeyCodec[K[_]], valueFormats: MongoFormatMapping[K],
+  //  ): MongoFormat[TypedMap[K]] = TypedMapFormat[K](TypedMap.typedMapCodec, keyCodec, valueFormats)
 
   implicit def optionalFormat[O, T](
     implicit optionLike: OptionLike.Aux[O, T], optionCodec: GenCodec[O], wrappedFormat: MongoFormat[T],
@@ -108,7 +108,7 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
 
   implicit class collectionFormatOps[C[X] <: Iterable[X], T](private val format: MongoFormat[C[T]]) extends AnyVal {
     def assumeCollection: CollectionFormat[C, T] = format match {
-      case coll: CollectionFormat[C@unchecked, T@unchecked] => coll
+      case coll: CollectionFormat[C @unchecked, T @unchecked] => coll
       case _ => throw new IllegalArgumentException(
         "Encountered a non-collection MongoFormat for a collection type - " +
           "do you have a custom implicit MongoFormat for that type?")
@@ -117,22 +117,22 @@ object MongoFormat extends MetadataCompanion[MongoFormat] with MongoFormatLowPri
 
   implicit class dictionaryFormatOps[M[X, Y] <: BMap[X, Y], K, V](private val format: MongoFormat[M[K, V]]) extends AnyVal {
     def assumeDictionary: DictionaryFormat[M, K, V] = format match {
-      case dict: DictionaryFormat[M@unchecked, K@unchecked, V@unchecked] => dict
+      case dict: DictionaryFormat[M @unchecked, K @unchecked, V @unchecked] => dict
       case _ => throw new IllegalArgumentException(
         "Encountered a non-dictionary MongoFormat for a dictionary type - " +
           "do you have a custom implicit MongoFormat for that type?")
     }
   }
 
-  implicit class typedMapFormatOps[K[_]](private val format: MongoFormat[TypedMap[K]]) extends AnyVal {
-    def assumeTypedMap: TypedMapFormat[K] = format match {
-      case typedMap: TypedMapFormat[K] => typedMap
-      case _ => throw new IllegalArgumentException(
-        "Encountered a non-typed-map MongoFormat for a TypedMap type - " +
-          "do you have a custom implicit MongoFormat for that type?")
-    }
-  }
+  //  implicit class typedMapFormatOps[K[_]](private val format: MongoFormat[TypedMap[K]]) extends AnyVal {
+  //    def assumeTypedMap: TypedMapFormat[K] = format match {
+  //      case typedMap: TypedMapFormat[K] => typedMap
+  //      case _ => throw new IllegalArgumentException(
+  //        "Encountered a non-typed-map MongoFormat for a TypedMap type - " +
+  //          "do you have a custom implicit MongoFormat for that type?")
+  //    }
 }
+//}
 trait MongoFormatLowPriority { this: MongoFormat.type =>
   implicit def leafFormat[T: GenCodec]: MongoFormat[T] = Opaque(GenCodec[T])
 }
@@ -145,6 +145,16 @@ sealed trait MongoAdtFormat[T] extends MongoFormat[T] with TypedMetadata[T] {
   def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0]
 }
 object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
+  sealed trait Case[T] extends TypedMetadata[T] {
+    def info: GenCaseInfo[T]
+    def classTag: ClassTag[T]
+    def sealedParents: List[SealedParent[_]]
+
+    def getField(scalaFieldName: String): Opt[Field[_]]
+    def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0]
+
+    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T]
+  }
   @positioned(positioned.here)
   final class UnionFormat[T](
     @composite val info: GenUnionInfo[T],
@@ -193,7 +203,18 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
         .map(_.asInstanceOf[Case[T]].fieldRefFor[E, T0](prefix, scalaFieldName))
         .getOrElse(throw new IllegalArgumentException("empty sealed hierarchy"))
     }
-
+    def subtypeRefFor[E >: T, T0 <: T](prefix: MongoToplevelRef[E, T], subclass: Class[T0]): MongoToplevelRef[E, T0] = {
+      val (caseNames, format) = subtypeInfo(subclass)
+      MongoRef.RootSubtypeRef[E, T0](prefix.fullRef, flattenAnnot.caseFieldName, caseNames, format)
+    }
+    def subtypeRefFor[E, T0 <: T](prefix: MongoPropertyRef[E, T], subclass: Class[T0]): MongoPropertyRef[E, T0] = {
+      val (caseNames, format) = subtypeInfo(subclass)
+      MongoRef.PropertySubtypeRef(prefix, flattenAnnot.caseFieldName, caseNames, format)
+    }
+    def subtypeFilterFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0], negated: Boolean): MongoDocumentFilter[E] = {
+      val (caseNames, _) = subtypeInfo(subclass)
+      MongoFilter.subtypeFilter(prefix, flattenAnnot.caseFieldName, caseNames, negated)
+    }
     private def subtypeInfo[T0](subclass: Class[T0]): (List[String], MongoAdtFormat[T0]) = {
       def asAdtFormat[C](cse: Case[_], codec: GenObjectCodec[_]): MongoAdtFormat[C] =
         cse.asInstanceOf[Case[C]].asAdtFormat(codec.asInstanceOf[GenObjectCodec[C]])
@@ -202,23 +223,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
         .orElse(subUnionsByClass.getOpt(subclass).map(u => (u.cases.map(_.info.rawName), u.asInstanceOf[UnionFormat[T0]])))
         .getOrElse(throw new NoSuchElementException(s"unrecognized subclass: $subclass"))
     }
-
-    def subtypeRefFor[E >: T, T0 <: T](prefix: MongoToplevelRef[E, T], subclass: Class[T0]): MongoToplevelRef[E, T0] = {
-      val (caseNames, format) = subtypeInfo(subclass)
-      MongoRef.RootSubtypeRef[E, T0](prefix.fullRef, flattenAnnot.caseFieldName, caseNames, format)
-    }
-
-    def subtypeRefFor[E, T0 <: T](prefix: MongoPropertyRef[E, T], subclass: Class[T0]): MongoPropertyRef[E, T0] = {
-      val (caseNames, format) = subtypeInfo(subclass)
-      MongoRef.PropertySubtypeRef(prefix, flattenAnnot.caseFieldName, caseNames, format)
-    }
-
-    def subtypeFilterFor[E, T0 <: T](prefix: MongoRef[E, T], subclass: Class[T0], negated: Boolean): MongoDocumentFilter[E] = {
-      val (caseNames, _) = subtypeInfo(subclass)
-      MongoFilter.subtypeFilter(prefix, flattenAnnot.caseFieldName, caseNames, negated)
-    }
   }
-
   // this class exists only because I can't put GenCodec into Record/Singleton when they are used as Union cases
   // because GenCodec may not be declared explicitly for case classes in a sealed hierarchy
   @positioned(positioned.here)
@@ -231,7 +236,6 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0] =
       record.fieldRefFor(prefix, scalaFieldName)
   }
-
   @positioned(positioned.here)
   final class SingletonFormat[T](
     @composite val singleton: SingletonCase[T],
@@ -242,18 +246,6 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0] =
       singleton.fieldRefFor(prefix, scalaFieldName)
   }
-
-  sealed trait Case[T] extends TypedMetadata[T] {
-    def info: GenCaseInfo[T]
-    def classTag: ClassTag[T]
-    def sealedParents: List[SealedParent[_]]
-
-    def getField(scalaFieldName: String): Opt[Field[_]]
-    def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0]
-
-    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T]
-  }
-
   @positioned(positioned.here)
   final class RecordCase[T](
     @composite val info: GenCaseInfo[T],
@@ -261,18 +253,12 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     @multi @adtParamMetadata val fields: List[Field[_]],
     @multi @adtCaseSealedParentMetadata val sealedParents: List[SealedParent[_]],
   ) extends Case[T] {
-    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
-      new RecordFormat(this, codec)
-
-    def transparentWrapper: Boolean =
-      info.transparent && fields.size == 1
-
     lazy val fieldsByScalaName: Map[String, Field[_]] =
       fields.toMapBy(_.info.sourceName)
-
+    def asAdtFormat(codec: GenObjectCodec[T]): MongoAdtFormat[T] =
+      new RecordFormat(this, codec)
     def getField(scalaFieldName: String): Opt[Field[_]] =
       fieldsByScalaName.getOpt(scalaFieldName)
-
     def fieldRefFor[E, T0](prefix: MongoRef[E, T], scalaFieldName: String): MongoPropertyRef[E, T0] = {
       val field = fieldsByScalaName.getOrElse(scalaFieldName,
         throw new NoSuchElementException(s"Field $scalaFieldName not found"),
@@ -284,6 +270,8 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
           MongoRef.FieldRef(prefix, field.info.rawName, field.format.value, field.fallbackBson)
       }
     }
+    def transparentWrapper: Boolean =
+      info.transparent && fields.size == 1
   }
 
   @positioned(positioned.here)
@@ -312,7 +300,7 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
     lazy val fallbackBson: Opt[BsonValue] = {
       if (info.optional) Opt(BsonNull.VALUE)
       else whenAbsentAnnot.map(a => Try(a.value)).orElse(defaultValue.map(a => Try(a.value)))
-        .flatMap(_.toOpt).map(v => BsonValueOutput.write(v)(format.value.codec))
+        .flatMap(_.toOpt).map(v => BsonValueOutput.write(v)(using format.value.codec))
     }
   }
 
@@ -322,13 +310,15 @@ object MongoAdtFormat extends AdtMetadataCompanion[MongoAdtFormat] {
   ) extends TypedMetadata[T]
 }
 
-final class MongoEntityMeta[E <: BaseMongoEntity](
+final class MongoEntityMeta[IDType, E <: BaseMongoEntity.Aux[IDType]](
   @infer val format: MongoAdtFormat[E],
-  @infer val idMode: EntityIdMode[E, E#IDType],
+  @infer val idMode: EntityIdMode[E, IDType],
 ) {
-  def idRef: MongoPropertyRef[E, E#IDType] = idMode.idRef(format)
+  def idRef: MongoPropertyRef[E, IDType] = idMode.idRef(format)
 }
-object MongoEntityMeta extends BoundedAdtMetadataCompanion[BaseMongoEntity, Nothing, MongoEntityMeta] {
-  private[typed] def bincompatMeta[E <: BaseMongoEntity](format: MongoAdtFormat[E]): MongoEntityMeta[E] =
+object MongoEntityMeta 
+//  extends BoundedAdtMetadataCompanion[BaseMongoEntity, Nothing, [E <: BaseMongoEntity.Aux[Any]] =>> MongoEntityMeta[Any, E]] 
+  {
+  private[typed] def bincompatMeta[IDType, E <: BaseMongoEntity.Aux[IDType]](format: MongoAdtFormat[E]): MongoEntityMeta[IDType, E] =
     new MongoEntityMeta(format, EntityIdMode.Explicit())
 }

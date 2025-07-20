@@ -24,7 +24,8 @@ object RawRef {
   def create[S]: Creator[S] = new Creator[S] {}
 
   trait Creator[S] {
-    def ref[T](fun: S => T): RawRef = macro macros.serialization.GenRefMacros.rawRef
+    def ref[T](fun: S => T): RawRef = 
+    ??? // macro macros.serialization.GenRefMacros.rawRef
   }
 }
 
@@ -39,7 +40,7 @@ case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {
     GenRef(fun andThen other.fun, RawRef.Composite(rawRef, other.rawRef))
 
   def compose[S0](other: GenRef[S0, S]): GenRef[S0, T] =
-    other andThen this
+    other `andThen` this
 }
 
 object GenRef {
@@ -49,11 +50,13 @@ object GenRef {
   trait Creator[S] {
     type Ref[T] = GenRef[S, T]
 
-    def ref[T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
+    def ref[T](fun: S => T): GenRef[S, T] = 
+    ??? // macro macros.serialization.GenRefMacros.genRef
   }
 
   trait Implicits {
-    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = macro macros.serialization.GenRefMacros.genRef
+    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = 
+    ??? // macro macros.serialization.GenRefMacros.genRef
   }
   object Implicits extends Implicits
 }
