@@ -158,3 +158,4 @@ trait GuavaInterop {
     }
   }
 }
+object GuavaInterop extends GuavaInterop

@@ -10,6 +10,7 @@ import com.avsystem.commons.misc.{Bytes, Timestamp}
 import java.util.UUID
 import scala.annotation.{implicitNotFound, tailrec}
 import scala.collection.Factory
+import com.avsystem.commons.misc.millis
 
 /**
   * Type class for types that can be serialized to [[Output]] (format-agnostic "output stream") and deserialized

@@ -1,6 +1,7 @@
 package com.avsystem.commons
 package jiop
 
+import com.avsystem.commons.jiop.JavaInterop.*
 import com.avsystem.commons.jiop.GuavaInterop._
 import com.google.common.util.concurrent.{MoreExecutors, SettableFuture}
 import org.scalatest.funsuite.AnyFunSuite
@@ -46,7 +47,7 @@ class JavaInteropTest extends AnyFunSuite {
     val input = JArrayList("a", "b", "c", "d", "e", "f", "g")
     assertSame(
       input.scalaStream.map(_.toUpperCase.charAt(0).toInt).filter(_ < 70).asJava,
-      input.stream.map[Int](jFunction(_.toUpperCase.charAt(0).toInt)).filter(jPredicate(_ < 70))
+      input.stream.map[Int](_.toUpperCase.charAt(0).toInt).filter(_ < 70)
     )
   }
 
@@ -55,24 +56,23 @@ class JavaInteropTest extends AnyFunSuite {
 
     assertSame(
       ints.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaIntStream).asJava.boxed,
-      ints.flatMap(jIntFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToInt(jToIntFunction(identity)))).boxed
+      ints.flatMap(i => JArrayList(i - 1, i, i + 1).stream.mapToInt(identity)).boxed
     )
 
     def longs = LongStream.of(1, 2, 3, 4, 5, 6)
 
     assertSame(
       longs.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaLongStream).asJava.boxed,
-      longs.flatMap(jLongFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToLong(jToLongFunction(identity)))).boxed
+      longs.flatMap(i => JArrayList(i - 1, i, i + 1)
+        .stream.mapToLong(identity)).boxed
     )
 
     def doubles = DoubleStream.of(1, 2, 3, 4, 5, 6)
 
     assertSame(
       doubles.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaDoubleStream).asJava.boxed,
-      doubles.flatMap(jDoubleFunction(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToDouble(jToDoubleFunction(identity)))).boxed
+      doubles.flatMap(i => JArrayList(i - 1, i, i + 1)
+        .stream.mapToDouble(identity)).boxed
     )
   }
 
@@ -179,9 +179,12 @@ class JavaInteropTest extends AnyFunSuite {
 
     assert(gfut.isDone == sfut.isCompleted)
 
-    gfut.addListener(jRunnable {
-      listenerCalled = true
-    }, MoreExecutors.directExecutor())
+    gfut.addListener(
+      () => {
+        listenerCalled = true
+      },
+      MoreExecutors.directExecutor(),
+    )
     promise.success(123)
 
     assert(Await.result(sfut, Duration.Inf) == gfut.get)

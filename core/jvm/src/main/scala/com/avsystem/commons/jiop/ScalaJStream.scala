@@ -4,136 +4,141 @@ package jiop
 import scala.annotation.unchecked.{uncheckedVariance => uV}
 import scala.collection.Factory
 
-final class ScalaJStream[+A](private val jStream: JStream[A @uV]) extends AnyVal {
-  def asJava[B >: A]: JStream[B] =
-    jStream.asInstanceOf[JStream[B]]
+opaque type ScalaJStream[+A] = JStream[A @uV]
+object ScalaJStream {
+  def apply[A](jStream: JStream[A]): ScalaJStream[A] = (jStream)
 
-  def close(): Unit =
-    jStream.close()
+  extension [A](jStream: ScalaJStream[A]) {
+    def asJava[B >: A]: JStream[B] =
+      jStream.asInstanceOf[JStream[B]]
 
-  def isParallel: Boolean =
-    jStream.isParallel
+    def close(): Unit =
+      jStream.close()
 
-  def parallel: ScalaJStream[A] =
-    new ScalaJStream(jStream.parallel())
+    def isParallel: Boolean =
+      jStream.isParallel
 
-  def onClose(closeHandler: => Any): ScalaJStream[A] =
-    new ScalaJStream(jStream.onClose(jRunnable(closeHandler)))
+    def parallel: ScalaJStream[A] =
+      ScalaJStream(jStream.parallel())
 
-  def sequential: ScalaJStream[A] =
-    new ScalaJStream(jStream.sequential())
+    def onClose(closeHandler: => Any): ScalaJStream[A] =
+      ScalaJStream(jStream.onClose(jRunnable(closeHandler)))
 
-  def unordered: ScalaJStream[A] =
-    new ScalaJStream(jStream.unordered())
+    def sequential: ScalaJStream[A] =
+      ScalaJStream(jStream.sequential())
 
-  def iterator: Iterator[A] =
-    jStream.iterator().asScala
+    def unordered: ScalaJStream[A] =
+      ScalaJStream(jStream.unordered())
 
-  def asDoubleStream(implicit ev: A <:< Double): ScalaJDoubleStream =
-    mapToDouble(ev)
+    def iterator: Iterator[A] =
+      jStream.iterator().asScala
 
-  def asIntStream(implicit ev: A <:< Int): ScalaJIntStream =
-    mapToInt(ev)
+    def asDoubleStream(using ev: A <:< Double): ScalaJDoubleStream =
+      mapToDouble(ev)
 
-  def asLongStream(implicit ev: A <:< Long): ScalaJLongStream =
-    mapToLong(ev)
+    def asIntStream(using ev: A <:< Int): ScalaJIntStream =
+      mapToInt(ev)
 
-  def allMatch(predicate: A => Boolean): Boolean =
-    jStream.allMatch(jPredicate(predicate))
+    def asLongStream(using ev: A <:< Long): ScalaJLongStream =
+      mapToLong(ev)
 
-  def anyMatch(predicate: A => Boolean): Boolean =
-    jStream.anyMatch(jPredicate(predicate))
+    def allMatch(predicate: A => Boolean): Boolean =
+      jStream.allMatch(jPredicate(predicate))
 
-  def collect[R, B](collector: JCollector[? >: A @uV, B, R]): R =
-    jStream.collect(collector)
+    def anyMatch(predicate: A => Boolean): Boolean =
+      jStream.anyMatch(jPredicate(predicate))
 
-  def collect[R](supplier: => R)(accumulator: (R, A) => Any, combiner: (R, R) => Any): R =
-    jStream.collect(jSupplier(supplier), jBiConsumer(accumulator), jBiConsumer(combiner))
+    def collect[R, B](collector: JCollector[? >: A @uV, B, R]): R =
+      jStream.collect(collector)
 
-  def count: Long =
-    jStream.count()
+    def collect[R](supplier: => R)(accumulator: (R, A) => Any, combiner: (R, R) => Any): R =
+      jStream.collect(() => supplier, accumulator(_, _), combiner(_, _))
 
-  def distinct: ScalaJStream[A] =
-    new ScalaJStream(jStream.distinct())
+    def count: Long =
+      jStream.count()
 
-  def filter(predicate: A => Boolean): ScalaJStream[A] =
-    new ScalaJStream(jStream.filter(jPredicate(predicate)))
+    def distinct: ScalaJStream[A] =
+      ScalaJStream(jStream.distinct())
 
-  def findAny: Option[A] =
-    jStream.findAny().asScala
+    def filter(predicate: A => Boolean): ScalaJStream[A] =
+      ScalaJStream(jStream.filter(predicate(_)))
 
-  def findFirst: Option[A] =
-    jStream.findFirst().asScala
+    def findAny: Option[A] =
+      jStream.findAny().asScala
 
-  def flatMap[R](mapper: A => ScalaJStream[R]): ScalaJStream[R] =
-    new ScalaJStream(jStream.flatMap(jFunction(t => mapper(t).jStream)))
+    def findFirst: Option[A] =
+      jStream.findFirst().asScala
 
-  def flatMapToDouble(mapper: A => ScalaJDoubleStream): ScalaJDoubleStream =
-    new ScalaJDoubleStream(jStream.flatMapToDouble(jFunction(t => mapper(t).asJava)))
+    def flatMap[R](mapper: A => ScalaJStream[R]): ScalaJStream[R] =
+      ScalaJStream(jStream.flatMap(t => mapper(t)))
 
-  def flatMapToInt(mapper: A => ScalaJIntStream): ScalaJIntStream =
-    new ScalaJIntStream(jStream.flatMapToInt(jFunction(t => mapper(t).asJava)))
+    def flatMapToDouble(mapper: A => ScalaJDoubleStream): ScalaJDoubleStream =
+      ScalaJDoubleStream(jStream.flatMapToDouble(jFunction(t => mapper(t).asJava)))
 
-  def flatMapToLong(mapper: A => ScalaJLongStream): ScalaJLongStream =
-    new ScalaJLongStream(jStream.flatMapToLong(jFunction(t => mapper(t).asJava)))
+    def flatMapToInt(mapper: A => ScalaJIntStream): ScalaJIntStream =
+      ScalaJIntStream((jStream: JStream[A]).flatMapToInt(t => mapper(t).asJava))
 
-  def forEach(action: A => Any): Unit =
-    jStream.forEach(jConsumer(action))
+    def flatMapToLong(mapper: A => ScalaJLongStream): ScalaJLongStream =
+      ScalaJLongStream(jStream.flatMapToLong(t => mapper(t).asJava))
 
-  def forEachOrdered(action: A => Any): Unit =
-    jStream.forEachOrdered(jConsumer(action))
+    def forEach(action: A => Any): Unit =
+      jStream.forEach(jConsumer(action))
 
-  def limit(maxSize: Long): ScalaJStream[A] =
-    new ScalaJStream(jStream.limit(maxSize))
+    def forEachOrdered(action: A => Any): Unit =
+      jStream.forEachOrdered(jConsumer(action))
 
-  def map[R](mapper: A => R): ScalaJStream[R] =
-    new ScalaJStream(jStream.map[R](jFunction(mapper)))
+    def limit(maxSize: Long): ScalaJStream[A] =
+      ScalaJStream(jStream.limit(maxSize))
 
-  def mapToDouble(mapper: A => Double): ScalaJDoubleStream =
-    new ScalaJDoubleStream(jStream.mapToDouble(jToDoubleFunction(mapper)))
+    def map[R](mapper: A => R): ScalaJStream[R] =
+      ScalaJStream(jStream.map[R](mapper(_)))
 
-  def mapToInt(mapper: A => Int): ScalaJIntStream =
-    new ScalaJIntStream(jStream.mapToInt(jToIntFunction(mapper)))
+    def mapToDouble(mapper: A => Double): ScalaJDoubleStream =
+      ScalaJDoubleStream(jStream.mapToDouble(mapper(_)))
 
-  def mapToLong(mapper: A => Long): ScalaJLongStream =
-    new ScalaJLongStream(jStream.mapToLong(jToLongFunction(mapper)))
+    def mapToInt(mapper: A => Int): ScalaJIntStream =
+      ScalaJIntStream(jStream.mapToInt(mapper(_)))
 
-  def max(comparator: (A, A) => Int): Option[A] =
-    jStream.max(jComparator(comparator)).asScala
+    def mapToLong(mapper: A => Long): ScalaJLongStream =
+      ScalaJLongStream(jStream.mapToLong(mapper(_)))
 
-  def min(comparator: (A, A) => Int): Option[A] =
-    jStream.min(jComparator(comparator)).asScala
+    def max(comparator: (A, A) => Int): Option[A] =
+      jStream.max(comparator(_, _)).asScala
 
-  def noneMatch(predicate: A => Boolean): Boolean =
-    jStream.noneMatch(jPredicate(predicate))
+    def min(comparator: (A, A) => Int): Option[A] =
+      jStream.min(comparator(_, _)).asScala
 
-  def peek(action: A => Any): ScalaJStream[A] =
-    new ScalaJStream(jStream.peek(jConsumer(action)))
+    def noneMatch(predicate: A => Boolean): Boolean =
+      jStream.noneMatch(predicate(_))
 
-  def reduce[B >: A](accumulator: (B, B) => B): Option[B] =
-    jStream.asInstanceOf[JStream[B]].reduce(jBinaryOperator(accumulator)).asScala
+    def peek(action: A => Any): ScalaJStream[A] =
+      ScalaJStream(jStream.peek(jConsumer(action)))
 
-  def reduce[B >: A](identity: B)(accumulator: (B, B) => B): B =
-    jStream.asInstanceOf[JStream[B]].reduce(identity, jBinaryOperator(accumulator))
+    def reduce[B >: A](accumulator: (B, B) => B): Option[B] =
+      jStream.asInstanceOf[JStream[B]].reduce(accumulator(_, _)).asScala
 
-  def reduce[U](identity: U)(accumulator: (U, A) => U, combiner: (U, U) => U): U =
-    jStream.reduce(identity, jBiFunction(accumulator), jBinaryOperator(combiner))
+    def reduce[B >: A](identity: B)(accumulator: (B, B) => B): B =
+      jStream.asInstanceOf[JStream[B]].reduce(identity, accumulator(_, _))
 
-  def skip(n: Long): ScalaJStream[A] =
-    new ScalaJStream(jStream.skip(n))
+    def reduce[U](identity: U)(accumulator: (U, A) => U, combiner: (U, U) => U): U =
+      jStream.reduce(identity, accumulator(_, _), combiner(_, _))
 
-  def sorted: ScalaJStream[A] =
-    new ScalaJStream(jStream.sorted)
+    def skip(n: Long): ScalaJStream[A] =
+      ScalaJStream(jStream.skip(n))
 
-  def sorted(comparator: (A, A) => Int): ScalaJStream[A] =
-    new ScalaJStream(jStream.sorted(jComparator(comparator)))
+    def sorted: ScalaJStream[A] =
+      ScalaJStream(jStream.sorted)
 
-  def toArray[B >: A <: AnyRef : ClassTag]: Array[B] =
-    jStream.toArray[B](jIntFunction(n => new Array[B](n)))
+    def sorted(comparator: (A, A) => Int): ScalaJStream[A] =
+      ScalaJStream(jStream.sorted(comparator(_, _)))
 
-  def to[C](fac: Factory[A, C]): C = {
-    val b = fac.newBuilder
-    forEachOrdered(b += _)
-    b.result()
+    def toArray[B >: A <: AnyRef : ClassTag]: Array[B] =
+      jStream.toArray[B](n => Array.ofDim[B](n))
+
+    def to[C](fac: Factory[A, C]): C = {
+      val b = fac.newBuilder
+      forEachOrdered(b += _)
+      b.result()
+    }
   }
 }

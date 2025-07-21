@@ -7,18 +7,16 @@ import org.scalatest.matchers.should.Matchers
 
 class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("mkMap") {
-    List.range(0, 3).mkMap(identity, _.toString) shouldEqual
-      Map(0 -> "0", 1 -> "1", 2 -> "2")
+    List.range(0, 3).mkMap(identity, _.toString).shouldEqual(Map(0 -> "0", 1 -> "1", 2 -> "2"))
   }
 
   test("groupToMap") {
-    List.range(0, 10).groupToMap(_ % 3, _.toString) shouldEqual
-      Map(0 -> List("0", "3", "6", "9"), 1 -> List("1", "4", "7"), 2 -> List("2", "5", "8"))
+    List.range(0, 10).groupToMap(_ % 3, _.toString).shouldEqual(Map(0 -> List("0", "3", "6", "9"), 1 -> List("1", "4", "7"), 2 -> List("2", "5", "8")))
   }
 
   test("maxOpt") {
-    List.range(0, 10).maxOpt shouldEqual Opt(9)
-    List.empty[Int].maxOpt shouldEqual Opt.Empty
+    List.range(0, 10).maxOpt.shouldEqual(Opt(9))
+    List.empty[Int].maxOpt.shouldEqual(Opt.Empty)
   }
 
   test("Future.eval") {
@@ -57,7 +55,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
 
     val p = Promise[Int]()
     val ex = new RuntimeException
-    val in = (1 to 10).toVector
+    val in = 1.to(10).toVector
 
     def fun(i: Int): Future[Int] = i match {
       case 2 => Future.failed(ex)
@@ -182,7 +180,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
     assert(it.hasNext) //flatCollect should not consume eagerly
     assert(fc.hasNext)
     assert(!it.hasNext)
-    fc.toSeq should contain theSameElementsInOrderAs Seq(-42, 42)
+    fc.toSeq.should(contain).theSameElementsInOrderAs(Seq(-42, 42))
   }
 
   test("partitionEither") {

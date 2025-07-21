@@ -8,7 +8,7 @@ import GenCodec._
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   given [T]: GenCodec[T] = ???
-  
+
   test("java collections") {
     testRoundtrip[JCollection[Int]](jArrayList)
     testRoundtrip[JList[Int]](jArrayList)
@@ -210,7 +210,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 
   test("typed map") {
     import SealedKey._
-//    testRoundtrip(TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true))
+    //    testRoundtrip(TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true))
   }
 
   test("customized flat sealed hierarchy") {
@@ -239,11 +239,12 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
       testRoundtrip[StepOne](StepOne(StepTwo(Opt.Empty)))
       testRoundtrip[StepOne](StepOne(StepTwo(Opt(StepOne(StepTwo(Opt.Empty))))))
     }
-    testWithCodec(GenCodec.materializeRecursively)
-    testWithCodec {
+    testWithCodec(using GenCodec.materializeRecursively)
+    testWithCodec(using {
       implicit val implCodec: GenCodec[StepOne] = GenCodec.materializeRecursively
       implCodec
     }
+    )
   }
 
   test("auto materialized key codec") {

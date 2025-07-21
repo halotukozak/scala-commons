@@ -16,8 +16,7 @@ trait JBasicUtils {
   @MayBeReplacedWith("cmp(_,_)")
   def jComparator[T](cmp: (T, T) => Int): Comparator[T] = Sam[Comparator[T]](cmp)
 
-  implicit def jDateTimestampConversions(date: JDate): TimestampConversions =
-    new TimestampConversions(date.getTime)
+  given Conversion[JDate, TimestampConversions] = date => TimestampConversions(date.getTime)
 
   type JByte = jl.Byte
   type JShort = jl.Short

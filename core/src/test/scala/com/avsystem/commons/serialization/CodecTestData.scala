@@ -364,7 +364,7 @@ object CodecTestData {
 
   locally {
     case class LocalStuff()
-    object LocalStuff extends HasGenCodec[LocalStuff]()(MacroInstances.materialize)
+    object LocalStuff extends HasGenCodec[LocalStuff]()(using MacroInstances.materialize)
   }
 
   trait GeneratorBase {

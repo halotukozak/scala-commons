@@ -121,7 +121,7 @@ trait SharedExtensions {
   }
 
   extension [A](a: => A) {
-    def evalFuture: Future[A] = FutureCompanionOps.eval(a)
+    def evalFuture: Future[A] = Future.eval(a)
 
     def evalTry: Try[A] = Try(a)
 
@@ -299,7 +299,7 @@ trait SharedExtensions {
     }
   }
 
-  object FutureCompanionOps {
+  extension (companion: Future.type) {
     /**
       * Evaluates an expression and wraps its value into a `Future`. Failed `Future` is returned if expression
       * evaluation throws an exception. This is very similar to `Future.apply` but evaluates the argument immediately,
@@ -448,7 +448,7 @@ trait SharedExtensions {
     }
   }
 
-  object TryCompanionOps {
+  extension (companion: Try.type) {
 
     /** Simple version of `TryOps.traverse`. Transforms a `IterableOnce[Try[A]]` into a `Try[IterableOnce[A]]`.
       * Useful for reducing many `Try`s into a single `Try`.
@@ -706,7 +706,7 @@ trait SharedExtensions {
     def distinct: Iterator[A] = distinctBy(identity)
   }
 
-  object IteratorCompanionOps {
+  extension (companion: Iterator.type) {
     def untilEmpty[T](elem: => Opt[T]): Iterator[T] =
       new AbstractIterator[T] {
         private var fetched = false
@@ -773,3 +773,4 @@ trait SharedExtensions {
       orElse(Ordering.by(f))
   }
 }
+object SharedExtensions extends SharedExtensions
