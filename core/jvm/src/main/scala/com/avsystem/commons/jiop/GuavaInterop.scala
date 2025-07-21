@@ -4,7 +4,6 @@ package jiop
 import com.avsystem.commons.annotation.MayBeReplacedWith
 
 import java.util.concurrent.{Executor, TimeUnit}
-import com.avsystem.commons.jiop.GuavaInterop.*
 import com.avsystem.commons.misc.Sam
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
 import com.google.common.base as gbase
@@ -25,18 +24,7 @@ trait GuavaInterop {
   @MayBeReplacedWith("pred(_)")
   def gPredicate[T](pred: T => Boolean) = Sam[GPredicate[T]](pred)
 
-  implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
-    new DecorateFutureAsScala(gfut)
-
-  implicit def toDecorateAsScalaPromise[T](gfut: SettableFuture[T]): DecorateSettableFutureAsScala[T] =
-    new DecorateSettableFutureAsScala(gfut)
-
-  implicit def toDecorateAsGuava[T](fut: Future[T]): DecorateFutureAsGuava[T] =
-    new DecorateFutureAsGuava(fut)
-}
-
-object GuavaInterop extends GuavaInterop {
-  class DecorateFutureAsScala[T](private val gfut: ListenableFuture[T]) extends AnyVal {
+  extension [T](gfut: ListenableFuture[T]) {
     def asScala: Future[T] = gfut match {
       case FutureAsListenableFuture(fut) => fut
       case _ => ListenableFutureAsScala(gfut)
@@ -46,11 +34,11 @@ object GuavaInterop extends GuavaInterop {
       asScala.toUnit
   }
 
-  class DecorateSettableFutureAsScala[T](private val gfut: SettableFuture[T]) extends AnyVal {
+  extension [T](gfut: SettableFuture[T]) {
     def asScalaPromise: Promise[T] = new SettableFutureAsPromise(gfut)
   }
 
-  class DecorateFutureAsGuava[T](private val fut: Future[T]) extends AnyVal {
+  extension [T](fut: Future[T]) {
     def asGuava: ListenableFuture[T] = fut match {
       case ListenableFutureAsScala(gfut) => gfut
       case _ => FutureAsListenableFuture(fut)
@@ -64,7 +52,7 @@ object GuavaInterop extends GuavaInterop {
     def isCompleted: Boolean =
       gfut.isDone
 
-    def onComplete[U](f: Try[T] => U)(implicit ec: ExecutionContext): Unit = {
+    def onComplete[U](f: Try[T] => U)(using ec: ExecutionContext): Unit = {
       val callback = new FutureCallback[T] {
         def onFailure(t: Throwable): Unit = f(Failure(t))
         def onSuccess(result: T): Unit = f(Success(result))
@@ -79,7 +67,7 @@ object GuavaInterop extends GuavaInterop {
       Futures.addCallback(gfut, callback, executor)
     }
 
-    def transform[S](f: Try[T] => Try[S])(implicit executor: ExecutionContext): Future[S] = {
+    def transform[S](f: Try[T] => Try[S])(using ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
         p.complete(try f(r) catch {
@@ -89,7 +77,7 @@ object GuavaInterop extends GuavaInterop {
       p.future
     }
 
-    def transformWith[S](f: Try[T] => Future[S])(implicit executor: ExecutionContext): Future[S] = {
+    def transformWith[S](f: Try[T] => Future[S])(using ExecutionContext): Future[S] = {
       val p = Promise[S]()
       onComplete { r =>
         try p.completeWith(f(r)) catch {

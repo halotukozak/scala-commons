@@ -9,57 +9,7 @@ import scala.collection.{AbstractIterator, BuildFrom, Factory, mutable}
 
 trait SharedExtensions {
 
-  import com.avsystem.commons.SharedExtensionsUtils.*
-
-  implicit def universalOps[A](a: A): UniversalOps[A] = new UniversalOps(a)
-
-  implicit def lazyUniversalOps[A](a: => A): LazyUniversalOps[A] = new LazyUniversalOps(() => a)
-
-  implicit def nullableOps[A >: Null](a: A): NullableOps[A] = new NullableOps(a)
-
-  implicit def stringOps(str: String): StringOps = new StringOps(str)
-
-  implicit def intOps(int: Int): IntOps = new IntOps(int)
-
-  implicit def futureOps[A](fut: Future[A]): FutureOps[A] = new FutureOps(fut)
-
-  implicit def lazyFutureOps[A](fut: => Future[A]): LazyFutureOps[A] = new LazyFutureOps(() => fut)
-
-  implicit def futureCompanionOps(fut: Future.type): FutureCompanionOps.type = FutureCompanionOps
-
-  implicit def optionOps[A](option: Option[A]): OptionOps[A] = new OptionOps(option)
-
-  implicit def tryOps[A](tr: Try[A]): TryOps[A] = new TryOps(tr)
-
-  implicit def lazyTryOps[A](tr: => Try[A]): LazyTryOps[A] = new LazyTryOps(() => tr)
-
-  implicit def tryCompanionOps(trc: Try.type): TryCompanionOps.type = TryCompanionOps
-
-  implicit def partialFunctionOps[A, B](pf: PartialFunction[A, B]): PartialFunctionOps[A, B] =
-    new PartialFunctionOps(pf)
-
-  implicit def setOps[A](set: BSet[A]): SetOps[A] = new SetOps(set)
-
-  implicit def iterableOnceOps[C[X] <: IterableOnce[X], A](coll: C[A]): IterableOnceOps[C, A] =
-    new IterableOnceOps(coll)
-
-  implicit def iterableOps[C[X] <: BIterable[X], A](coll: C[A]): IterableOps[C, A] = new IterableOps(coll)
-
-  implicit def pairIterableOnceOps[C[X] <: IterableOnce[X], K, V](coll: C[(K, V)]): PairIterableOnceOps[C, K, V] =
-    new PairIterableOnceOps(coll)
-
-  implicit def mapOps[M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]): MapOps[M, K, V] = new MapOps(map)
-
-  implicit def iteratorOps[A](it: Iterator[A]): IteratorOps[A] = new IteratorOps(it)
-
-  implicit def iteratorCompanionOps(it: Iterator.type): IteratorCompanionOps.type = IteratorCompanionOps
-
-  implicit def orderingOps[A](ordering: Ordering[A]): OrderingOps[A] = new OrderingOps(ordering)
-}
-object SharedExtensions extends SharedExtensions
-
-object SharedExtensionsUtils extends SharedExtensions {
-  class UniversalOps[A](private val a: A) extends AnyVal {
+  extension [A](a: A) {
     /**
       * The "pipe" operator. Alternative syntax to apply a function on an argument.
       * Useful for fluent expressions and avoiding intermediate variables.
@@ -170,35 +120,35 @@ object SharedExtensionsUtils extends SharedExtensions {
     def debugMacro: A = a
   }
 
-  class LazyUniversalOps[A](private val a: () => A) extends AnyVal {
-    def evalFuture: Future[A] = FutureCompanionOps.eval(a())
+  extension [A](a: => A) {
+    def evalFuture: Future[A] = FutureCompanionOps.eval(a)
 
-    def evalTry: Try[A] = Try(a())
+    def evalTry: Try[A] = Try(a)
 
     def optIf(condition: Boolean): Opt[A] =
-      if (condition) Opt(a()) else Opt.Empty
+      if (condition) Opt(a) else Opt.Empty
 
     def optionIf(condition: Boolean): Option[A] =
-      if (condition) Some(a()) else None
+      if (condition) Some(a) else None
 
     def recoverFrom[T <: Throwable : ClassTag](fallbackValue: => A): A =
-      try a() catch {
+      try a catch {
         case _: T => fallbackValue
       }
 
     def recoverToOpt[T <: Throwable : ClassTag]: Opt[A] =
-      try Opt(a()) catch {
+      try Opt(a) catch {
         case _: T => Opt.Empty
       }
   }
 
-  class NullableOps[A >: Null](private val a: A) extends AnyVal {
+  extension [A >: Null](a: A) {
     def optRef: OptRef[A] = OptRef(a)
   }
 
   private val RemovableLineBreak = "\\n+".r
 
-  class StringOps(private val str: String) extends AnyVal {
+  extension (str: String) {
     /**
       * Makes sure that `String` value is not `null` by replacing `null` with empty string.
       */
@@ -253,7 +203,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       }
   }
 
-  class IntOps(private val int: Int) extends AnyVal {
+  extension (int: Int) {
     def times(code: => Any): Unit = {
       var i = 0
       while (i < int) {
@@ -263,7 +213,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     }
   }
 
-  class FutureOps[A](private val fut: Future[A]) extends AnyVal {
+  extension [A](fut: Future[A]) {
     def onCompleteNow[U](f: Try[A] => U): Unit =
       fut.onComplete(f)(using RunNowEC)
 
@@ -334,7 +284,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       thenReturn(Future.successful {})
   }
 
-  class LazyFutureOps[A](private val fut: () => Future[A]) extends AnyVal {
+  extension [A](fut: => Future[A]) {
     /**
       * Evaluates a left-hand-side expression that returns a `Future` and ensures that all exceptions thrown by
       * that expression are converted to a failed `Future`.
@@ -342,7 +292,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * `NullPointerException`.
       */
     def catchFailures: Future[A] = {
-      val result = try fut() catch {
+      val result = try fut catch {
         case NonFatal(t) => Future.failed(t)
       }
       if (result != null) result else Future.failed(new NullPointerException("null Future"))
@@ -397,7 +347,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       traverseCompleted(in)(identity)
   }
 
-  class OptionOps[A](private val option: Option[A]) extends AnyVal {
+  extension [A](option: Option[A]) {
     /**
       * Converts this `Option` into `Opt`. Because `Opt` cannot hold `null`, `Some(null)` is translated to `Opt.Empty`.
       */
@@ -442,7 +392,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       option.fold(ifEmpty)(f)
   }
 
-  class TryOps[A](private val tr: Try[A]) extends AnyVal {
+  extension [A](tr: Try[A]) {
     /**
       * Converts this `Try` into `Opt`. Because `Opt` cannot hold `null`, `Success(null)` is translated to `Opt.Empty`.
       */
@@ -488,12 +438,12 @@ object SharedExtensionsUtils extends SharedExtensions {
     }
   }
 
-  class LazyTryOps[A](private val tr: () => Try[A]) extends AnyVal {
+  extension [A](tr: => Try[A]) {
     /**
       * Evaluates a left-hand side expression that return `Try`,
       * catches all exceptions and converts them into a `Failure`.
       */
-    def catchFailures: Try[A] = try tr() catch {
+    def catchFailures: Try[A] = try tr catch {
       case NonFatal(t) => Failure(t)
     }
   }
@@ -525,10 +475,7 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   }
 
-  class PartialFunctionOps[A, B](private val pf: PartialFunction[A, B]) extends AnyVal {
-
-    import PartialFunctionOps.*
-
+  extension [A, B](pf: PartialFunction[A, B]) {
     /**
       * The same thing as `orElse` but with arguments flipped.
       * Useful in situations where `orElse` would have to be called on a partial function literal,
@@ -536,27 +483,27 @@ object SharedExtensionsUtils extends SharedExtensions {
       */
     def unless(pre: PartialFunction[A, B]): PartialFunction[A, B] = pre orElse pf
 
-    def applyNOpt(a: A): NOpt[B] = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
-      case NoValueMarker => NOpt.Empty
+    def applyNOpt(a: A): NOpt[B] = pf.applyOrElse[A, Any](a, PartialFunctionOps.NoValueMarkerFunc) match {
+      case PartialFunctionOps.NoValueMarker => NOpt.Empty
       case rawValue => NOpt.some(rawValue.asInstanceOf[B])
     }
 
-    def applyOpt(a: A): Opt[B] = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
-      case NoValueMarker => Opt.Empty
+    def applyOpt(a: A): Opt[B] = pf.applyOrElse[A, Any](a, PartialFunctionOps.NoValueMarkerFunc) match {
+      case PartialFunctionOps.NoValueMarker => Opt.Empty
       case rawValue => Opt(rawValue.asInstanceOf[B])
     }
 
-    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse[A, Any](a, NoValueMarkerFunc) match {
-      case NoValueMarker => forEmpty(a)
+    def fold[C](a: A)(forEmpty: A => C, forNonEmpty: B => C): C = pf.applyOrElse[A, Any](a, PartialFunctionOps.NoValueMarkerFunc) match {
+      case PartialFunctionOps.NoValueMarker => forEmpty(a)
       case rawValue => forNonEmpty(rawValue.asInstanceOf[B])
     }
   }
   object PartialFunctionOps {
-    private object NoValueMarker
-    private final val NoValueMarkerFunc = (_: Any) => NoValueMarker
+    private[SharedExtensions] object NoValueMarker
+    private[SharedExtensions] final val NoValueMarkerFunc = (_: Any) => NoValueMarker
   }
 
-  class IterableOnceOps[C[X] <: IterableOnce[X], A](private val coll: C[A]) extends AnyVal {
+  extension [C[X] <: IterableOnce[X], A](coll: C[A]) {
     private def it: Iterator[A] = coll.iterator
 
     def toSized[To](fac: Factory[A, To], sizeHint: Int): To = {
@@ -641,7 +588,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     }
   }
 
-  class PairIterableOnceOps[C[X] <: IterableOnce[X], K, V](private val coll: C[(K, V)]) extends AnyVal {
+  extension [C[X] <: IterableOnce[X], K, V](coll: C[(K, V)]) {
     def intoMap[M[X, Y] <: BMap[X, Y]](implicit fac: Factory[(K, V), M[K, V]]): M[K, V] = {
       val builder = fac.newBuilder
       coll.iterator.foreach(builder += _)
@@ -649,32 +596,30 @@ object SharedExtensionsUtils extends SharedExtensions {
     }
   }
 
-  class SetOps[A](private val set: BSet[A]) extends AnyVal {
+  extension [A](set: BSet[A]) {
     def containsAny(other: BIterable[A]): Boolean = other.exists(set.contains)
 
     def containsAll(other: BIterable[A]): Boolean = other.forall(set.contains)
   }
 
-  class IterableOps[C[X] <: BIterable[X], A](private val coll: C[A]) extends AnyVal {
+  extension [C[X] <: BIterable[X], A](coll: C[A]) {
     def headOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.head)
 
     def lastOpt: Opt[A] = if (coll.isEmpty) Opt.Empty else Opt(coll.last)
   }
 
-  class MapOps[M[X, Y] <: BMap[X, Y], K, V](private val map: M[K, V]) extends AnyVal {
-
-    import MapOps.*
+  extension [M[X, Y] <: BMap[X, Y], K, V](map: M[K, V]) {
 
     def getOpt(key: K): Opt[V] = map.get(key).toOpt
 
     /** For iterating, filtering, mapping etc without having to use tuples */
-    def entries: Iterator[Entry[K, V]] = map.iterator.map { case (k, v) => Entry(k, v) }
+    def entries: Iterator[MapOps.Entry[K, V]] = map.iterator.map { case (k, v) => MapOps.Entry(k, v) }
   }
   object MapOps {
     case class Entry[K, V](key: K, value: V)
   }
 
-  class IteratorOps[A](private val it: Iterator[A]) extends AnyVal {
+  extension [A](it: Iterator[A]) {
     def pairs: Iterator[(A, A)] = new AbstractIterator[(A, A)] {
       private var first: NOpt[A] = NOpt.empty
 
@@ -817,7 +762,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       }
   }
 
-  final class OrderingOps[A](private val ordering: Ordering[A]) extends AnyVal {
+  extension [A](ordering: Ordering[A]) {
     def orElse(whenEqual: Ordering[A]): Ordering[A] =
       (x, y) => ordering.compare(x, y) match {
         case 0 => whenEqual.compare(x, y)
