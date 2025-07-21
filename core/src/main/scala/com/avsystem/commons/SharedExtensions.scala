@@ -1,5 +1,6 @@
 package com.avsystem.commons
 
+import com.avsystem.commons.annotation.MayBeReplacedWith
 import com.avsystem.commons.concurrent.RunNowEC
 import com.avsystem.commons.misc.*
 
@@ -91,6 +92,7 @@ object SharedExtensionsUtils extends SharedExtensions {
     def unboxedOpt[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
       opt.map(unboxing.fun)
 
+    @MayBeReplacedWith(".nn")
     def checkNotNull(msg: String): A =
       if (a != null) a else throw new NullPointerException(msg)
 
@@ -109,6 +111,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       * }
       * }}}
       */
+    @MayBeReplacedWith(".tap")
     def setup(code: A => Any): A = {
       code(a)
       a
@@ -128,6 +131,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       *   }
       * }}}
       */
+    @MayBeReplacedWith("@unchecked")
     def uncheckedMatch[B](pf: PartialFunction[A, B]): B =
       pf.applyOrElse(a, (obj: A) => throw new MatchError(obj))
 
@@ -261,22 +265,22 @@ object SharedExtensionsUtils extends SharedExtensions {
 
   class FutureOps[A](private val fut: Future[A]) extends AnyVal {
     def onCompleteNow[U](f: Try[A] => U): Unit =
-      fut.onComplete(f)(RunNowEC)
+      fut.onComplete(f)(using RunNowEC)
 
     def andThenNow[U](pf: PartialFunction[Try[A], U]): Future[A] =
-      fut.andThen(pf)(RunNowEC)
+      fut.andThen(pf)(using RunNowEC)
 
     def foreachNow[U](f: A => U): Unit =
-      fut.foreach(f)(RunNowEC)
+      fut.foreach(f)(using RunNowEC)
 
     def transformNow[S](s: A => S, f: Throwable => Throwable): Future[S] =
-      fut.transform(s, f)(RunNowEC)
+      fut.transform(s, f)(using RunNowEC)
 
     def transformNow[S](f: Try[A] => Try[S]): Future[S] =
-      fut.transform(f)(RunNowEC)
+      fut.transform(f)(using RunNowEC)
 
     def transformWithNow[S](f: Try[A] => Future[S]): Future[S] =
-      fut.transformWith(f)(RunNowEC)
+      fut.transformWith(f)(using RunNowEC)
 
     def wrapToTry: Future[Try[A]] =
       fut.transformNow(Success(_))
@@ -285,28 +289,28 @@ object SharedExtensionsUtils extends SharedExtensions {
       * Maps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
     def mapNow[B](f: A => B): Future[B] =
-      fut.map(f)(RunNowEC)
+      fut.map(f)(using RunNowEC)
 
     /**
       * FlatMaps a `Future` using [[concurrent.RunNowEC RunNowEC]].
       */
     def flatMapNow[B](f: A => Future[B]): Future[B] =
-      fut.flatMap(f)(RunNowEC)
+      fut.flatMap(f)(using RunNowEC)
 
     def filterNow(p: A => Boolean): Future[A] =
-      fut.filter(p)(RunNowEC)
+      fut.filter(p)(using RunNowEC)
 
     def collectNow[B](pf: PartialFunction[A, B]): Future[B] =
-      fut.collect(pf)(RunNowEC)
+      fut.collect(pf)(using RunNowEC)
 
     def recoverNow[U >: A](pf: PartialFunction[Throwable, U]): Future[U] =
-      fut.recover(pf)(RunNowEC)
+      fut.recover(pf)(using RunNowEC)
 
     def recoverWithNow[B >: A](pf: PartialFunction[Throwable, Future[B]]): Future[B] =
-      fut.recoverWith(pf)(RunNowEC)
+      fut.recoverWith(pf)(using RunNowEC)
 
     def zipWithNow[B, R](that: Future[B])(f: (A, B) => R): Future[R] =
-      fut.zipWith(that)(f)(RunNowEC)
+      fut.zipWith(that)(f)(using RunNowEC)
 
     def toUnit: Future[Unit] =
       mapNow(_ => ())
@@ -319,7 +323,7 @@ object SharedExtensionsUtils extends SharedExtensions {
       */
     def thenReturn[T](result: Future[T]): Future[T] = {
       val p = Promise[T]()
-      fut.onComplete(_ => p.completeWith(result))(RunNowEC)
+      fut.onComplete(_ => p.completeWith(result))(using RunNowEC)
       p.future
     }
 
@@ -740,7 +744,7 @@ object SharedExtensionsUtils extends SharedExtensions {
         private val seen = new MHashSet[B]
         private var nextDistinct = NOpt.empty[A]
 
-//        @tailrec 
+        //        @tailrec 
         override final def hasNext: Boolean = nextDistinct.nonEmpty || it.hasNext && {
           nextDistinct = NOpt.some(it.next()).filter(a => seen.add(f(a)))
           hasNext

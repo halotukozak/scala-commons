@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package misc
 
+import com.avsystem.commons.annotation.MayBeReplacedWith
+
 object Sam {
   /**
     * Implements a single abstract method trait/class `T` using passed function or expression as implementation

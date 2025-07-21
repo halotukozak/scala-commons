@@ -133,7 +133,6 @@ trait RPCFramework {
     // may be completely unused on the JS side and we want to make sure that DCE gets rid of them.
     implicit def asRealRPC: AsRealRPC[RealRPC] = ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
     implicit def asRawRPC: AsRawRPC[RealRPC] = ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
-    implicit def metadata: RPCMetadata[RealRPC]
-    ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
+    implicit def metadata: RPCMetadata[RealRPC] = ??? // macro macros.rpc.RPCFrameworkMacros.typeClassFromFullInfo
   }
 }

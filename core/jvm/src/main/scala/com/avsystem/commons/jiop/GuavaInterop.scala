@@ -1,12 +1,13 @@
 package com.avsystem.commons
 package jiop
 
-import java.util.concurrent.{Executor, TimeUnit}
+import com.avsystem.commons.annotation.MayBeReplacedWith
 
-import com.avsystem.commons.jiop.GuavaInterop._
+import java.util.concurrent.{Executor, TimeUnit}
+import com.avsystem.commons.jiop.GuavaInterop.*
 import com.avsystem.commons.misc.Sam
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture, SettableFuture}
-import com.google.common.{base => gbase}
+import com.google.common.base as gbase
 
 import scala.annotation.unchecked.uncheckedVariance
 import scala.concurrent.duration.Duration
@@ -17,8 +18,11 @@ trait GuavaInterop {
   type GSupplier[T] = gbase.Supplier[T]
   type GPredicate[T] = gbase.Predicate[T]
 
+  @MayBeReplacedWith("fun(_,_)")
   def gFunction[F, T](fun: F => T) = Sam[GFunction[F, T]](fun)
+  @MayBeReplacedWith("() => expr")
   def gSupplier[T](expr: => T) = Sam[GSupplier[T]](expr)
+  @MayBeReplacedWith("pred(_)")
   def gPredicate[T](pred: T => Boolean) = Sam[GPredicate[T]](pred)
 
   implicit def toDecorateAsScala[T](gfut: ListenableFuture[T]): DecorateFutureAsScala[T] =
@@ -56,7 +60,7 @@ object GuavaInterop extends GuavaInterop {
       fut.toVoid.asGuava
   }
 
-  private case class ListenableFutureAsScala[+T](gfut: ListenableFuture[T@uncheckedVariance]) extends Future[T] {
+  private case class ListenableFutureAsScala[+T](gfut: ListenableFuture[T @uncheckedVariance]) extends Future[T] {
     def isCompleted: Boolean =
       gfut.isDone
 
@@ -95,7 +99,7 @@ object GuavaInterop extends GuavaInterop {
       p.future
     }
 
-    private def unwrapFailures(expr: => T): T =
+    private def unwrapFailures(expr: => T @uncheckedVariance): T =
       try expr catch {
         case ee: ExecutionException => throw ee.getCause
       }
@@ -132,7 +136,7 @@ object GuavaInterop extends GuavaInterop {
             executor.execute(runnable)
         }
       }
-      fut.onComplete(_ => listener.run())(ec)
+      fut.onComplete(_ => listener.run())(using ec)
     }
 
     def isCancelled: Boolean =

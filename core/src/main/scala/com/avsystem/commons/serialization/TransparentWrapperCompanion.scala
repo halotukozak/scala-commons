@@ -1,12 +1,15 @@
 package com.avsystem.commons
 package serialization
 
+import com.avsystem.commons.annotation.MayBeReplacedWith
+
 /**
   * A typeclass which serves as evidence that some type `T` is a "transparent" wrapper of some other type.
   * This usually means that instances of various typeclasses (e.g. [[GenCodec]]) for type `T` could be automatically
   * derived from instances for the wrapped type. How this actually happens is decided in each typeclass which can
   * define appropriate implicit.
   */
+@MayBeReplacedWith("Scala 3 opaque types")
 trait TransparentWrapping[R, T] {
   def wrap(r: R): T
   def unwrap(t: T): R

@@ -12,7 +12,7 @@ case class InnerId(id: String) extends AnyVal
 //object InnerId extends StringWrapperCompanion[InnerId]
 
 sealed abstract class PKey[T](implicit val valueFormat: MongoFormat[T]) extends MongoTypedKey[T] with AutoNamedEnum
-object PKey extends NamedEnumCompanion[PKey[_]] {
+object PKey extends NamedEnumCompanion[PKey[?]] {
   val values: List[PKey[_]] = caseObjects
   case object IntKey extends PKey[Int]
   case object StringKey extends PKey[String]

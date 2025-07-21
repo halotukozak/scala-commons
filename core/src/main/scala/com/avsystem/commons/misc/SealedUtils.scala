@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package misc
 
-import com.avsystem.commons.annotation.explicitGenerics
+import com.avsystem.commons.annotation.{MayBeReplacedWith, explicitGenerics}
 import com.avsystem.commons.serialization.{GenCodec, GenKeyCodec}
 
 object SealedUtils {
@@ -36,6 +36,7 @@ object SealedUtils {
   *   }
   * }}}
   */
+@MayBeReplacedWith("scala 3 enums")
 trait SealedEnumCompanion[T] {
   /**
     * Thanks to this implicit, [[SealedEnumCompanion]] and its subtraits can be used as typeclasses.
