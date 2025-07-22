@@ -5,6 +5,7 @@ import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.misc.Unboxing
 import com.avsystem.commons.serialization.GenCodec.{ReadFailure, WriteFailure}
 
+import scala.annotation.nowarn
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
@@ -111,7 +112,7 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
       private val it = map.iterator.map {
         case (k, v) => new SimpleValueFieldInput(k, v)
       }
-      override def knownSize: Int = if(map.isEmpty) 0 else map.knownSize
+      override def knownSize: Int = if (map.isEmpty) 0 else map.knownSize
       override def nextField(): SimpleValueFieldInput = it.next()
       override def peekField(name: String): Opt[SimpleValueFieldInput] =
         map.get(name).map(new SimpleValueFieldInput(name, _)).toOpt // values may be null!
@@ -122,7 +123,7 @@ class SimpleValueInput(value: Any) extends InputAndSimpleInput {
     new ListInput {
       private val inputSeq: BSeq[Any] = doRead[BSeq[Any]]
       private val it = inputSeq.iterator.map(new SimpleValueInput(_))
-      override def knownSize: Int = if(inputSeq.isEmpty) 0 else inputSeq.knownSize
+      override def knownSize: Int = if (inputSeq.isEmpty) 0 else inputSeq.knownSize
       override def nextElement(): SimpleValueInput = it.next()
       override def hasNext: Boolean = it.hasNext
     }

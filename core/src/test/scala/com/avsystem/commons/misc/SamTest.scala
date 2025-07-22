@@ -98,9 +98,9 @@ class SamTest extends AnyFunSuite {
     object ImplicitParamsSam extends SamCompanion[ImplicitParamsSam, Int => String => String]
 
     val sam = ImplicitParamsSam(i => s => i.toString + s)
-    assert(sam.handle(123)("lol") == "123lol")
+    assert(sam.handle(123)(using "lol") == "123lol")
 
     val adhoc = Sam[ImplicitParamsSam]((i: Int) => (s: String) => i.toString + s)
-    assert(adhoc.handle(123)("lol") == "123lol")
+    assert(adhoc.handle(123)(using "lol") == "123lol")
   }
 }

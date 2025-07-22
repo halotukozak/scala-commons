@@ -15,14 +15,11 @@ sealed trait OptionLike[O] {
     * Used primarily by `GenCodec` when deserializing and dealing with e.g. JSON nulls vs missing fields.
     */
   def ignoreNulls: Boolean
-
-  def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B = if (isDefined(opt)) f(get(opt)) else ifEmpty
   def getOrElse[B >: Value](opt: O, default: => B): B = if (isDefined(opt)) get(opt) else default
   def foreach(opt: O, f: Value => Unit): Unit = if (isDefined(opt)) f(get(opt))
-
   final def convert[OO, V](opt: O, into: OptionLike.Aux[OO, V])(fun: Value => V): OO =
     fold(opt, into.none)(v => into.some(fun(v)))
-
+  def fold[B](opt: O, ifEmpty: => B)(f: Value => B): B = if (isDefined(opt)) f(get(opt)) else ifEmpty
   final def apply(value: Value): O =
     if (ignoreNulls && (value.asInstanceOf[AnyRef] eq null)) none else some(value)
 }

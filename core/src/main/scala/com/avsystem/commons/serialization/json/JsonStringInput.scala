@@ -3,9 +3,9 @@ package serialization.json
 
 import com.avsystem.commons.annotation.explicitGenerics
 import com.avsystem.commons.misc.CrossUtils
+import com.avsystem.commons.serialization.*
 import com.avsystem.commons.serialization.GenCodec.ReadFailure
-import com.avsystem.commons.serialization._
-import com.avsystem.commons.serialization.json.JsonStringInput._
+import com.avsystem.commons.serialization.json.JsonStringInput.*
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -335,20 +335,20 @@ final class JsonReader(val json: String) {
   private def readFailure(msg: String, cause: Throwable = null): Nothing =
     throw new ParseException(s"$msg ${posInfo(i)}", cause)
 
-  @inline private def read(): Char =
+  inline private def read(): Char =
     if (i < json.length) {
       val res = json.charAt(i)
       advance()
       res
     } else readFailure("Unexpected EOF")
 
-  @inline def isNext(ch: Char): Boolean =
+  inline def isNext(ch: Char): Boolean =
     i < json.length && json.charAt(i) == ch
 
-  @inline def isNextDigit: Boolean =
+  inline def isNextDigit: Boolean =
     i < json.length && Character.isDigit(json.charAt(i))
 
-  @inline def advance(): Unit =
+  inline def advance(): Unit =
     i += 1
 
   def skipWs(): Unit =
@@ -464,7 +464,8 @@ final class JsonReader(val json: String) {
     * @return startIndex
     */
   def parseValue(): Int = {
-    @inline def update(newValue: Any, newTpe: JsonType): Unit = {
+    inline def update(newValue: Any, newTpe: JsonType): Unit
+    = {
       value = newValue
       tpe = newTpe
     }

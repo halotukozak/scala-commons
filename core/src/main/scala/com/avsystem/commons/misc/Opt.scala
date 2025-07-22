@@ -2,46 +2,47 @@ package com.avsystem.commons.misc
 
 import com.avsystem.commons.IIterable
 
+import scala.annotation.publicInBinary
+
 object Opt {
   // Used as Opt's raw value to represent empty Opt. Unfortunately, null can't be used for that purpose
   // because https://github.com/scala/bug/issues/7396
   private object EmptyMarker extends Serializable
 
-  def apply[A](value: A): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
+  inline def apply[A](value: A): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
   def unapply[A](opt: Opt[A]): Opt[A] = opt //name-based extractor
 
-  def some[A](value: A): Opt[A] =
+  inline def some[A](value: A): Opt[A] =
     if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
-  implicit def opt2Iterable[A](xo: Opt[A]): IIterable[A] = xo.toList
+  given opt2Iterable[A]: Conversion[Opt[A], IIterable[A]] = _.toList
 
   final val Empty: Opt[Nothing] = new Opt(EmptyMarker)
 
-  def empty[A]: Opt[A] = Empty
+  inline def empty[A]: Opt[A] = Empty
 
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
-  final class WithFilter[+A] private[Opt](self: Opt[A], p: A => Boolean) {
-    def map[B](f: A => B): Opt[B] = self `filter` p `map` f
-    def flatMap[B](f: A => Opt[B]): Opt[B] = self `filter` p `flatMap` f
-    def foreach[U](f: A => U): Unit = self `filter` p `foreach` f
-    def withFilter(q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
+  final class WithFilter[+A] @publicInBinary private[Opt](self: Opt[A], p: A => Boolean) {
+    inline def map[B](inline f: A => B): Opt[B] = self.filter(p).map(f)
+    inline def flatMap[B](inline f: A => Opt[B]): Opt[B] = self.filter(p).flatMap(f)
+    inline def foreach[U](inline f: A => U): Unit = self.filter(p).foreach(f)
+    inline def withFilter(inline q: A => Boolean): WithFilter[A] = new WithFilter[A](self, x => p(x) && q(x))
   }
 
-  final class LazyOptOps[A](private val opt: () => Opt[A]) extends AnyVal {
+  extension [A](opt: => Opt[A]) {
     /** When a given condition is true, evaluates the `opt` argument and returns it.
       * When the condition is false, `opt` is not evaluated and [[Opt.Empty]] is
       * returned.
       */
-    def when(cond: Boolean): Opt[A] = if (cond) opt() else Opt.Empty
+    inline def when(inline cond: Boolean): Opt[A] = if (cond) opt else Opt.Empty
+
     /** Unless a given condition is true, this will evaluate the `opt` argument and
       * return it. Otherwise, `opt` is not evaluated and [[Opt.Empty]] is returned.
       */
-    @inline def unless(cond: Boolean): Opt[A] = when(!cond)
+    inline def unless(inline cond: Boolean): Opt[A] = when(!cond)
   }
-
-  implicit def lazyOptOps[A](opt: => Opt[A]): LazyOptOps[A] = new LazyOptOps(() => opt)
 }
 
 /**
@@ -54,87 +55,87 @@ object Opt {
   * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking.
   * Please be aware of that tradeoff.
   */
-final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class Opt[+A] @publicInBinary private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import Opt.*
 
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
-  @inline def isDefined: Boolean = !isEmpty
-  @inline def nonEmpty: Boolean = isDefined
+  def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
+  inline def isDefined: Boolean = !isEmpty
+  inline def nonEmpty: Boolean = isDefined
 
-  @inline def get: A =
+  def get: A =
     if (isEmpty) throw new NoSuchElementException("empty Opt") else value
 
-  @inline def boxed[B](implicit boxing: Boxing[A, B]): Opt[B] =
+  inline def boxed[B](using inline boxing: Boxing[A, B]): Opt[B] =
     map(boxing.fun)
 
-  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
+  inline def boxedOrNull[B >: Null](using inline boxing: Boxing[A, B]): B =
     if (isEmpty) null else boxing.fun(value)
 
-  @inline def unboxed[B](implicit unboxing: Unboxing[B, A]): Opt[B] =
+  inline def unboxed[B](using inline unboxing: Unboxing[B, A]): Opt[B] =
     map(unboxing.fun)
 
-  @inline def toOption: Option[A] =
+  inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+  inline def toOptRef[B >: Null](using inline boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
-  @inline def toNOpt: NOpt[A] =
+  inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt(value)
 
-  @inline def toOptArg: OptArg[A] =
+  inline def toOptArg: OptArg[A] =
     if (isEmpty) OptArg.Empty else OptArg(value)
 
-  @inline def getOrElse[B >: A](default: => B): B =
+  inline def getOrElse[B >: A](inline default: B): B =
     if (isEmpty) default else value
 
-  @inline def orNull[B >: A](implicit ev: Null <:< B): B =
+  inline def orNull[B >: A](using inline ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
   /**
     * Analogous to `Option.map` except that when mapping function returns `null`,
     * empty `Opt` is returned as a result.
     */
-  @inline def map[B](f: A => B): Opt[B] =
+  inline def map[B](inline f: A => B): Opt[B] =
     if (isEmpty) Opt.Empty else Opt(f(value))
 
-  @inline def fold[B](ifEmpty: => B)(f: A => B): B =
+  inline def fold[B](inline ifEmpty: B)(inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
   /**
     * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
-  @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
+  inline def mapOr[B](inline ifEmpty: B, inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  @inline def flatMap[B](f: A => Opt[B]): Opt[B] =
+  inline def flatMap[B](inline f: A => Opt[B]): Opt[B] =
     if (isEmpty) Opt.Empty else f(value)
 
-  @inline def flatten[B](implicit ev: A <:< Opt[B]): Opt[B] =
+  inline def flatten[B](using inline ev: A <:< Opt[B]): Opt[B] =
     if (isEmpty) Opt.Empty else ev(value)
 
-  @inline def filter(p: A => Boolean): Opt[A] =
+  inline def filter(inline p: A => Boolean): Opt[A] =
     if (isEmpty || p(value)) this else Opt.Empty
 
-  @inline def withFilter(p: A => Boolean): Opt.WithFilter[A] =
+  inline def withFilter(inline p: A => Boolean): Opt.WithFilter[A] =
     new Opt.WithFilter[A](this, p)
 
-  @inline def filterNot(p: A => Boolean): Opt[A] =
+  inline def filterNot(inline p: A => Boolean): Opt[A] =
     if (isEmpty || !p(value)) this else Opt.Empty
 
-  @inline def contains[A1 >: A](elem: A1): Boolean =
+  inline def contains[A1 >: A](inline elem: A1): Boolean =
     !isEmpty && value == elem
 
-  @inline def exists(p: A => Boolean): Boolean =
+  inline def exists(inline p: A => Boolean): Boolean =
     !isEmpty && p(value)
 
-  @inline def forall(p: A => Boolean): Boolean =
+  inline def forall(inline p: A => Boolean): Boolean =
     isEmpty || p(value)
 
-  @inline def foreach[U](f: A => U): Unit = {
+  inline def foreach[U](inline f: A => U): Unit = {
     if (!isEmpty) f(value)
   }
 
@@ -142,28 +143,28 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     * Analogous to `Option.collect` except that when the function returns `null`,
     * empty `Opt` is returned as a result.
     */
-  @inline def collect[B](pf: PartialFunction[A, B]): Opt[B] =
+  inline def collect[B](inline pf: PartialFunction[A, B]): Opt[B] =
     if (!isEmpty) {
       val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
       new Opt(if (res == null) EmptyMarker else res)
     } else Opt.Empty
 
-  @inline def orElse[B >: A](alternative: => Opt[B]): Opt[B] =
+  inline def orElse[B >: A](inline alternative: Opt[B]): Opt[B] =
     if (isEmpty) alternative else this
 
-  @inline def iterator: Iterator[A] =
+  inline def iterator: Iterator[A] =
     if (isEmpty) Iterator.empty else Iterator.single(value)
 
-  @inline def toList: List[A] =
+  inline def toList: List[A] =
     if (isEmpty) List() else value :: Nil
 
-  @inline def toRight[X](left: => X): Either[X, A] =
+  inline def toRight[X](inline left: X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
 
-  @inline def toLeft[X](right: => X): Either[A, X] =
+  inline def toLeft[X](inline right: X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  @inline def zip[B](that: Opt[B]): Opt[(A, B)] =
+  inline def zip[B](that: Opt[B]): Opt[(A, B)] =
     if (isEmpty || that.isEmpty) Opt.Empty else Opt((this.get, that.get))
 
   /**
@@ -173,7 +174,7 @@ final class Opt[+A] private(private val rawValue: Any) extends AnyVal with OptBa
     * @return the same opt
     * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
     */
-  @inline def forEmpty(sideEffect: => Unit): Opt[A] = {
+  inline def forEmpty(inline sideEffect: Unit): Opt[A] = {
     if (isEmpty) {
       sideEffect
     }

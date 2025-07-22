@@ -1,26 +1,28 @@
 package com.avsystem.commons.misc
 
+import scala.annotation.publicInBinary
+
 object OptArg {
   /**
     * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
     */
-  implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
+  inline given argToOptArg[A]: Conversion[A, OptArg[A]] = OptArg(_)
 
   // additional implicits to cover most common, safe numeric promotions
-  implicit def intToOptArgLong(int: Int): OptArg[Long] = OptArg(int)
-  implicit def intToOptArgDouble(int: Int): OptArg[Double] = OptArg(int)
+  given intToOptArgLong: Conversion[Int, OptArg[Int]] = OptArg(_)
+  given intToOptArgDouble: Conversion[Double, OptArg[Double]] = OptArg(_)
 
   private object EmptyMarker extends Serializable
 
   def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
-  def unapply[A](opt: OptArg[A]): OptArg[A] = opt //name-based extractor
+  inline def unapply[A](inline opt: OptArg[A]): OptArg[A] = opt //name-based extractor
 
-  def some[A](value: A): OptArg[A] =
+  inline def some[A](value: A): OptArg[A] =
     if (value != null) new OptArg[A](value)
     else throw new NullPointerException
 
   val Empty: OptArg[Nothing] = new OptArg(EmptyMarker)
-  def empty[A]: OptArg[A] = Empty
+  inline def empty[A]: OptArg[A] = Empty
 }
 
 /**
@@ -43,70 +45,70 @@ object OptArg {
   * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
   * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
   */
-final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
-  import OptArg._
+final class OptArg[+A] @publicInBinary private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+
+  import OptArg.*
 
   private def value: A = rawValue.asInstanceOf[A]
 
-  @inline def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value
+  def get: A = if (isEmpty) throw new NoSuchElementException("empty OptArg") else value
 
-  @inline def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
-  @inline def isDefined: Boolean = !isEmpty
-  @inline def nonEmpty: Boolean = isDefined
+  def isEmpty: Boolean = rawValue.asInstanceOf[AnyRef] eq EmptyMarker
+  inline def isDefined: Boolean = !isEmpty
+  inline def nonEmpty: Boolean = isDefined
 
-  @inline def boxedOrNull[B >: Null](implicit boxing: Boxing[A, B]): B =
-    if (isEmpty) null else boxing.fun(value)
+  inline def boxedOrNull[B >: Null](using inline boxing: Boxing[A, B]): B = if (isEmpty) null else boxing.fun(value)
 
-  @inline def toOpt: Opt[A] =
+  inline def toOpt: Opt[A] =
     if (isEmpty) Opt.Empty else Opt(value)
 
-  @inline def toOption: Option[A] =
+  inline def toOption: Option[A] =
     if (isEmpty) None else Some(value)
 
-  @inline def toNOpt: NOpt[A] =
+  inline def toNOpt: NOpt[A] =
     if (isEmpty) NOpt.Empty else NOpt.some(value)
 
-  @inline def toOptRef[B >: Null](implicit boxing: Boxing[A, B]): OptRef[B] =
+  inline def toOptRef[B >: Null](using inline boxing: Boxing[A, B]): OptRef[B] =
     if (isEmpty) OptRef.Empty else OptRef(boxing.fun(value))
 
-  @inline def getOrElse[B >: A](default: => B): B =
+  inline def getOrElse[B >: A](inline default: B): B =
     if (isEmpty) default else value
 
-  @inline def orNull[B >: A](implicit ev: Null <:< B): B =
+  inline def orNull[B >: A](using inline ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
-  @inline def fold[B](ifEmpty: => B)(f: A => B): B =
+  inline def fold[B](inline ifEmpty: B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
   /**
     * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
-  @inline def mapOr[B](ifEmpty: => B, f: A => B): B =
+  inline def mapOr[B](inline ifEmpty: B, inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  @inline def contains[A1 >: A](elem: A1): Boolean =
+  inline def contains[A1 >: A](inline elem: A1): Boolean =
     !isEmpty && value == elem
 
-  @inline def exists(p: A => Boolean): Boolean =
+  inline def exists(p: A => Boolean): Boolean =
     !isEmpty && p(value)
 
-  @inline def forall(p: A => Boolean): Boolean =
+  inline def forall(p: A => Boolean): Boolean =
     isEmpty || p(value)
 
-  @inline def foreach[U](f: A => U): Unit = {
+  inline def foreach[U](f: A => U): Unit = {
     if (!isEmpty) f(value)
   }
 
-  @inline def iterator: Iterator[A] =
+  inline def iterator: Iterator[A] =
     if (isEmpty) Iterator.empty else Iterator.single(value)
 
-  @inline def toList: List[A] =
-    if (isEmpty) List() else new ::(value, Nil)
+  inline def toList: List[A] =
+    if (isEmpty) List() else new::(value, Nil)
 
-  @inline def toRight[X](left: => X): Either[X, A] =
+  inline def toRight[X](inline left: X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
 
-  @inline def toLeft[X](right: => X): Either[A, X] =
+  inline def toLeft[X](inline right: X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
   /**
@@ -116,7 +118,7 @@ final class OptArg[+A] private(private val rawValue: Any) extends AnyVal with Op
     * @return the same optArg
     * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
     */
-  @inline def forEmpty(sideEffect: => Unit): OptArg[A] = {
+  inline def forEmpty(inline sideEffect: Unit): OptArg[A] = {
     if (isEmpty) {
       sideEffect
     }
