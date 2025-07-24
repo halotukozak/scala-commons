@@ -1,6 +1,8 @@
 package com.avsystem.commons
 package annotation
 
+import scala.quoted.*
+
 /**
   * Annotate a symbol (i.e. class, method, parameter, etc.) with `@positioned(positioned.here)` to retain source
   * position information for that symbol to be available in macro implementations which inspect that symbol.
@@ -10,5 +12,8 @@ package annotation
   */
 class positioned(val point: Int) extends StaticAnnotation
 object positioned {
-  def here: Int = ???// macro macros.misc.MiscMacros.posPoint
+  inline def here: Int = ${ hereImpl }
+  private def hereImpl(using quotes: Quotes): Expr[Int] =
+    Expr(quotes.reflect.Position.ofMacroExpansion.start)
+
 }

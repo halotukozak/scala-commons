@@ -1,9 +1,9 @@
 package com.avsystem.commons
 package serialization
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
-
 import org.scalatest.funsuite.AnyFunSuite
+
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream, DataOutputStream}
 
 case class Wrap(x: Int)
 
@@ -83,7 +83,7 @@ class StreamInputOutputTest extends AnyFunSuite {
 
   test("simple encode/decode") {
     assertEncDec(1)
-//    assert(Array[Byte](1, 3, 8) sameElements encDec(Array[Byte](1, 3, 8)))
+    //    assert(Array[Byte](1, 3, 8) sameElements encDec(Array[Byte](1, 3, 8)))
     assertEncDec("x")
     assertEncDec(List.empty[String])
     assertEncDec(List[String]("   "))

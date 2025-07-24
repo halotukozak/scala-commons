@@ -1,7 +1,7 @@
 package com.avsystem.commons
 package jiop
 
-import scala.annotation.unchecked.{uncheckedVariance => uV}
+import scala.annotation.unchecked.uncheckedVariance as uV
 import scala.collection.Factory
 
 opaque type ScalaJStream[+A] = JStream[A @uV]
@@ -22,7 +22,7 @@ object ScalaJStream {
       ScalaJStream(jStream.parallel())
 
     def onClose(closeHandler: => Any): ScalaJStream[A] =
-      ScalaJStream(jStream.onClose(jRunnable(closeHandler)))
+      ScalaJStream(jStream.onClose(() => closeHandler))
 
     def sequential: ScalaJStream[A] =
       ScalaJStream(jStream.sequential())
@@ -43,10 +43,10 @@ object ScalaJStream {
       mapToLong(ev)
 
     def allMatch(predicate: A => Boolean): Boolean =
-      jStream.allMatch(jPredicate(predicate))
+      jStream.allMatch(predicate(_))
 
     def anyMatch(predicate: A => Boolean): Boolean =
-      jStream.anyMatch(jPredicate(predicate))
+      jStream.anyMatch(predicate(_))
 
     def collect[R, B](collector: JCollector[? >: A @uV, B, R]): R =
       jStream.collect(collector)
@@ -73,7 +73,7 @@ object ScalaJStream {
       ScalaJStream(jStream.flatMap(t => mapper(t)))
 
     def flatMapToDouble(mapper: A => ScalaJDoubleStream): ScalaJDoubleStream =
-      ScalaJDoubleStream(jStream.flatMapToDouble(jFunction(t => mapper(t).asJava)))
+      ScalaJDoubleStream(jStream.flatMapToDouble(t => mapper(t).asJava))
 
     def flatMapToInt(mapper: A => ScalaJIntStream): ScalaJIntStream =
       ScalaJIntStream((jStream: JStream[A]).flatMapToInt(t => mapper(t).asJava))
@@ -82,10 +82,10 @@ object ScalaJStream {
       ScalaJLongStream(jStream.flatMapToLong(t => mapper(t).asJava))
 
     def forEach(action: A => Any): Unit =
-      jStream.forEach(jConsumer(action))
+      jStream.forEach(action(_))
 
     def forEachOrdered(action: A => Any): Unit =
-      jStream.forEachOrdered(jConsumer(action))
+      jStream.forEachOrdered(action(_))
 
     def limit(maxSize: Long): ScalaJStream[A] =
       ScalaJStream(jStream.limit(maxSize))
@@ -112,7 +112,7 @@ object ScalaJStream {
       jStream.noneMatch(predicate(_))
 
     def peek(action: A => Any): ScalaJStream[A] =
-      ScalaJStream(jStream.peek(jConsumer(action)))
+      ScalaJStream(jStream.peek(action(_)))
 
     def reduce[B >: A](accumulator: (B, B) => B): Option[B] =
       jStream.asInstanceOf[JStream[B]].reduce(accumulator(_, _)).asScala

@@ -3,56 +3,56 @@ package jiop
 
 trait Java8CollectionUtils {
 
-  extension [A]( it: JIterator[A])  {
+  extension [A](it: JIterator[A]) {
     def forEachRemaining(code: A => Any): Unit =
-      it.forEachRemaining(jConsumer(code))
+      it.forEachRemaining(code(_))
   }
 
-  extension [A]( it: JIterable[A])  {
+  extension [A](it: JIterable[A]) {
     def forEach(code: A => Any): Unit =
-      it.forEach(jConsumer(code))
+      it.forEach(code(_))
   }
 
-  extension [A](coll: JCollection[A])  {
+  extension [A](coll: JCollection[A]) {
     def removeIf(pred: A => Boolean): Unit =
-      coll.removeIf(jPredicate(pred))
+      coll.removeIf(pred(_))
 
     def scalaStream: ScalaJStream[A] =
       coll.stream.asScala
   }
 
-  extension [A](coll: JCollection[Int])  {
+  extension [A](coll: JCollection[Int]) {
     def scalaIntStream: ScalaJIntStream =
       coll.stream.asScalaIntStream
   }
 
-  extension [A]( coll: JCollection[Long])  {
+  extension [A](coll: JCollection[Long]) {
     def scalaLongStream: ScalaJLongStream =
       coll.stream.asScalaLongStream
   }
 
-  extension [A]( coll: JCollection[Double])  {
+  extension [A](coll: JCollection[Double]) {
     def scalaDoubleStream: ScalaJDoubleStream =
       coll.stream.asScalaDoubleStream
   }
 
-  extension [K, V]( map: JMap[K, V])  {
+  extension [K, V](map: JMap[K, V]) {
     def compute(key: K, remappingFunction: (K, V) => V): V =
-      map.compute(key, jBiFunction(remappingFunction))
+      map.compute(key, (remappingFunction(_, _)))
 
     def computeIfAbsent(key: K)(mappingFunction: K => V): V =
-      map.computeIfAbsent(key, jFunction(mappingFunction))
+      map.computeIfAbsent(key, mappingFunction(_))
 
     def computeIfPresent(key: K)(remappingFunction: (K, V) => V): V =
-      map.computeIfPresent(key, jBiFunction(remappingFunction))
+      map.computeIfPresent(key, remappingFunction(_, _))
 
     def forEach(action: (K, V) => Any): Unit =
-      map.forEach(jBiConsumer(action))
+      map.forEach(action(_, _))
 
     def merge(key: K, value: V)(remappingFunction: (V, V) => V): V =
-      map.merge(key, value, jBiFunction(remappingFunction))
+      map.merge(key, value, (remappingFunction(_, _)))
 
     def replaceAll(function: (K, V) => V): Unit =
-      map.replaceAll(jBiFunction(function))
+      map.replaceAll(function(_, _))
   }
 }

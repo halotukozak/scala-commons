@@ -21,7 +21,7 @@ object ScalaJDoubleStream {
       jStream.iterator().asInstanceOf[JIterator[Double]].asScala
 
     def onClose(closeHandler: => Any): ScalaJDoubleStream =
-      ScalaJDoubleStream(jStream.onClose(jRunnable(closeHandler)))
+      ScalaJDoubleStream(jStream.onClose(() => closeHandler))
 
     def parallel: ScalaJDoubleStream =
       ScalaJDoubleStream(jStream.parallel())
@@ -33,10 +33,10 @@ object ScalaJDoubleStream {
       ScalaJDoubleStream(jStream.unordered())
 
     def allMatch(predicate: Double => Boolean): Boolean =
-      jStream.allMatch(jDoublePredicate(predicate))
+      jStream.allMatch(predicate(_))
 
     def anyMatch(predicate: Double => Boolean): Boolean =
-      jStream.allMatch(jDoublePredicate(predicate))
+      jStream.allMatch(predicate(_))
 
     def average: Option[Double] =
       jStream.average.asScala
@@ -93,16 +93,16 @@ object ScalaJDoubleStream {
       jStream.min.asScala
 
     def noneMatch(predicate: Double => Boolean): Boolean =
-      jStream.noneMatch(jDoublePredicate(predicate))
+      jStream.noneMatch(predicate(_))
 
     def peek(action: Double => Any): ScalaJDoubleStream =
-      ScalaJDoubleStream(jStream.peek(jDoubleConsumer(action)))
+      ScalaJDoubleStream(jStream.peek(action(_)))
 
     def reduce(identity: Double)(op: (Double, Double) => Double): Double =
-      jStream.reduce(identity, jDoubleBinaryOperator(op))
+      jStream.reduce(identity, op(_, _))
 
     def reduce(op: (Double, Double) => Double): Option[Double] =
-      jStream.reduce(jDoubleBinaryOperator(op)).asScala
+      jStream.reduce(op(_, _)).asScala
 
     def skip(n: Long): ScalaJDoubleStream =
       ScalaJDoubleStream(jStream.skip(n))

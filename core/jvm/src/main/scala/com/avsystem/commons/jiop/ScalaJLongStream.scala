@@ -21,7 +21,7 @@ object ScalaJLongStream {
       jStream.iterator().asInstanceOf[JIterator[Long]].asScala
 
     def onClose(closeHandler: => Any): ScalaJLongStream =
-      ScalaJLongStream(jStream.onClose(jRunnable(closeHandler)))
+      ScalaJLongStream(jStream.onClose(() => closeHandler))
 
     def parallel: ScalaJLongStream =
       ScalaJLongStream(jStream.parallel())
@@ -33,10 +33,10 @@ object ScalaJLongStream {
       ScalaJLongStream(jStream.unordered())
 
     def allMatch(predicate: Long => Boolean): Boolean =
-      jStream.allMatch(jLongPredicate(predicate))
+      jStream.allMatch(predicate(_))
 
     def anyMatch(predicate: Long => Boolean): Boolean =
-      jStream.allMatch(jLongPredicate(predicate))
+      jStream.allMatch(predicate(_))
 
     def asDoubleStream: ScalaJDoubleStream =
       ScalaJDoubleStream(jStream.asDoubleStream())
@@ -48,7 +48,7 @@ object ScalaJLongStream {
       ScalaJStream(jStream.boxed.asInstanceOf[JStream[Long]])
 
     def collect[R](supplier: => R)(accumulator: (R, Long) => Any, combiner: (R, R) => Any): R =
-      jStream.collect(() => supplier, jObjLongConsumer(accumulator), combiner(_, _))
+      jStream.collect(() => supplier, accumulator(_, _), combiner(_, _))
 
     def count: Long =
       jStream.count
@@ -57,7 +57,7 @@ object ScalaJLongStream {
       ScalaJLongStream(jStream.distinct)
 
     def filter(predicate: Long => Boolean): ScalaJLongStream =
-      ScalaJLongStream(jStream.filter(jLongPredicate(predicate)))
+      ScalaJLongStream(jStream.filter(predicate(_)))
 
     def findAny: Option[Long] =
       jStream.findAny().asScala
@@ -78,16 +78,16 @@ object ScalaJLongStream {
       ScalaJLongStream(jStream.limit(maxSize))
 
     def map(mapper: Long => Long): ScalaJLongStream =
-      ScalaJLongStream(jStream.map(jLongUnaryOperator(mapper)))
+      ScalaJLongStream(jStream.map(mapper(_)))
 
     def mapToDouble(mapper: Long => Double): ScalaJDoubleStream =
-      ScalaJDoubleStream(jStream.mapToDouble(jLongToDoubleFunction(mapper)))
+      ScalaJDoubleStream(jStream.mapToDouble(mapper(_)))
 
     def mapToInt(mapper: Long => Int): ScalaJIntStream =
-      ScalaJIntStream(jStream.mapToInt(jLongToIntFunction(mapper)))
+      ScalaJIntStream(jStream.mapToInt(mapper(_)))
 
     def mapToObj[U](mapper: Long => U): ScalaJStream[U] =
-      ScalaJStream(jStream.mapToObj(jLongFunction(mapper)))
+      ScalaJStream(jStream.mapToObj(mapper(_)))
 
     def max: Option[Long] =
       jStream.max.asScala
@@ -96,16 +96,16 @@ object ScalaJLongStream {
       jStream.min.asScala
 
     def noneMatch(predicate: Long => Boolean): Boolean =
-      jStream.noneMatch(jLongPredicate(predicate))
+      jStream.noneMatch(predicate(_))
 
     def peek(action: Long => Any): ScalaJLongStream =
-      ScalaJLongStream(jStream.peek(jLongConsumer(action)))
+      ScalaJLongStream(jStream.peek(action(_)))
 
     def reduce(identity: Long)(op: (Long, Long) => Long): Long =
-      jStream.reduce(identity, jLongBinaryOperator(op))
+      jStream.reduce(identity, op(_, _))
 
     def reduce(op: (Long, Long) => Long): Option[Long] =
-      jStream.reduce(jLongBinaryOperator(op)).asScala
+      jStream.reduce(op(_, _)).asScala
 
     def skip(n: Long): ScalaJLongStream =
       ScalaJLongStream(jStream.skip(n))

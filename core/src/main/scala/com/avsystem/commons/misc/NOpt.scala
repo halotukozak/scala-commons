@@ -19,7 +19,7 @@ object NOpt {
     if (value == null) NOpt.Empty
     else new NOpt(value)
 
-  inline def unapply[A](inline opt: NOpt[A]): NOpt[A] = opt //name-based extractor
+  def unapply[A](opt: NOpt[A]): NOpt[A] = opt //name-based extractor
 
   inline def some[A](value: A): NOpt[A] =
     new NOpt(if (value == null) NullMarker else value)
