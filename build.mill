@@ -1,0 +1,124 @@
+//| mill-version: 1.0.1
+package build
+import mill._
+import mill.scalajslib._
+import mill.scalalib._
+object Versions {
+  val scala2 = "2.13.16"
+  val scala3 = "3.7.1"
+
+  val guava = "33.4.8-jre"
+  val jsr305 = "3.0.2"
+  val scalatest = "3.2.19"
+  val scalatestplusScalacheck = "3.2.14.0"
+  val scalacheck = "1.18.1"
+  val jetty = "12.0.23"
+  val mongo = "5.5.1"
+  val spring = "5.3.39"
+  val typesafeConfig = "1.4.4"
+  val commonsIo = "1.3.2"
+  val scalaLogging = "3.9.5"
+  val pekko = "1.1.4"
+  val monix = "3.4.1"
+  val circe = "0.14.5"
+  val upickle = "3.1.2"
+  val scalajsBenchmark = "0.10.0"
+  val slf4j = "2.0.17"
+}
+
+
+//todo: remove os.up fiku-miku
+
+trait SharedModule extends ScalaModule {
+  def scalaVersion = Versions.scala3
+
+  def mainClass = None
+
+  override def scalacOptions = Seq(
+    "-encoding",
+    "utf-8",
+    "-explaintypes",
+    "-feature",
+    "-deprecation",
+    "-unchecked",
+    "-language:implicitConversions",
+    "-language:existentials",
+    "-language:dynamics",
+    "-language:experimental.macros",
+    "-language:higherKinds",
+    "-Xignore-scala2-macros"
+  )
+
+  override def mvnDeps = Seq(
+    mvn"org.scalatest::scalatest:${Versions.scalatest}",
+    mvn"org.scalacheck::scalacheck:${Versions.scalacheck}",
+    mvn"org.scalatestplus::scalacheck-1-16:${Versions.scalatestplusScalacheck}"
+  )
+
+  trait SharedTest extends ScalaTests with TestModule.ScalaTest{
+    def scalaTestVersion = "3.2.19"
+  }
+}
+
+trait JvmModule extends SharedModule {
+
+ override def sources = Task.Sources(
+  moduleDir / os.up / "src" / "main" / "scala",
+  moduleDir / os.up / "jvm" / "src" / "main" / "scala",
+ )
+
+  trait TestModule extends SharedTest {
+    override def sources = Task.Sources(
+    moduleDir / os.up / os.up / "src" / "test"/ "scala",
+    moduleDir / os.up / os.up / "jvm" / "src" / "test" / "scala",
+  )
+  }
+}
+
+
+trait JsModule extends SharedModule with ScalaJSModule {
+  def scalaJSVersion = "1.19.0"
+
+  override def sources = Task.Sources(
+  moduleDir / os.up / "src" / "main" / "scala",
+  moduleDir / os.up / "js" / "src" / "main" / "scala",
+ )
+
+
+  trait TestModule extends SharedTest with ScalaJSTests {
+    override def sources = Task.Sources(
+    moduleDir / os.up / os.up / "src" / "test"/ "scala",
+    moduleDir / os.up / os.up / "js" / "src" / "test" / "scala",
+  )
+  }
+} 
+
+object macros extends Module {
+  trait macrosModule extends SharedModule {
+    override def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scala-lang:scala-reflect:${Versions.scala2}")
+  }
+  object jvm extends macrosModule with JvmModule
+  object js extends macrosModule with JsModule
+}
+
+object core extends Module {
+  def moduleDeps = Seq(macros)
+
+  trait CoreModule extends SharedModule {
+    override def mvnDeps =
+      super.mvnDeps() ++ Seq(mvn"io.monix::monix:${Versions.monix}")
+  }
+
+  object jvm extends CoreModule with JvmModule {
+    def moduleDeps = Seq(macros.jvm)
+    override def mvnDeps =
+      super.mvnDeps() ++ Seq(mvn"com.google.guava:guava:${Versions.guava}")
+
+    object test extends TestModule
+  }
+
+  object js extends CoreModule with JsModule {
+    def moduleDeps = Seq(macros.js)
+    object test extends TestModule
+  }
+}
