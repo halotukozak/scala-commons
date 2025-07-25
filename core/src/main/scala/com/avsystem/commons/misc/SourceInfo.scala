@@ -43,8 +43,6 @@ object SourceInfo {
         .iterate(Symbol.spliceOwner)(_.owner)
         .takeWhile(_ != Symbol.noSymbol)
 
-    defn.RootPackage.name.error
-
     val filePath = Expr(pos.sourceFile.getJPath.get.toString)
     val fileName = Expr(pos.sourceFile.name)
     val offset = Expr(pos.start)

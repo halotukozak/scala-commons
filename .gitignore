@@ -6,7 +6,7 @@
 *.iws
 *.ipr
 
-target
+target/
 out
 .bloop
 .bsp
@@ -26,3 +26,7 @@ out
 local.*
 cluster/
 masterSlave/
+
+.metals/
+.vscode/
+.DS_Store

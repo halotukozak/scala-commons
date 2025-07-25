@@ -702,8 +702,6 @@ trait SharedExtensions {
             result
           } else throw new NoSuchElementException
       }
-
-    def distinct: Iterator[A] = distinctBy(identity)
   }
 
   extension (companion: Iterator.type) {
