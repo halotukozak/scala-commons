@@ -27,10 +27,9 @@ object AllTypesInABag extends HasGenCodecWithDeps[BsonGenCodecs.type, AllTypesIn
 
 class BsonValueCodecsTest extends AnyFunSuite with BsonGenCodecs {
   test("codec roundtrip") {
-    val doc = new BsonDocument(JList(
-      new BsonElement("someInt64", new BsonInt64(64)),
-      new BsonElement("someString", new BsonString("some"))
-    ))
+    val doc = new BsonDocument(
+      JList(new BsonElement("someInt64", new BsonInt64(64)), new BsonElement("someString", new BsonString("some")))
+    )
 
     val bag = AllTypesInABag(
       new BsonArray(JList(BsonBoolean.TRUE, new BsonInt32(131))),
@@ -89,7 +88,7 @@ class BsonValueCodecsTest extends AnyFunSuite with BsonGenCodecs {
     assert(array === new BsonArray(JList(new BsonDocument("key", BsonNull.VALUE))))
   }
 
-  def testJsonRoundtrip[T: GenCodec](value: T)(implicit pos: Position): Unit = {
+  def testJsonRoundtrip[T: GenCodec](value: T)(using pos: Position): Unit = {
     val json = JsonStringOutput.write(value)
     val readValue = JsonStringInput.read[T](json)
     assert(value == readValue)

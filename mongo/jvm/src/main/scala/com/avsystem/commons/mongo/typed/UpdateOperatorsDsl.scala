@@ -23,7 +23,7 @@ trait UpdateOperatorsDsl[T, R] {
   def unset: R = wrapUpdateOperator(Unset())
 }
 object UpdateOperatorsDsl {
-  implicit class ForCollection[C[X] <: Iterable[X], T, R](private val dsl: UpdateOperatorsDsl[C[T], R]) extends AnyVal {
+  extension [C[X] <: Iterable[X], T, R](dsl: UpdateOperatorsDsl[C[T], R]) {
 
     import MongoUpdateOperator._
 
@@ -51,18 +51,17 @@ object UpdateOperatorsDsl {
     def pullAll(values: T*): R = pullAll(values)
     def pullAll(values: Iterable[T]): R = dsl.wrapUpdateOperator(PullAll(values, format))
 
-    /**
-      * Uses [[https://docs.mongodb.com/manual/reference/operator/update/positional/ the $$ positional operator]]
-      * to update first element of an array field that matches the query document. The array field must appear
-      * as part of the query document.
+    /** Uses [[https://docs.mongodb.com/manual/reference/operator/update/positional/ the $$ positional operator]] to
+      * update first element of an array field that matches the query document. The array field must appear as part of
+      * the query document.
       */
     def updateFirstMatching(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
       val up = update(new MongoUpdate.Creator(format))
       dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.FirstMatching()))
     }
 
-    /**
-      * Uses [[https://docs.mongodb.com/manual/reference/operator/update/positional-all/ the all $$[] positional operator]]
+    /** Uses
+      * [[https://docs.mongodb.com/manual/reference/operator/update/positional-all/ the all $$[] positional operator]]
       * to update all elements of an array field.
       */
     def updateAll(update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
@@ -70,12 +69,15 @@ object UpdateOperatorsDsl {
       dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Each()))
     }
 
-    /**
-      * Uses the [[https://docs.mongodb.com/manual/reference/operator/update/positional-filtered/ the filtered positional operator]]
+    /** Uses the
+      * [[https://docs.mongodb.com/manual/reference/operator/update/positional-filtered/ the filtered positional operator]]
       * to update all elements of an array matching a specified filter. The filter is added to
       * [[https://docs.mongodb.com/manual/release-notes/3.6/#arrayfilters arrayFilters]] option of an update operation.
       */
-    def updateFiltered(filter: MongoFilter.Creator[T] => MongoFilter[T], update: MongoUpdate.Creator[T] => MongoUpdate[T]): R = {
+    def updateFiltered(
+      filter: MongoFilter.Creator[T] => MongoFilter[T],
+      update: MongoUpdate.Creator[T] => MongoUpdate[T]
+    ): R = {
       val fil = filter(new MongoFilter.Creator(format))
       val up = update(new MongoUpdate.Creator(format))
       dsl.wrapUpdate(MongoUpdate.UpdateArrayElements(up, MongoUpdate.ArrayElementsQualifier.Filtered(fil)))

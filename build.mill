@@ -45,7 +45,7 @@ trait SharedModule extends PlatformScalaModule {
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xignore-scala2-macros",
-    "-Wconf:msg=Scala 2 macro cannot be used in Dotty.*:silent",
+    "-Wconf:msg=Scala 2 macro cannot be used in Dotty.*:silent"
     // "-Werror",
     // "-Ycheck:all",
     // "-Ydebug-error",
@@ -53,6 +53,8 @@ trait SharedModule extends PlatformScalaModule {
     // "-Ydebug-missing-refs",
     // "-Yprint-debug"
   )
+
+  override def mvnDeps = super.mvnDeps() ++ Seq(mvn"org.scala-lang::scala3-library:${Versions.scala3}")
 
   trait SharedTest extends ScalaTests with TestModule.ScalaTest {
     def scalaTestVersion = "3.2.19"
@@ -86,14 +88,12 @@ object core extends Module {
   def moduleDeps = Seq(macros)
 
   trait CoreModule extends SharedModule {
-    override def mvnDeps =
-      super.mvnDeps() ++ Seq(mvn"io.monix::monix:${Versions.monix}")
+    override def mvnDeps = super.mvnDeps() ++ Seq(mvn"io.monix::monix:${Versions.monix}")
   }
 
   object jvm extends CoreModule with JvmModule {
     def moduleDeps = Seq(macros.jvm)
-    override def mvnDeps =
-      super.mvnDeps() ++ Seq(mvn"com.google.guava:guava:${Versions.guava}")
+    override def mvnDeps = super.mvnDeps() ++ Seq(mvn"com.google.guava:guava:${Versions.guava}")
 
     object test extends TestModule
   }

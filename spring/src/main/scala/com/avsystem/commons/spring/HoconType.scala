@@ -12,7 +12,10 @@ trait HoconType[T] {
 
   protected def requireType(requiredType: ConfigValueType, value: ConfigValue): Unit = {
     requireNonNull(value)
-    require(value.valueType == requiredType, s"Value at ${value.origin.description} has type, ${value.valueType}, required $requiredType")
+    require(
+      value.valueType == requiredType,
+      s"Value at ${value.origin.description} has type, ${value.valueType}, required $requiredType"
+    )
   }
 
   def get(value: ConfigValue): T
@@ -22,84 +25,84 @@ object HoconType {
 
   import com.typesafe.config.ConfigValueType._
 
-  implicit object anyHoconType extends HoconType[Any] {
+  given anyHoconType: HoconType[Any] = new HoconType[Any] {
     def get(value: ConfigValue) =
       requireNonNull(value).unwrapped
   }
 
-  implicit object anyRefHoconType extends HoconType[AnyRef] {
+  given anyRefHoconType: HoconType[AnyRef] = new HoconType[AnyRef] {
     def get(value: ConfigValue) =
       requireNonNull(value).unwrapped
   }
 
-  implicit object nullHoconType extends HoconType[Null] {
+  given nullHoconType: HoconType[Null] = new HoconType[Null] {
     def get(value: ConfigValue) = {
       requireType(NULL, value)
       null
     }
   }
 
-  implicit object stringHoconType extends HoconType[String] {
+  given stringHoconType: HoconType[String] = new HoconType[String] {
     def get(value: ConfigValue) = {
       requireType(STRING, value)
       value.unwrapped.asInstanceOf[String]
     }
   }
 
-  implicit object booleanHoconType extends HoconType[Boolean] {
+  given booleanHoconType: HoconType[Boolean] = new HoconType[Boolean] {
     def get(value: ConfigValue) = {
       requireType(BOOLEAN, value)
       value.unwrapped.asInstanceOf[Boolean]
     }
   }
 
-  implicit object numberHoconType extends HoconType[JNumber] {
+  given numberHoconType: HoconType[JNumber] = new HoconType[JNumber] {
     def get(value: ConfigValue) = {
       requireType(NUMBER, value)
       value.unwrapped.asInstanceOf[JNumber]
     }
   }
 
-  implicit object intHoconType extends HoconType[Int] {
+  given intHoconType: HoconType[Int] = new HoconType[Int] {
     def get(value: ConfigValue) = {
       requireType(NUMBER, value)
       value.unwrapped.asInstanceOf[JNumber].intValue
     }
   }
 
-  implicit object longHoconType extends HoconType[Long] {
+  given longHoconType: HoconType[Long] = new HoconType[Long] {
     def get(value: ConfigValue) = {
       requireType(NUMBER, value)
       value.unwrapped.asInstanceOf[JNumber].longValue
     }
   }
 
-  implicit object configHoconType extends HoconType[Config] {
+  given configHoconType: HoconType[Config] = new HoconType[Config] {
     def get(value: ConfigValue) = {
       requireType(OBJECT, value)
       value.asInstanceOf[ConfigObject].toConfig
     }
   }
 
-  implicit object configValueHoconType extends HoconType[ConfigValue] {
+  given configValueHoconType: HoconType[ConfigValue] = new HoconType[ConfigValue] {
     def get(value: ConfigValue) = value
   }
 
-  implicit object configObjectHoconType extends HoconType[ConfigObject] {
+  given configObjectHoconType: HoconType[ConfigObject] = new HoconType[ConfigObject] {
     def get(value: ConfigValue) = {
       requireType(OBJECT, value)
       value.asInstanceOf[ConfigObject]
     }
   }
 
-  implicit object configListHoconType extends HoconType[ConfigList] {
+  given configListHoconType: HoconType[ConfigList] = new HoconType[ConfigList] {
     def get(value: ConfigValue) = {
       requireType(LIST, value)
       value.asInstanceOf[ConfigList]
     }
   }
 
-  implicit def listHoconType[T: HoconType]: HoconType[JList[T]] = new HoconType[JList[T]] {
+  given listHoconType[T: HoconType]: HoconType[JList[T]] = new HoconType[JList[T]] {
     def get(value: ConfigValue) = {
       requireType(LIST, value)
       val elementHoconType = implicitly[HoconType[T]]
@@ -107,31 +110,37 @@ object HoconType {
     }
   }
 
-  implicit def mapHoconType[T: HoconType]: HoconType[JMap[String, T]] = new HoconType[JMap[String, T]] {
+  given mapHoconType[T: HoconType]: HoconType[JMap[String, T]] = new HoconType[JMap[String, T]] {
     def get(value: ConfigValue) = {
       requireType(OBJECT, value)
       val elementHoconType = implicitly[HoconType[T]]
-      value.asInstanceOf[ConfigObject].asScala.map {
-        case (k, v) => (k, elementHoconType.get(v))
-      }.asJava
+      value
+        .asInstanceOf[ConfigObject]
+        .asScala
+        .map { case (k, v) =>
+          (k, elementHoconType.get(v))
+        }
+        .asJava
     }
   }
 
-  implicit def optionHoconType[T: HoconType]: HoconType[Option[T]] = new HoconType[Option[T]] {
+  given optionHoconType[T: HoconType]: HoconType[Option[T]] = new HoconType[Option[T]] {
     def get(value: ConfigValue): Option[T] =
       if (value == null || value.valueType == NULL) None
       else Some(implicitly[HoconType[T]].get(value))
   }
 
-  implicit def eitherHoconType[A: HoconType, B: HoconType]: HoconType[Either[A, B]] = new HoconType[Either[A, B]] {
+  given eitherHoconType[A: HoconType, B: HoconType]: HoconType[Either[A, B]] = new HoconType[Either[A, B]] {
     def get(value: ConfigValue): Either[A, B] = {
       val leftTry = Try(implicitly[HoconType[A]].get(value))
       val rightTry = Try(implicitly[HoconType[B]].get(value))
 
       (leftTry, rightTry) match {
         case (Failure(left), Failure(right)) =>
-          throw new IllegalArgumentException("Could not parse config value as one of two types:\n" +
-            left.getMessage + "\n" + right.getMessage)
+          throw new IllegalArgumentException(
+            "Could not parse config value as one of two types:\n" +
+              left.getMessage + "\n" + right.getMessage
+          )
         case (Success(left), _) => Left(left)
         case (_, Success(right)) => Right(right)
       }

@@ -279,12 +279,12 @@ object CodecTestData {
   }
 
   sealed abstract class SealedKey[T](using val valueCodec: GenCodec[T]) extends TypedKey[T] with AutoNamedEnum
-  object SealedKey extends NamedEnumCompanion[AnyOf[SealedKey]] {
+  object SealedKey extends NamedEnumCompanion[SealedKey[Any]] {
     case object StringKey extends SealedKey[String]
     case object IntKey extends SealedKey[Int]
     case object BooleanKey extends SealedKey[Boolean]
 
-    val values: List[AnyOf[SealedKey]] = caseObjects
+    val values: List[SealedKey[Any]] = caseObjects
   }
 
   @flatten("kejs") sealed trait CustomizedSeal

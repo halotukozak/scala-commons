@@ -5,7 +5,12 @@ import com.avsystem.commons.spring.AttrNames._
 import com.typesafe.config._
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder
-import org.springframework.beans.factory.config.{BeanDefinitionHolder, ConstructorArgumentValues, RuntimeBeanNameReference, RuntimeBeanReference}
+import org.springframework.beans.factory.config.{
+  BeanDefinitionHolder,
+  ConstructorArgumentValues,
+  RuntimeBeanNameReference,
+  RuntimeBeanReference
+}
 import org.springframework.beans.factory.support._
 import org.springframework.beans.{MutablePropertyValues, PropertyValue}
 import org.springframework.core.io.Resource
@@ -13,23 +18,19 @@ import org.springframework.core.io.Resource
 import java.{util => ju}
 import scala.annotation.nowarn
 
-class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
-  extends AbstractBeanDefinitionReader(registry) {
+class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry) extends AbstractBeanDefinitionReader(registry) {
 
   import com.avsystem.commons.spring.HoconBeanDefinitionReader.Keys._
   import com.typesafe.config.ConfigValueType._
 
-  private implicit class ConfigValueExtensions(value: ConfigValue) {
-    def as[T: HoconType]: T =
-      implicitly[HoconType[T]].get(value)
+  extension (value: ConfigValue) private def as[T: HoconType]: T = summon[HoconType[T]].get(value)
+
+  private val autowireMapping = AutowireMapping.withDefault { v =>
+    throw new IllegalArgumentException(s"Invalid value $v for $AutowireAttr attribute")
   }
 
-  private val autowireMapping = AutowireMapping.withDefault {
-    v => throw new IllegalArgumentException(s"Invalid value $v for $AutowireAttr attribute")
-  }
-
-  private val dependencyCheckMapping = DependencyCheckMapping.withDefault {
-    v => throw new IllegalArgumentException(s"Invalid value $v for $DependencyCheckAttr attribute")
+  private val dependencyCheckMapping = DependencyCheckMapping.withDefault { v =>
+    throw new IllegalArgumentException(s"Invalid value $v for $DependencyCheckAttr attribute")
   }
 
   private def setup[T](t: T)(setupFunc: T => Any) = {
@@ -37,9 +38,7 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     t
   }
 
-  private def iterate(obj: ConfigObject)
-    (attrFun: (String, ConfigValue) => Any)
-    (propFun: (String, ConfigValue) => Any) =
+  private def iterate(obj: ConfigObject)(attrFun: (String, ConfigValue) => Any)(propFun: (String, ConfigValue) => Any) =
     obj.asScala.foreach {
       case (key, _) if key.startsWith("_") =>
       case (key, value) if key.startsWith("%") => attrFun(key, value)
@@ -52,10 +51,14 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     allowed: Set[String] = Set.empty,
     props: Boolean = false
   )(obj: ConfigObject): Unit = {
-    require(required.forall(obj.containsKey),
-      s"Attributes ${required.mkString(", ")} must be present in object at ${obj.origin.description}")
-    require(requiredAny.isEmpty || requiredAny.exists(obj.containsKey),
-      s"At least one of ${requiredAny.mkString(", ")} must be present in object at ${obj.origin.description}")
+    require(
+      required.forall(obj.containsKey),
+      s"Attributes ${required.mkString(", ")} must be present in object at ${obj.origin.description}"
+    )
+    require(
+      requiredAny.isEmpty || requiredAny.exists(obj.containsKey),
+      s"At least one of ${requiredAny.mkString(", ")} must be present in object at ${obj.origin.description}"
+    )
     val allAllowed = required ++ requiredAny ++ allowed
     iterate(obj) { (key, value) =>
       if (!allAllowed.contains(key))
@@ -180,8 +183,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
         case _ =>
           throw new IllegalArgumentException(s"Required an object at ${obj.origin.description}")
       }
-      getProps(obj).foreach {
-        case (key, value) => mm.put(key, read(value))
+      getProps(obj).foreach { case (key, value) =>
+        mm.put(key, read(value))
       }
     }
   }
@@ -231,8 +234,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     bd.setLazyInit(obj.get(LazyInitAttr).as[Option[Boolean]].getOrElse(false))
     obj.get(LookupMethodsAttr).as[Option[ConfigObject]].foreach { obj =>
       validateObj(props = true)(obj)
-      getProps(obj).foreach {
-        case (key, value) => bd.getMethodOverrides.addOverride(new LookupOverride(key, value.as[String]))
+      getProps(obj).foreach { case (key, value) =>
+        bd.getMethodOverrides.addOverride(new LookupOverride(key, value.as[String]))
       }
     }
     obj.get(MetaAttr).as[Option[ConfigObject]].getOrElse(ConfigFactory.empty.root).asScala.foreach {
@@ -240,22 +243,23 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     }
     obj.get(ParentAttr).as[Option[String]].foreach(bd.setParentName)
     obj.get(PrimaryAttr).as[Option[Boolean]].foreach(bd.setPrimary)
-    obj.get(QualifiersAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach { obj =>
-      bd.addQualifier(readQualifier(obj))
+    obj.get(QualifiersAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach {
+      obj =>
+        bd.addQualifier(readQualifier(obj))
     }
-    obj.get(ReplacedMethodsAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach { obj =>
-      bd.getMethodOverrides.addOverride(readReplacedMethod(obj))
+    obj.get(ReplacedMethodsAttr).as[Option[ju.List[ConfigObject]]].getOrElse(ju.Collections.emptyList).asScala.foreach {
+      obj =>
+        bd.getMethodOverrides.addOverride(readReplacedMethod(obj))
     }
     obj.get(ScopeAttr).as[Option[String]].foreach(bd.setScope)
 
     val construct = obj.get(ConstructAttr).as[Option[Boolean]].getOrElse(false)
-    getProps(obj).foreach {
-      case (key, value) =>
-        if (construct) {
-          addConstructorArg(readConstructorArg(value, forcedName = key))
-        } else {
-          propertyValues.addPropertyValue(readPropertyValue(key, value))
-        }
+    getProps(obj).foreach { case (key, value) =>
+      if (construct) {
+        addConstructorArg(readConstructorArg(value, forcedName = key))
+      } else {
+        propertyValues.addPropertyValue(readPropertyValue(key, value))
+      }
     }
     bd
   }
@@ -264,8 +268,8 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
     validateObj(allowed = Set(TypeAttr, ValueAttr), props = true)(obj)
     val acq = new AutowireCandidateQualifier(obj.get(TypeAttr).as[Option[String]].getOrElse(classOf[Qualifier].getName))
     obj.get(ValueAttr).as[Option[String]].foreach(acq.setAttribute(AutowireCandidateQualifier.VALUE_KEY, _))
-    getProps(obj).foreach {
-      case (key, value) => acq.setAttribute(key, value.as[String])
+    getProps(obj).foreach { case (key, value) =>
+      acq.setAttribute(key, value.as[String])
     }
     acq
   }
@@ -273,7 +277,12 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
   private def readReplacedMethod(obj: ConfigObject) = {
     validateObj(required = Set(NameAttr, ReplacerAttr), allowed = Set(ArgTypesAttr))(obj)
     val replaceOverride = new ReplaceOverride(obj.get(NameAttr).as[String], obj.get(ReplacerAttr).as[String])
-    obj.get(ArgTypesAttr).as[Option[ju.List[String]]].getOrElse(ju.Collections.emptyList).asScala.foreach(replaceOverride.addTypeIdentifier)
+    obj
+      .get(ArgTypesAttr)
+      .as[Option[ju.List[String]]]
+      .getOrElse(ju.Collections.emptyList)
+      .asScala
+      .foreach(replaceOverride.addTypeIdentifier)
     replaceOverride
   }
 
@@ -325,14 +334,13 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   private def readBeans(obj: ConfigObject) = {
     validateObj(props = true)(obj)
-    val beanDefs = getProps(obj).iterator.flatMap {
-      case (key, value) =>
-        try {
-          value.as[Option[ConfigObject]].map(obj => (key, readBean(obj)))
-        } catch {
-          case e: Exception => throw new RuntimeException(
-            s"Could not read definition of bean $key at ${value.origin.description}", e)
-        }
+    val beanDefs = getProps(obj).iterator.flatMap { case (key, value) =>
+      try {
+        value.as[Option[ConfigObject]].map(obj => (key, readBean(obj)))
+      } catch {
+        case e: Exception =>
+          throw new RuntimeException(s"Could not read definition of bean $key at ${value.origin.description}", e)
+      }
     }.toVector
     beanDefs.foreach((registry.registerBeanDefinition).tupled)
     beanDefs.size
@@ -340,21 +348,23 @@ class HoconBeanDefinitionReader(registry: BeanDefinitionRegistry)
 
   private def readAliases(obj: ConfigObject): Unit = {
     validateObj(props = true)(obj)
-    getProps(obj).foreach {
-      case (key, value) => value.as[Option[String]].foreach(registry.registerAlias(_, key))
+    getProps(obj).foreach { case (key, value) =>
+      value.as[Option[String]].foreach(registry.registerAlias(_, key))
     }
   }
 
   private def readConditionals(config: Config): Config = {
     if (!config.hasPath(Conditionals)) config
-    else config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals)) { (currentConfig, conditionalObject) =>
-      val props = getProps(conditionalObject.as[ConfigObject])
+    else
+      config.getList(Conditionals).asScala.foldLeft(config.withoutPath(Conditionals)) {
+        (currentConfig, conditionalObject) =>
+          val props = getProps(conditionalObject.as[ConfigObject])
 
-      if (props(Condition).as[Boolean])
-        readConditionals(props(Config).as[Config]).withFallback(currentConfig)
-      else
-        currentConfig
-    }
+          if (props(Condition).as[Boolean])
+            readConditionals(props(Config).as[Config]).withFallback(currentConfig)
+          else
+            currentConfig
+      }
   }
 
   def loadBeanDefinitions(resourceConfig: Config): Int = {

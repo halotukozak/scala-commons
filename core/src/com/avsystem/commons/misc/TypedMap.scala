@@ -63,9 +63,9 @@ class TypedMap[K[_]](val raw: Map[K[Any], Any]) extends AnyVal {
   def ++(other: TypedMap[K]): TypedMap[K] =
     new TypedMap[K](raw ++ other.raw)
 
-  def keys: Iterable[Kind[K]#T] = raw.keys.asInstanceOf[Iterable[Kind[K]#T]]
-  def keysIterator: Iterator[Kind[K]#T] = raw.keysIterator.asInstanceOf[Iterator[Kind[K]#T]]
-  def keySet: Set[Kind[K]#T] = raw.keySet.asInstanceOf[Set[Kind[K]#T]]
+  def keys: Iterable[AnyOf[K]] = raw.keys.asInstanceOf[Iterable[AnyOf[K]]]
+  def keysIterator: Iterator[AnyOf[K]] = raw.keysIterator.asInstanceOf[Iterator[AnyOf[K]]]
+  def keySet: Set[AnyOf[K]] = raw.keySet.asInstanceOf[Set[AnyOf[K]]]
 
   def size: Int = raw.size
 
@@ -79,12 +79,12 @@ object TypedMap {
     type T = (K[A], A)
   }
 
-  given [K[_], A]: Conversion[(K[A], A), KTuple2[K]#T] = _.asInstanceOf[KTuple2[K]#T]
+  given [K[_], A]: Conversion[(K[A], A), KTuple2[K]] = _.asInstanceOf[KTuple2[K]]
 
   def empty[K[_]]: TypedMap[K] =
     new TypedMap[K](Map.empty)
 
-  def apply[K[_]](entries: KTuple2[K]#T*): TypedMap[K] = {
+  def apply[K[_]](entries: KTuple2[K]*): TypedMap[K] = {
     val raw = Map.newBuilder[K[Any], Any]
     entries.foreach(e => raw += e.asInstanceOf[(K[Any], Any)])
     new TypedMap[K](raw.result())
@@ -95,7 +95,7 @@ object TypedMap {
   }
 
   given typedMapCodec[K[_]](using
-    keyCodec: GenKeyCodec[Kind[K]#T],
+    keyCodec: GenKeyCodec[K[Any]],
     codecMapping: GenCodecMapping[K]
   ): GenObjectCodec[TypedMap[K]] =
     new GenCodec.ObjectCodec[TypedMap[K]] {
@@ -118,7 +118,7 @@ object TypedMap {
         output.declareSizeOf(typedMap.raw)
         typedMap.raw.foreach { (key, value) =>
           val valueCodec = codecMapping.valueCodec(key.asInstanceOf[K[Any]])
-          valueCodec.write(output.writeField(keyCodec.write(key.asInstanceOf[Kind[K]#T])), value)
+          valueCodec.write(output.writeField(keyCodec.write(key.asInstanceOf[K[Any]])), value)
         }
       }
     }

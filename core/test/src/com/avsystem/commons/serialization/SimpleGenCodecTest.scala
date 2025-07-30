@@ -10,6 +10,7 @@ import com.avsystem.commons.misc.TypedMap._
 import com.avsystem.commons.misc.TypedMap.given
 import com.avsystem.commons.misc.TypedKey
 import JavaCodecs.given
+import com.avsystem.commons.misc.TypedMap.GenCodecMapping
 
 trait SimpleIOCodecTest extends AbstractCodecTest {
   type Raw = Any
@@ -335,7 +336,6 @@ class SimpleGenCodecTest extends SimpleIOCodecTest {
 
   test("typed map") {
     import SealedKey._
-    import SealedKey.given
 
     testWrite(
       TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true),

@@ -22,8 +22,8 @@ class TypedMongoCollectionTest extends AnyFunSuite with ScalaFutures with Before
   override implicit def patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(10, Seconds), interval = Span(100, Milliseconds))
 
-  implicit class taskOps[T](task: Task[T]) {
-    def value(implicit position: Position): T = task.runToFuture.futureValue
+  extension [T](task: Task[T]) {
+    def value(using position: Position): T = task.runToFuture.futureValue
   }
 
   final val Rte = RecordTestEntity
