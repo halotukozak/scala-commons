@@ -75,7 +75,7 @@ object Utils {
   }
 }
 
-import com.avsystem.commons.rpc.Utils._
+import Utils._
 
 case class DoSomethings(
   @rpcMethodMetadata doSomething: DoSomethingSignature,

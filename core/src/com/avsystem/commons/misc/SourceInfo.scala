@@ -28,9 +28,7 @@ case class SourceInfo(
 
 object SourceInfo {
   def apply()(using si: SourceInfo): SourceInfo = si
-
-  import com.avsystem.commons.macros.error
-
+  
   inline given here: SourceInfo = ${ hereImpl }
   private def hereImpl(using quotes: Quotes): Expr[SourceInfo] = {
     import quotes.reflect.*

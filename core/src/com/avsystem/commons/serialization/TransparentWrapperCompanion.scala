@@ -5,8 +5,6 @@ import com.avsystem.commons.annotation.MayBeReplacedWith
 import scala.quoted.Expr
 import scala.quoted.Type
 import scala.quoted.Quotes
-import com.avsystem.commons.macros._
-import com.avsystem.commons.macros.error
 
 /** A typeclass which serves as evidence that some type `T` is a "transparent" wrapper of some other type. This usually
   * means that instances of various typeclasses (e.g. [[GenCodec]]) for type `T` could be automatically derived from

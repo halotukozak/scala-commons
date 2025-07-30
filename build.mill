@@ -29,7 +29,7 @@ object Versions {
 
 //todo: remove os.up fiku-miku
 
-trait SharedModule extends ScalaModule {
+trait SharedModule extends PlatformScalaModule {
   def scalaVersion = Versions.scala3
 
   override def scalacOptions = Seq(
@@ -65,30 +65,13 @@ trait SharedModule extends ScalaModule {
 }
 
 trait JvmModule extends SharedModule {
-
-  override def sources =
-    Task.Sources(moduleDir / os.up / "src" / "main" / "scala", moduleDir / os.up / "jvm" / "src" / "main" / "scala")
-
-  trait TestModule extends SharedTest {
-    override def sources = Task.Sources(
-      moduleDir / os.up / os.up / "src" / "test" / "scala",
-      moduleDir / os.up / os.up / "jvm" / "src" / "test" / "scala"
-    )
-  }
+  trait TestModule extends SharedTest
 }
 
 trait JsModule extends SharedModule with ScalaJSModule {
   def scalaJSVersion = "1.19.0"
 
-  override def sources =
-    Task.Sources(moduleDir / os.up / "src" / "main" / "scala", moduleDir / os.up / "js" / "src" / "main" / "scala")
-
-  trait TestModule extends SharedTest with ScalaJSTests {
-    override def sources = Task.Sources(
-      moduleDir / os.up / os.up / "src" / "test" / "scala",
-      moduleDir / os.up / os.up / "js" / "src" / "test" / "scala"
-    )
-  }
+  trait TestModule extends SharedTest with ScalaJSTests
 }
 
 object macros extends Module {
