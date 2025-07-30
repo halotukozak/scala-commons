@@ -187,7 +187,7 @@ trait DirectMetadataParamStrategy extends MetadataParamStrategy
 
 /**
   * When a metadata parameter is annotated as `@infer`, RPC macro engine will materialize that parameter by searching
-  * for an implicit value of that parameter's type. `@infer` is the default strategy assumed for implicit parameters
+  * for an given value of that parameter's type. `@infer` is the default strategy assumed for implicit parameters
   * of metadata classes, so using this annotation explicitly is only needed when you want an implicit search done
   * for non-implicit parameter. This may be useful if, e.g. you want an inferred parameter to be a case class field.
   *

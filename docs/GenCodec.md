@@ -171,7 +171,7 @@ This is a shorter version of a more general way:
 ```scala
 case class Data(int: Int, string: String)
 object Data {
-  implicit val codec: GenCodec[Data] = GenCodec.materialize
+  given codec: GenCodec[Data] = GenCodec.materialize
 }
 ```
 
@@ -227,7 +227,7 @@ import com.avsystem.commons.serialization._
 type ThirdPartyType // defined in a library
 
 object AdditionalImplicits {
-  implicit val thirdPartyTypeCodec: GenCodec[ThirdPartyType] = ???
+  given thirdPartyTypeCodec: GenCodec[ThirdPartyType] = ???
 }
 
 case class Data(int: Int, thirdParty: ThirdPartyType)
@@ -239,7 +239,7 @@ This is roughly equivalent to:
 ```scala
 case class Data(int: Int, thirdParty: ThirdPartyType)
 object Data {
-  implicit val codec: GenCodec[Data] = {
+  given codec: GenCodec[Data] = {
     import AdditionalImplicits._
     GenCodec.materialize[Data]
   }
@@ -571,7 +571,7 @@ object ThirdPartyCodecs {
       Some((duration.getSeconds, duration.getNano))
   }
   
-  implicit val durationCodec: GenCodec[Duration] =
+  given durationCodec: GenCodec[Duration] =
     GenCodec.fromApplyUnapplyProvider[Duration](JavaDurationAU)
 }
 
@@ -594,7 +594,7 @@ object ThirdPartyCodecs {
   case class DurationRepr(seconds: Long, nanos: Int)
   object DurationRepr extends HasGenCodec[Duration]
   
-  implicit val durationCodec: GenCodec[Duration] =
+  given durationCodec: GenCodec[Duration] =
     DurationRepr.codec.transform[Duration](
       d => DurationRepr(d.getSeconds, d.getNamo), 
       dr => Duration.ofSeconds(dr.seconds).withNanos(dr.nanos)
@@ -619,7 +619,7 @@ import com.avsystem.commons.serialization._
 import java.time.Duration
 
 object ThirdPartyCodecs {
-  implicit val durationCodec: GenCodec[Duration] = new GenCodec.ObjectCodec[Duration] {
+  given durationCodec: GenCodec[Duration] = new GenCodec.ObjectCodec[Duration] {
     def read(input: ObjectInput): Duration = {
       // this implementation requires that random field access is available or field order is strictly preserved
       val seconds = input.getNextNamedField("seconds").readSimple().readLong()

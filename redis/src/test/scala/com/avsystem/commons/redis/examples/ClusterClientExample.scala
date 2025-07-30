@@ -12,7 +12,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
   * Basic example showing how to execute simple command on [[RedisClusterClient]].
   */
 object ClusterClientExample extends App {
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  given actorSystem: ActorSystem = ActorSystem()
 
   // The cluster client asks seed nodes about cluster state (by default local Redis instance is the only seed node)
   // and then uses separate RedisNodeClients to connect individually to every master mentioned in cluster state

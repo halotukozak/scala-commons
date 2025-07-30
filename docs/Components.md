@@ -159,7 +159,7 @@ class Database
 class Server(implicit db: Database)
 
 object MyApp extends Components {
-  implicit val database: Component[Database] = component(new Database)
+  given database: Component[Database] = component(new Database)
   val server: Component[Server] = component(new Server))
 }
 ```

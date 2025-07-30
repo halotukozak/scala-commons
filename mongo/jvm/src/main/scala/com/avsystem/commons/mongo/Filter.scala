@@ -7,8 +7,8 @@ import org.bson._
 
 import _root_.scala.collection.Factory
 
-/**
-  * @author MKej
+/** @author
+  *   MKej
   */
 object Filter {
 
@@ -26,13 +26,17 @@ object Filter {
   def equal[A](key: DocKey[A, _], value: A): Bson = F.eq(key.key, key.codec.toBson(value))
   def notEqual[A](key: DocKey[A, _], value: A): Bson = F.ne(key.key, key.codec.toBson(value))
 
-  def lt[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.lt(key.key, key.codec.toBson(value))
+  def lt[A, BSON <: BsonValue: CanCompare](key: DocKey[A, BSON], value: A): Bson =
+    F.lt(key.key, key.codec.toBson(value))
 
-  def lte[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.lte(key.key, key.codec.toBson(value))
+  def lte[A, BSON <: BsonValue: CanCompare](key: DocKey[A, BSON], value: A): Bson =
+    F.lte(key.key, key.codec.toBson(value))
 
-  def gt[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.gt(key.key, key.codec.toBson(value))
+  def gt[A, BSON <: BsonValue: CanCompare](key: DocKey[A, BSON], value: A): Bson =
+    F.gt(key.key, key.codec.toBson(value))
 
-  def gte[A, BSON <: BsonValue : CanCompare](key: DocKey[A, BSON], value: A): Bson = F.gte(key.key, key.codec.toBson(value))
+  def gte[A, BSON <: BsonValue: CanCompare](key: DocKey[A, BSON], value: A): Bson =
+    F.gte(key.key, key.codec.toBson(value))
 
   def in[A](key: DocKey[A, _], values: Iterable[A]): Bson = F.in(key.key, values.map(key.codec.toBson).asJava)
 
@@ -46,18 +50,17 @@ object Filter {
 
   def elemMatch(key: DocKey[_, _ <: BsonArray], filter: Bson): Bson = F.elemMatch(key.key, filter)
 
-  def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)
-    (implicit fac: Factory[A, COL]): Bson =
+  def contains[A, COL <: Iterable[A]](key: DocKey[COL, _ <: BsonArray], value: A)(implicit fac: Factory[A, COL]): Bson =
     F.eq(key.key, key.codec.toBson((fac.newBuilder += value).result()).asScala.head)
 
   object Limitations {
     trait CanCompare[BSON <: BsonValue]
     object CanCompare {
       def create[BSON <: BsonValue]: CanCompare[BSON] = new CanCompare[BSON] {}
-      implicit val date: CanCompare[BsonDateTime] = create[BsonDateTime]
-      implicit val int32: CanCompare[BsonInt32] = create[BsonInt32]
-      implicit val int64: CanCompare[BsonInt64] = create[BsonInt64]
-      implicit val double: CanCompare[BsonDouble] = create[BsonDouble]
+      given date: CanCompare[BsonDateTime] = create[BsonDateTime]
+      given int32: CanCompare[BsonInt32] = create[BsonInt32]
+      given int64: CanCompare[BsonInt64] = create[BsonInt64]
+      given double: CanCompare[BsonDouble] = create[BsonDouble]
     }
   }
 }

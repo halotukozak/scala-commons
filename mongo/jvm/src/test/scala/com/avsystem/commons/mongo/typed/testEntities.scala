@@ -11,7 +11,7 @@ case class RecordId(id: String) extends AnyVal
 case class InnerId(id: String) extends AnyVal
 //object InnerId extends StringWrapperCompanion[InnerId]
 
-sealed abstract class PKey[T](implicit val valueFormat: MongoFormat[T]) extends MongoTypedKey[T] with AutoNamedEnum
+sealed abstract class PKey[T](using val valueFormat: MongoFormat[T]) extends MongoTypedKey[T] with AutoNamedEnum
 object PKey extends NamedEnumCompanion[PKey[?]] {
   val values: List[PKey[_]] = caseObjects
   case object IntKey extends PKey[Int]
@@ -25,11 +25,10 @@ case class InnerRecord(
   strOpt: Opt[String],
   @optionalParam intOpt: Opt[Int],
   intList: List[Int],
-  intMap: Map[String, Int],
+  intMap: Map[String, Int]
 )
 object InnerRecord extends MongoDataCompanion[InnerRecord] {
-  final val Example = InnerRecord(
-    24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
+  final val Example = InnerRecord(24, "istr", Opt("istropt"), Opt.Empty, List(3, 4, 5), Map("ione" -> 1, "ithree" -> 3))
 }
 
 case class Props(map: Map[String, String]) extends AnyVal
@@ -44,23 +43,32 @@ case class RecordTestEntity(
   @optionalParam intOpt: Opt[Int],
   intList: List[Int],
   intMap: Map[String, Int],
-  //  typedMap: TypedMap[PKey],
+  typedMap: TypedMap[PKey],
   inner: InnerRecord,
   innerOpt: Opt[InnerRecord],
   innerList: List[InnerRecord],
   innerMap: Map[InnerId, InnerRecord],
   complex: Opt[Map[InnerId, List[InnerRecord]]],
   props: Props,
-  @transientDefault union: UnionTestEntity = CaseOne("uid", "ustr", data = false),
+  @transientDefault union: UnionTestEntity = CaseOne("uid", "ustr", data = false)
 ) extends MongoEntity[String]
 object RecordTestEntity extends MongoEntityCompanion[String, RecordTestEntity] {
   final val Example = RecordTestEntity(
-    "rid", 42, "str", Timestamp.Zero, Opt("stropt"), Opt.Empty,
-    List(1, 2, 3), Map("one" -> 1, "two" -> 2),
-    //    TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
-    InnerRecord.Example, Opt(InnerRecord.Example), List(InnerRecord.Example),
-    Map(InnerId("iid") -> InnerRecord.Example), Opt(Map(InnerId("iid") -> List(InnerRecord.Example))),
-    Props(Map.empty),
+    "rid",
+    42,
+    "str",
+    Timestamp.Zero,
+    Opt("stropt"),
+    Opt.Empty,
+    List(1, 2, 3),
+    Map("one" -> 1, "two" -> 2),
+    TypedMap(PKey.IntKey -> 42, PKey.InnerKey -> InnerRecord.Example),
+    InnerRecord.Example,
+    Opt(InnerRecord.Example),
+    List(InnerRecord.Example),
+    Map(InnerId("iid") -> InnerRecord.Example),
+    Opt(Map(InnerId("iid") -> List(InnerRecord.Example))),
+    Props(Map.empty)
   )
 }
 
@@ -79,14 +87,8 @@ case class TestAutoId(id: ObjectId) extends AnyVal
 given GenCodec[TestAutoId] = ???
 //object TestAutoId extends ObjectIdWrapperCompanion[TestAutoId]
 
-case class RecordTestAutoIdEntity(
-  str: String,
-  int: Int,
-) extends AutoIdMongoEntity[TestAutoId]
+case class RecordTestAutoIdEntity(str: String, int: Int) extends AutoIdMongoEntity[TestAutoId]
 object RecordTestAutoIdEntity extends MongoEntityCompanion[TestAutoId, RecordTestAutoIdEntity]
 
-case class AutoObjectIdEntity(
-  str: String,
-  int: Int,
-) extends AutoIdMongoEntity[ObjectId]
+case class AutoObjectIdEntity(str: String, int: Int) extends AutoIdMongoEntity[ObjectId]
 object AutoObjectIdEntity extends MongoEntityCompanion[ObjectId, AutoObjectIdEntity]

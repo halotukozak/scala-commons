@@ -13,9 +13,9 @@ trait GenCodecStructure[T] {
 abstract class HasGenCodecStructure[T](
   implicit macroInstances: MacroInstances[Unit, GenCodecStructure[T]]
 ) {
-  implicit val genCodec: GenCodec[T] = 
+  given genCodec: GenCodec[T] = 
   ??? // macroInstances((), this).codec
-  implicit val genStructure: GenStructure[T] = 
+  given genStructure: GenStructure[T] = 
   ??? // macroInstances((), this).structure
 }
 
@@ -102,8 +102,8 @@ case class Galaxy(name: String, distance: Long) extends MaterialBeing
 
 class Peculiarity extends Being
 object Peculiarity {
-  implicit val codec: GenCodec[Peculiarity] = null
-  implicit val structure: GenStructure[Peculiarity] = null
+  given codec: GenCodec[Peculiarity] = null
+  given structure: GenStructure[Peculiarity] = null
 }
 
 case object God extends Being

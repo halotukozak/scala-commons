@@ -11,12 +11,17 @@ class td extends transientDefault
 trait SomeBase {
   def difolt: Boolean = true
 
-  @POST def postit(arg: String, @header("X-Bar") bar: String, int: Int, @header("X-Foo") @suchMeta(2, "b") foo: String): String
+  @POST def postit(
+    arg: String,
+    @header("X-Bar") bar: String,
+    int: Int,
+    @header("X-Foo") @suchMeta(2, "b") foo: String
+  ): String
 }
 
 trait Box[T]
 object Box {
-  implicit def codec[T: GenCodec]: GenCodec[Box[T]] = ???
+  given codec[T: GenCodec]: GenCodec[Box[T]] = ???
 }
 
 class annotTypeString[T](@infer val ts: TypeString[T] = RpcMetadata.auto) extends StaticAnnotation
@@ -39,20 +44,21 @@ trait TestApi extends SomeBase {
 //  def generyk[T](@annotTypeString[Box[T]] lel: Box[T])(implicit @encodingDependency tag: Tag[T]): Future[List[T]]
 }
 object TestApi {
-  implicit def codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
-  implicit def asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
-  implicit def futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
+  given codecFromTag[T: Tag]: GenCodec[T] = Tag[T].codec
+  given asRawRealFromGenCodec[T: GenCodec]: AsRawReal[String, T] = ???
+  given futureAsRawRealFromGenCodec[T: GenCodec]: AsRawReal[Future[String], Future[T]] = ???
 
-  implicit val asRaw: NewRawRpc.AsRawRpc[TestApi] = NewRawRpc.materializeAsRaw[TestApi]
-  implicit val asReal: NewRawRpc.AsRealRpc[TestApi] = NewRawRpc.materializeAsReal[TestApi]
-  implicit val metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materialize[TestApi]
-  implicit val partialMetadata: PartialMetadata[TestApi] = PartialMetadata.materialize[TestApi]
+  given asRaw: NewRawRpc.AsRawRpc[TestApi] = NewRawRpc.materializeAsRaw[TestApi]
+  given asReal: NewRawRpc.AsRealRpc[TestApi] = NewRawRpc.materializeAsReal[TestApi]
+  given metadata: NewRpcMetadata[TestApi] = NewRpcMetadata.materialize[TestApi]
+  given partialMetadata: PartialMetadata[TestApi] = PartialMetadata.materialize[TestApi]
 }
 
 class NewRpcMetadataTest extends AnyFunSuite {
   test("TestApi metadata") {
-    assert(TestApi.metadata.toString ==
-      """com.avsystem.commons.rpc.TestApi
+    assert(
+      TestApi.metadata.toString ==
+        """com.avsystem.commons.rpc.TestApi
         |  DO SOMETHING ELSE: true
         |  PROCEDURES:
         |  flames -> def flames@4:0: void

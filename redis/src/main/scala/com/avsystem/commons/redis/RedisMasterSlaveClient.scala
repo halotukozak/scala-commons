@@ -12,21 +12,26 @@ import com.avsystem.commons.redis.monitoring.SentinelStateObserver
 import com.avsystem.commons.redis.protocol.{ErrorMsg, RedisReply, TransactionReply}
 import com.avsystem.commons.redis.util.DelayedFuture
 
-/**
-  * Redis client implementation for master-slave installations with Redis Sentinels.
-  * [[RedisMasterSlaveClient]] is able to execute the same set of commands as [[RedisNodeClient]].
+/** Redis client implementation for master-slave installations with Redis Sentinels. [[RedisMasterSlaveClient]] is able
+  * to execute the same set of commands as [[RedisNodeClient]].
   *
-  * @param masterName            name of the master, as configured in the sentinels
-  * @param seedSentinels         sentinel seed addresses - must point to at least one reachable sentinel
-  * @param config                client configuration - [[MasterSlaveConfig]]
-  * @param sentinelStateObserver optional observer of client's state and connections - [[SentinelStateObserver]]
+  * @param masterName
+  *   name of the master, as configured in the sentinels
+  * @param seedSentinels
+  *   sentinel seed addresses - must point to at least one reachable sentinel
+  * @param config
+  *   client configuration - [[MasterSlaveConfig]]
+  * @param sentinelStateObserver
+  *   optional observer of client's state and connections - [[SentinelStateObserver]]
   */
 final class RedisMasterSlaveClient(
   val masterName: String,
   val seedSentinels: Seq[NodeAddress] = Seq(NodeAddress.DefaultSentinel),
   val config: MasterSlaveConfig = MasterSlaveConfig(),
-  val sentinelStateObserver: OptArg[SentinelStateObserver] = OptArg.Empty,
-)(implicit system: ActorSystem) extends RedisClient with RedisNodeExecutor {
+  val sentinelStateObserver: OptArg[SentinelStateObserver] = OptArg.Empty
+)(implicit system: ActorSystem)
+  extends RedisClient
+  with RedisNodeExecutor {
 
   require(seedSentinels.nonEmpty, "No seed sentinel nodes provided")
 
@@ -63,7 +68,18 @@ final class RedisMasterSlaveClient(
   }
 
   private val monitoringActor =
-    system.actorOf(Props(new SentinelsMonitoringActor(masterName, seedSentinels, config, initPromise.failure, onNewMaster, sentinelStateObserver)))
+    system.actorOf(
+      Props(
+        new SentinelsMonitoringActor(
+          masterName,
+          seedSentinels,
+          config,
+          initPromise.failure,
+          onNewMaster,
+          sentinelStateObserver
+        )
+      )
+    )
 
   def setMasterListener(listener: RedisNodeClient => Unit)(implicit executor: ExecutionContext): Unit =
     masterListener = newMaster => executor.execute(jRunnable(listener(newMaster)))
@@ -79,15 +95,15 @@ final class RedisMasterSlaveClient(
   def executionContext: ExecutionContext = system.dispatcher
 
   def executeBatch[A](batch: RedisBatch[A], execConfig: ExecutionConfig): Future[A] = ifReady {
-    implicit val timeout: Timeout = execConfig.responseTimeout
+    given timeout: Timeout = execConfig.responseTimeout
     val packs = batch.rawCommandPacks
     val replyFut = handleFailover(master.executeRaw(packs), packs, config.failoverBackoutStrategy)
     replyFut.map(batch.decodeReplies(_))(execConfig.decodeOn)
   }
 
-  private def handleFailover(
-    resultFut: Future[PacksResult], packs: RawCommandPacks, retryStrategy: RetryStrategy
-  )(implicit timeout: Timeout): Future[PacksResult] =
+  private def handleFailover(resultFut: Future[PacksResult], packs: RawCommandPacks, retryStrategy: RetryStrategy)(
+    implicit timeout: Timeout
+  ): Future[PacksResult] =
     resultFut.flatMapNow { pr =>
       pr.collectFirstOpt { case ReadonlyReply(err) => err } match {
         case Opt.Empty => resultFut
@@ -102,10 +118,9 @@ final class RedisMasterSlaveClient(
               DelayedFuture(delay).flatMapNow(_ => handleFailover(master.executeRaw(packs), packs, nextStrategy))
           }
       }
-    } recoverWithNow {
-      case _: NodeRemovedException =>
-        // this means the master changed before the batch could be sent, retry immediately
-        handleFailover(master.executeRaw(packs), packs, config.failoverBackoutStrategy)
+    } recoverWithNow { case _: NodeRemovedException =>
+      // this means the master changed before the batch could be sent, retry immediately
+      handleFailover(master.executeRaw(packs), packs, config.failoverBackoutStrategy)
     }
 
   def executeOp[A](op: RedisOp[A], executionConfig: ExecutionConfig): Future[A] =

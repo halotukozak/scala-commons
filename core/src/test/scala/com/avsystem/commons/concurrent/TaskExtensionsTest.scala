@@ -11,7 +11,7 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 class TaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDrivenPropertyChecks with ScalaFutures {
   import com.avsystem.commons.concurrent.TaskExtensions._
 
-  private implicit val scheduler: Scheduler = Scheduler.global
+  private given Scheduler = Scheduler.global
 
   test("traverseOpt") {
     Task.traverseOpt(Opt.empty[Int])(i => Task.now(i)).runToFuture.futureValue shouldBe Opt.Empty

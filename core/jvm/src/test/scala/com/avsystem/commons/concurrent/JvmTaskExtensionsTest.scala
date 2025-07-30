@@ -15,7 +15,7 @@ class JvmTaskExtensionsTest extends AnyFunSuite with Matchers with ScalaCheckDri
 
   import com.avsystem.commons.concurrent.TaskExtensions._
 
-  private implicit val scheduler: Scheduler = Scheduler.global
+  private given Scheduler = Scheduler.global
 
   // This test does not work in SJS runtime (but the method itself does)
   test("lazyTimeout") {

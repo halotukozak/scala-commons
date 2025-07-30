@@ -4,7 +4,7 @@ package misc
 import org.scalatest.funsuite.AnyFunSuite
 
 class SealedEnumTest extends AnyFunSuite {
-  sealed abstract class SomeEnum(implicit val sourceInfo: SourceInfo) extends OrderedEnum
+  sealed abstract class SomeEnum(using val sourceInfo: SourceInfo) extends OrderedEnum
   object SomeEnum extends SealedEnumCompanion[SomeEnum] {
     case object First extends SomeEnum
     case object Second extends SomeEnum

@@ -24,7 +24,7 @@ final case class RawCbor(bytes: Array[Byte], offset: Int, length: Int) {
   }
 
   def hex: String =
-    Iterator.range(offset, offset + length).map(i => f"${bytes(i) & 0xFF}%02X").mkString
+    Iterator.range(offset, offset + length).map(i => f"${bytes(i) & 0xff}%02X").mkString
 
   override def toString: String = hex
 
@@ -64,11 +64,12 @@ object RawCbor extends TypeMarker[RawCbor] {
   ): RawCbor =
     RawCbor(CborOutput.write(value, keyCodec, sizePolicy))
 
-  implicit val codec: GenCodec[RawCbor] =
+  given codec: GenCodec[RawCbor] =
     GenCodec.nonNull(
       input => input.readCustom(RawCbor).getOrElse(RawCbor(input.readSimple().readBinary())),
-      (output, cbor) => if (!output.writeCustom(RawCbor, cbor)) {
-        output.writeSimple().writeBinary(cbor.compact.bytes)
-      }
+      (output, cbor) =>
+        if (!output.writeCustom(RawCbor, cbor)) {
+          output.writeSimple().writeBinary(cbor.compact.bytes)
+        }
     )
 }

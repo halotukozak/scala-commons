@@ -7,10 +7,10 @@ import com.avsystem.commons.serialization.GenCodec
 class BsonRefIterableUpdatingCompilationTest extends BsonRef.Creator[Something] {
   import Updating._
 
-  implicit val codec: GenCodec[Something] = GenCodec.materialize
+  given codec: GenCodec[Something] = GenCodec.materialize
 
-  new BsonRefIterableUpdating(ref(_.a)) //Instantiation without explicit type parameters
-  ref(_.a).push(7)                      //Implicit conversion to BsonRef -> BsonRefIterableUpdating
+  new BsonRefIterableUpdating(ref(_.a)) // Instantiation without explicit type parameters
+  ref(_.a).push(7) // Implicit conversion to BsonRef -> BsonRefIterableUpdating
 
 }
 

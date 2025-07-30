@@ -4,11 +4,9 @@ package mongo
 import com.avsystem.commons.serialization.{GenCodec, name, transparent}
 import org.scalatest.funsuite.AnyFunSuite
 
-case class InnerClass(
-  map: Map[String, String]
-)
+case class InnerClass(map: Map[String, String])
 object InnerClass extends BsonRef.Creator[InnerClass] {
-  implicit val codec: GenCodec[InnerClass] = GenCodec.materialize
+  given codec: GenCodec[InnerClass] = GenCodec.materialize
 
   final val MapRef = ref(_.map)
 }
@@ -16,16 +14,12 @@ object InnerClass extends BsonRef.Creator[InnerClass] {
 @transparent
 case class Wrapper(s: String) extends AnyVal
 object Wrapper {
-  implicit val codec: GenCodec[Wrapper] = GenCodec.materialize
+  given codec: GenCodec[Wrapper] = GenCodec.materialize
 }
 
-case class TestEntity(
-  `$special.field`: String,
-  wrapper: Wrapper,
-  @name("inner") innerClass: InnerClass
-)
+case class TestEntity(`$special.field`: String, wrapper: Wrapper, @name("inner") innerClass: InnerClass)
 object TestEntity extends BsonRef.Creator[TestEntity] {
-  implicit val codec: GenCodec[TestEntity] = GenCodec.materialize
+  given codec: GenCodec[TestEntity] = GenCodec.materialize
 }
 
 class BsonRefTest extends AnyFunSuite with BsonRef.Creator[TestEntity] {

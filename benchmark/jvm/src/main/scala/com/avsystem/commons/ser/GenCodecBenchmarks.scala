@@ -18,13 +18,13 @@ class GenCodecBenchmarks {
 
   @Benchmark
   def cleanSomeWriting: String = {
-    implicit val cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
+    given cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
     JsonStringOutput.write(GenCodecBenchmarks.somes)
   }
 
   @Benchmark
   def cleanNoneWriting: String = {
-    implicit val cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
+    given cleanCodec: GenCodec[Option[String]] = GenCodecBenchmarks.cleanOptionCodec[String]
     JsonStringOutput.write(GenCodecBenchmarks.nones)
   }
 
@@ -34,13 +34,14 @@ class GenCodecBenchmarks {
 }
 
 object GenCodecBenchmarks {
-  implicit def cleanOptionCodec[T: GenCodec]: GenCodec[Option[T]] =
+  given cleanOptionCodec[T: GenCodec]: GenCodec[Option[T]] =
     GenCodec.create[Option[T]](
       i => if (i.readNull()) None else Some(GenCodec.read[T](i)),
-      (o, vo) => vo match {
-        case Some(v) => GenCodec.write[T](o, v)
-        case None => o.writeNull()
-      }
+      (o, vo) =>
+        vo match {
+          case Some(v) => GenCodec.write[T](o, v)
+          case None => o.writeNull()
+        }
     )
 
   val somes: BSeq[Option[String]] = MArrayBuffer.tabulate(1000)(i => Some(i.toString))

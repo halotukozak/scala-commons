@@ -48,15 +48,12 @@ class StreamInputOutputTest extends AnyFunSuite {
     BigDecimal(BigInt("2356342454564522135435"), 150),
     Array[Byte](1, 2, 4, 2),
     Obj(10, "x"),
-    List(
-      List.empty,
-      List(Obj(123, "y"), Obj(124, "z"))
-    )
+    List(List.empty, List(Obj(123, "y"), Obj(124, "z")))
   )
 
-  implicit val wrapCodec: GenCodec[Wrap] = GenCodec.materialize[Wrap]
-  implicit val objCodec: GenCodec[Obj] = GenCodec.materialize[Obj]
-  implicit val fieldTypesCodec: GenCodec[FieldTypes] = GenCodec.materialize[FieldTypes]
+  given wrapCodec: GenCodec[Wrap] = GenCodec.materialize[Wrap]
+  given objCodec: GenCodec[Obj] = GenCodec.materialize[Obj]
+  given fieldTypesCodec: GenCodec[FieldTypes] = GenCodec.materialize[FieldTypes]
 
   def outputs() = {
     val os = new ByteArrayOutputStream()

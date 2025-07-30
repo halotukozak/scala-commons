@@ -9,7 +9,7 @@ object ComplexInstancesTest {
   case class Klass[T](value: T)
 
   object DependencyImplicits {
-    implicit val depCodec: GenCodec[Dep] = GenCodec.materialize
+    given depCodec: GenCodec[Dep] = GenCodec.materialize
   }
 
   trait ComplexInstances[T] {
@@ -19,8 +19,8 @@ object ComplexInstancesTest {
     def parameterizedCodec[A: GenCodec]: GenCodec[Klass[A]]
   }
 
-  abstract class HasComplexInstances[T](
-    implicit macroInstances: MacroInstances[DependencyImplicits.type, ComplexInstances[T]]
+  abstract class HasComplexInstances[T](implicit
+    macroInstances: MacroInstances[DependencyImplicits.type, ComplexInstances[T]]
   ) {
     val instances: ComplexInstances[T]
     ??? // macroInstances(DependencyImplicits, this)
@@ -32,14 +32,14 @@ object MultipleImplicitImportsTest {
   case class B(int: Int)
 
   object ACodec {
-    implicit val aCodec: GenCodec[A] = GenCodec.materialize
+    given aCodec: GenCodec[A] = GenCodec.materialize
   }
   object BCodec {
-    implicit val bCodec: GenCodec[B] = GenCodec.materialize
+    given bCodec: GenCodec[B] = GenCodec.materialize
   }
 
-  abstract class HasGenCodecUsingAB[T](
-    implicit instances: MacroInstances[(ACodec.type, BCodec.type), () => GenCodec[T]]
+  abstract class HasGenCodecUsingAB[T](implicit
+    instances: MacroInstances[(ACodec.type, BCodec.type), () => GenCodec[T]]
   ) {
     implicit lazy val codec: GenCodec[T] = instances((ACodec, BCodec), this).apply()
   }
@@ -54,15 +54,13 @@ object AnnotationReferringToEnclosingObjectTest {
   class Meta[T](@reifyAnnot example: example[T])
   object Meta extends AdtMetadataCompanion[Meta]
 
-  abstract class HasMeta[T](
-    implicit instances: MacroInstances[Unit, () => Meta[T]]
-  ) {
-    implicit val meta: Meta[T] = instances((), this).apply()
+  abstract class HasMeta[T](implicit instances: MacroInstances[Unit, () => Meta[T]]) {
+    given meta: Meta[T] = instances((), this).apply()
   }
 
   //  @example(Rec("lol", 42))
   case class Rec(str: String, int: Int)
   object Rec extends HasMeta[Rec] {
-    implicit val codec: GenCodec[Rec] = GenCodec.materialize
+    given codec: GenCodec[Rec] = GenCodec.materialize
   }
 }

@@ -8,11 +8,10 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 import com.avsystem.commons.redis.protocol._
 
-/**
-  * Author: ghik
-  * Created: 06/04/16.
+/** Author: ghik Created: 06/04/16.
   */
 trait KeyedKeysApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/copy COPY]] */
   def copy(
     source: Key,
@@ -30,8 +29,9 @@ trait KeyedKeysApi extends ApiSubset {
   def del(key: Key, keys: Key*): Result[Int] =
     execute(new Del(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/del DEL]]
-    * or simply returns 0 if `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/del DEL]] or simply returns 0 if `keys` is empty, without sending the command
+    * to Redis
+    */
   def del(keys: Iterable[Key]): Result[Int] =
     execute(new Del(keys))
 
@@ -47,8 +47,9 @@ trait KeyedKeysApi extends ApiSubset {
   def exists(key: Key, keys: Key*): Result[Int] =
     execute(new Exists(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/exists EXISTS]]
-    * or simply returns 0 when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/exists EXISTS]] or simply returns 0 when `keys` is empty, without sending the
+    * command to Redis
+    */
   def exists(keys: Iterable[Key]): Result[Int] =
     execute(new Exists(keys))
 
@@ -60,8 +61,9 @@ trait KeyedKeysApi extends ApiSubset {
   def expireat(key: Key, timestamp: Long): Result[Boolean] =
     execute(new Expireat(key, timestamp))
 
-  /** Executes [[http://redis.io/commands/migrate MIGRATE]]
-    * or simply returns `true` when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/migrate MIGRATE]] or simply returns `true` when `keys` is empty, without
+    * sending the command to Redis
+    */
   def migrate(
     keys: Iterable[Key],
     address: NodeAddress,
@@ -69,7 +71,7 @@ trait KeyedKeysApi extends ApiSubset {
     timeout: Long,
     copy: Boolean = false,
     replace: Boolean = false,
-    auth: OptArg[MigrateAuth] = OptArg.Empty,
+    auth: OptArg[MigrateAuth] = OptArg.Empty
   ): Result[Boolean] =
     execute(new Migrate(keys, address, destinationDb, timeout, copy, replace, auth.toOpt))
 
@@ -117,20 +119,35 @@ trait KeyedKeysApi extends ApiSubset {
     execute(new Restore(key, ttl, dumpedValue, replace))
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
-  def sort(key: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false
+  def sort(
+    key: Key,
+    by: OptArg[SortPattern[Key, Field]] = OptArg.Empty,
+    limit: OptArg[SortLimit] = OptArg.Empty,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty,
+    alpha: Boolean = false
   ): Result[Seq[Value]] =
     execute(new Sort(key, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
-  def sortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false
+  def sortGet(
+    key: Key,
+    gets: Seq[SortPattern[Key, Field]],
+    by: OptArg[SortPattern[Key, Field]] = OptArg.Empty,
+    limit: OptArg[SortLimit] = OptArg.Empty,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty,
+    alpha: Boolean = false
   ): Result[Seq[Seq[Opt[Value]]]] =
     execute(new SortGet(key, gets, by.toOpt, limit.toOpt, sortOrder.toOpt, alpha))
 
   /** Executes [[http://redis.io/commands/sort SORT]] */
-  def sortStore(key: Key, destination: Key, by: OptArg[SortPattern[Key, Field]] = OptArg.Empty, limit: OptArg[SortLimit] = OptArg.Empty,
-    gets: Seq[SortPattern[Key, Field]] = Nil, sortOrder: OptArg[SortOrder] = OptArg.Empty, alpha: Boolean = false
+  def sortStore(
+    key: Key,
+    destination: Key,
+    by: OptArg[SortPattern[Key, Field]] = OptArg.Empty,
+    limit: OptArg[SortLimit] = OptArg.Empty,
+    gets: Seq[SortPattern[Key, Field]] = Nil,
+    sortOrder: OptArg[SortOrder] = OptArg.Empty,
+    alpha: Boolean = false
   ): Result[Long] =
     execute(new SortStore(key, destination, by.toOpt, limit.toOpt, gets, sortOrder.toOpt, alpha))
 
@@ -142,8 +159,9 @@ trait KeyedKeysApi extends ApiSubset {
   def touch(key: Key, keys: Key*): Result[Int] =
     execute(new Touch(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/touch TOUCH]]
-    * or simply returns 0 when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/touch TOUCH]] or simply returns 0 when `keys` is empty, without sending the
+    * command to Redis
+    */
   def touch(keys: Iterable[Key]): Result[Int] =
     execute(new Touch(keys))
 
@@ -163,15 +181,21 @@ trait KeyedKeysApi extends ApiSubset {
   def unlink(key: Key, keys: Key*): Result[Int] =
     execute(new Unlink(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/unlink UNLINK]]
-    * or simply returns 0 when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/unlink UNLINK]] or simply returns 0 when `keys` is empty, without sending the
+    * command to Redis
+    */
   def unlink(keys: Iterable[Key]): Result[Int] =
     execute(new Unlink(keys))
 
   private final class Copy(source: Key, destination: Key, destinationDb: Opt[Int], replace: Boolean)
-    extends RedisBooleanCommand with NodeCommand {
-    val encoded: Encoded = encoder("COPY").key(source).key(destination)
-      .optAdd("DB", destinationDb).addFlag("REPLACE", replace).result
+    extends RedisBooleanCommand
+    with NodeCommand {
+    val encoded: Encoded = encoder("COPY")
+      .key(source)
+      .key(destination)
+      .optAdd("DB", destinationDb)
+      .addFlag("REPLACE", replace)
+      .result
   }
 
   private final class Del(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
@@ -203,8 +227,9 @@ trait KeyedKeysApi extends ApiSubset {
     timeout: Long,
     copy: Boolean,
     replace: Boolean,
-    auth: Opt[MigrateAuth],
-  ) extends RedisCommand[Boolean] with NodeCommand {
+    auth: Opt[MigrateAuth]
+  ) extends RedisCommand[Boolean]
+    with NodeCommand {
     private val multiKey = keys.size != 1
 
     val encoded: Encoded = {
@@ -241,7 +266,8 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private final class ObjectEncoding(key: Key)
-    extends RedisOptCommand[Encoding](bulkAsNamedEnum(Encoding)) with NodeCommand {
+    extends RedisOptCommand[Encoding](bulkAsNamedEnum(Encoding))
+    with NodeCommand {
     val encoded: Encoded = encoder("OBJECT", "ENCODING").key(key).result
   }
 
@@ -278,9 +304,14 @@ trait KeyedKeysApi extends ApiSubset {
   }
 
   private final class Restore(key: Key, ttl: Long, dumpedValue: Dumped, replace: Boolean)
-    extends RedisUnitCommand with NodeCommand {
-    val encoded: Encoded = encoder("RESTORE").key(key).add(ttl)
-      .add(dumpedValue.raw).addFlag("REPLACE", replace).result
+    extends RedisUnitCommand
+    with NodeCommand {
+    val encoded: Encoded = encoder("RESTORE")
+      .key(key)
+      .add(ttl)
+      .add(dumpedValue.raw)
+      .addFlag("REPLACE", replace)
+      .result
   }
 
   private abstract class AbstractSort[T](decoder: ReplyDecoder[T])(
@@ -291,7 +322,8 @@ trait KeyedKeysApi extends ApiSubset {
     sortOrder: Opt[SortOrder],
     alpha: Boolean,
     destination: Opt[Key]
-  ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
+  ) extends AbstractRedisCommand[T](decoder)
+    with NodeCommand {
     val encoded: Encoded = {
       val enc = encoder("SORT").key(key).optAdd("BY", by).optAdd("LIMIT", limit)
       gets.foreach(sp => enc.add("GET").add(sp))
@@ -299,15 +331,40 @@ trait KeyedKeysApi extends ApiSubset {
     }
   }
 
-  private final class Sort(key: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
-    extends AbstractSort[Seq[Value]](multiBulkAsSeqOf[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
+  private final class Sort(
+    key: Key,
+    by: Opt[SortPattern[Key, Field]],
+    limit: Opt[SortLimit],
+    sortOrder: Opt[SortOrder],
+    alpha: Boolean
+  ) extends AbstractSort[Seq[Value]](multiBulkAsSeqOf[Value])(key, by, limit, Nil, sortOrder, alpha, Opt.Empty)
 
-  private final class SortGet(key: Key, gets: Seq[SortPattern[Key, Field]], by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], sortOrder: Opt[SortOrder], alpha: Boolean)
-    extends AbstractSort[Seq[Seq[Opt[Value]]]](multiBulkAsGroupedSeq(gets.size min 1, nullBulkOrAs[Value]))(
-      key, by, limit, gets, sortOrder, alpha, Opt.Empty)
+  private final class SortGet(
+    key: Key,
+    gets: Seq[SortPattern[Key, Field]],
+    by: Opt[SortPattern[Key, Field]],
+    limit: Opt[SortLimit],
+    sortOrder: Opt[SortOrder],
+    alpha: Boolean
+  ) extends AbstractSort[Seq[Seq[Opt[Value]]]](multiBulkAsGroupedSeq(gets.size min 1, nullBulkOrAs[Value]))(
+      key,
+      by,
+      limit,
+      gets,
+      sortOrder,
+      alpha,
+      Opt.Empty
+    )
 
-  private final class SortStore(key: Key, destination: Key, by: Opt[SortPattern[Key, Field]], limit: Opt[SortLimit], gets: Seq[SortPattern[Key, Field]], sortOrder: Opt[SortOrder], alpha: Boolean)
-    extends AbstractSort[Long](integerAsLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
+  private final class SortStore(
+    key: Key,
+    destination: Key,
+    by: Opt[SortPattern[Key, Field]],
+    limit: Opt[SortLimit],
+    gets: Seq[SortPattern[Key, Field]],
+    sortOrder: Opt[SortOrder],
+    alpha: Boolean
+  ) extends AbstractSort[Long](integerAsLong)(key, by, limit, gets, sortOrder, alpha, Opt(destination))
 
   private final class Touch(keys: Iterable[Key]) extends RedisIntCommand with NodeCommand {
     val encoded: Encoded = encoder("TOUCH").keys(keys).result
@@ -329,12 +386,15 @@ trait KeyedKeysApi extends ApiSubset {
 }
 
 trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
+
   /** Executes [[http://redis.io/commands/move MOVE]] */
   def move(key: Key, db: Int): Result[Boolean] =
     execute(new Move(key, db))
+
   /** Executes [[http://redis.io/commands/keys KEYS]] */
   def keys(pattern: Key): Result[BSet[Key]] =
     execute(new Keys(pattern))
+
   /** Executes [[http://redis.io/commands/scan SCAN]] */
   def scan(
     cursor: Cursor,
@@ -343,9 +403,11 @@ trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
     keyType: OptArg[RedisType] = OptArg.Empty
   ): Result[(Cursor, Seq[Key])] =
     execute(new Scan(cursor, matchPattern.toOpt, count.toOpt, keyType.toOpt))
+
   /** Executes [[http://redis.io/commands/randomkey RANDOMKEY]] */
   def randomkey: Result[Opt[Key]] =
     execute(Randomkey)
+
   /** Executes [[http://redis.io/commands/wait WAIT]] */
   def wait(numslaves: Int, timeout: Long): Result[Long] =
     execute(new Wait(numslaves, timeout))
@@ -359,9 +421,15 @@ trait NodeKeysApi extends KeyedKeysApi with ApiSubset {
   }
 
   private final class Scan(cursor: Cursor, matchPattern: Opt[Key], count: Opt[Long], keyType: Opt[RedisType])
-    extends RedisScanCommand[Key](multiBulkAsSeqOf[Key]) with NodeCommand {
+    extends RedisScanCommand[Key](multiBulkAsSeqOf[Key])
+    with NodeCommand {
     val encoded: Encoded =
-      encoder("SCAN").add(cursor.raw).optData("MATCH", matchPattern).optAdd("COUNT", count).optAdd("TYPE", keyType).result
+      encoder("SCAN")
+        .add(cursor.raw)
+        .optData("MATCH", matchPattern)
+        .optAdd("COUNT", count)
+        .optAdd("TYPE", keyType)
+        .result
   }
 
   private object Randomkey extends RedisOptDataCommand[Key] with NodeCommand {
@@ -397,7 +465,7 @@ object Encoding extends NamedEnumCompanion[Encoding] {
 
 case class SortLimit(offset: Long, count: Long)
 object SortLimit {
-  implicit val SortLimitArg: CommandArg[SortLimit] =
+  given SortLimitArg: CommandArg[SortLimit] =
     CommandArg((ce, sl) => ce.add(sl.offset).add(sl.count))
 }
 
@@ -407,16 +475,18 @@ case class KeyPattern[+K](pattern: K) extends SortPattern[K, Nothing]
 case class FieldPattern[+K, +F](keyPattern: K, fieldPattern: F) extends SortPattern[K, F]
 object SortPattern {
   implicit def SortPatternArg[K: RedisDataCodec, F: RedisDataCodec]: CommandArg[SortPattern[K, F]] =
-    CommandArg((ce, sp) => ce.add(sp match {
-      case SelfPattern => ByteString("#")
-      case KeyPattern(pattern) => RedisDataCodec.write(pattern)
-      case FieldPattern(keyPattern, fieldPattern) =>
-        val bsb = new ByteStringBuilder
-        bsb.append(RedisDataCodec.write(keyPattern))
-        bsb.append(ByteString("->"))
-        bsb.append(RedisDataCodec.write(fieldPattern))
-        bsb.result()
-    }))
+    CommandArg((ce, sp) =>
+      ce.add(sp match {
+        case SelfPattern => ByteString("#")
+        case KeyPattern(pattern) => RedisDataCodec.write(pattern)
+        case FieldPattern(keyPattern, fieldPattern) =>
+          val bsb = new ByteStringBuilder
+          bsb.append(RedisDataCodec.write(keyPattern))
+          bsb.append(ByteString("->"))
+          bsb.append(RedisDataCodec.write(fieldPattern))
+          bsb.result()
+      })
+    )
 }
 
 sealed abstract class RedisType(val name: String) extends NamedEnum

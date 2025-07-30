@@ -4,14 +4,9 @@ package di
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-case class DynamicConfig(
-  databaseUrl: String,
-  bulbulator: BulbulatorConfig
-)
+case class DynamicConfig(databaseUrl: String, bulbulator: BulbulatorConfig)
 
-case class BulbulatorConfig(
-  types: List[String]
-)
+case class BulbulatorConfig(types: List[String])
 
 abstract class MyComponent {
   println(s"starting $this initialization on ${Thread.currentThread()}")
@@ -27,26 +22,13 @@ abstract class MyComponent {
 
 class DynamicDep(db: Database) extends MyComponent
 
-class Database(
-  databaseUrl: String
-) extends MyComponent
+class Database(databaseUrl: String) extends MyComponent
 
-class BulbulatorDao(
-  config: BulbulatorConfig
-)(implicit
-  db: Database,
-) extends MyComponent
+class BulbulatorDao(config: BulbulatorConfig)(implicit db: Database) extends MyComponent
 
-class DeviceDao(implicit
-  db: Database,
-) extends MyComponent
+class DeviceDao(implicit db: Database) extends MyComponent
 
-class FullApplication(
-  dynamicDep: DynamicDep
-)(implicit
-  bulbulatorDao: BulbulatorDao,
-  deviceDao: DeviceDao
-) {
+class FullApplication(dynamicDep: DynamicDep)(implicit bulbulatorDao: BulbulatorDao, deviceDao: DeviceDao) {
   println("full initialization")
 }
 
@@ -56,13 +38,13 @@ trait DatabaseComponents extends Components {
   def dynamicDep(db: Component[Database]): Component[DynamicDep] =
     component(new DynamicDep(db.ref)).destroyWith(_.destroy())
 
-  implicit val database: Component[Database] =
+  given database: Component[Database] =
     component(new Database(config.databaseUrl)).destroyWith(_.destroy())
 
-  implicit val bulbulatorDao: Component[BulbulatorDao] =
+  given bulbulatorDao: Component[BulbulatorDao] =
     component(new BulbulatorDao(config.bulbulator)).destroyWith(_.destroy())
 
-  implicit val deviceDao: Component[DeviceDao] =
+  given deviceDao: Component[DeviceDao] =
     component(new DeviceDao).destroyWith(_.destroy())
 }
 

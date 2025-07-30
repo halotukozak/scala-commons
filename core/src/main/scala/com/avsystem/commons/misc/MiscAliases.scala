@@ -10,5 +10,7 @@ trait MiscAliases {
   final val NOpt = com.avsystem.commons.misc.NOpt
   type OptRef[+A >: Null] = com.avsystem.commons.misc.OptRef[A]
   final val OptRef = com.avsystem.commons.misc.OptRef
+
+  type AnyOf[K[_]] = com.avsystem.commons.misc.AnyOf[K]
 }
 object MiscAliases extends MiscAliases

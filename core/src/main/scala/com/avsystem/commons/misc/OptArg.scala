@@ -3,10 +3,11 @@ package com.avsystem.commons.misc
 import scala.annotation.publicInBinary
 
 object OptArg {
-  /**
-    * This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
+
+  /** This implicit conversion allows you to pass unwrapped values where `OptArg` is required.
     */
-  inline given argToOptArg[A]: Conversion[A, OptArg[A]] = OptArg(_)
+  //todo: cannot be easily converted to `Conversion[A, OptArg[A]]`
+  implicit def argToOptArg[A](value: A): OptArg[A] = OptArg(value)
 
   // additional implicits to cover most common, safe numeric promotions
   given intToOptArgLong: Conversion[Int, OptArg[Int]] = OptArg(_)
@@ -15,7 +16,7 @@ object OptArg {
   private object EmptyMarker extends Serializable
 
   def apply[A](value: A): OptArg[A] = new OptArg[A](if (value != null) value else EmptyMarker)
-  inline def unapply[A](inline opt: OptArg[A]): OptArg[A] = opt //name-based extractor
+  inline def unapply[A](inline opt: OptArg[A]): OptArg[A] = opt // name-based extractor
 
   inline def some[A](value: A): OptArg[A] =
     if (value != null) new OptArg[A](value)
@@ -25,10 +26,9 @@ object OptArg {
   inline def empty[A]: OptArg[A] = Empty
 }
 
-/**
-  * [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
-  * parameters while at the same time avoiding having to explicitly wrap arguments when passing them
-  * (thanks to the implicit conversion from `A` to `OptArg[A]`). For example:
+/** [[OptArg]] is like [[Opt]] except it's intended to be used to type-safely express optional method/constructor
+  * parameters while at the same time avoiding having to explicitly wrap arguments when passing them (thanks to the
+  * implicit conversion from `A` to `OptArg[A]`). For example:
   *
   * {{{
   *   def takesMaybeString(str: OptArg[String] = OptArg.Empty) = ???
@@ -37,15 +37,18 @@ object OptArg {
   *   takesMaybeString("string") // no explicit wrapping into OptArg required
   * }}}
   *
-  * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into `OptArg.Empty`.
-  * <br/>
-  * It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit conversion `A => OptArg[A]`
-  * is intended to work. You should not use [[OptArg]] as a general-purpose "optional value" type - other types like
-  * [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately does not have any "transforming"
-  * methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that [[OptArg]] is converted to [[Opt]],
-  * [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption` methods).
+  * Note that like [[Opt]], [[OptArg]] assumes its underlying value to be non-null and `null` is translated into
+  * `OptArg.Empty`. <br/> It is strongly recommended that [[OptArg]] type is used ONLY in signatures where implicit
+  * conversion `A => OptArg[A]` is intended to work. You should not use [[OptArg]] as a general-purpose "optional value"
+  * type - other types like [[Opt]], [[NOpt]] and `Option` serve that purpose. For this reason [[OptArg]] deliberately
+  * does not have any "transforming" methods like `map`, `flatMap`, `orElse`, etc. Instead it's recommended that
+  * [[OptArg]] is converted to [[Opt]], [[NOpt]] or `Option` as soon as possible (using `toOpt`, `toNOpt` and `toOption`
+  * methods).
   */
-final class OptArg[+A] @publicInBinary private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class OptArg[+A] @publicInBinary private (private val rawValue: Any)
+  extends AnyVal
+  with OptBase[A]
+  with Serializable {
 
   import OptArg.*
 
@@ -57,7 +60,7 @@ final class OptArg[+A] @publicInBinary private(private val rawValue: Any) extend
   inline def isDefined: Boolean = !isEmpty
   inline def nonEmpty: Boolean = isDefined
 
-  inline def boxedOrNull[B >: Null](using inline boxing: Boxing[A, B]): B = if (isEmpty) null else boxing.fun(value)
+  inline def boxedOrNull[B >: Null](using inline boxing: Boxing[A, B]): B = if (isEmpty) null else boxing(value)
 
   inline def toOpt: Opt[A] =
     if (isEmpty) Opt.Empty else Opt(value)
@@ -80,8 +83,7 @@ final class OptArg[+A] @publicInBinary private(private val rawValue: Any) extend
   inline def fold[B](inline ifEmpty: B)(f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
   inline def mapOr[B](inline ifEmpty: B, inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
@@ -103,7 +105,7 @@ final class OptArg[+A] @publicInBinary private(private val rawValue: Any) extend
     if (isEmpty) Iterator.empty else Iterator.single(value)
 
   inline def toList: List[A] =
-    if (isEmpty) List() else new::(value, Nil)
+    if (isEmpty) List() else new ::(value, Nil)
 
   inline def toRight[X](inline left: X): Either[X, A] =
     if (isEmpty) Left(left) else Right(value)
@@ -111,12 +113,14 @@ final class OptArg[+A] @publicInBinary private(private val rawValue: Any) extend
   inline def toLeft[X](inline right: X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  /**
-    * Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
+  /** Apply side effect only if OptArg is empty. It's a bit like foreach for OptArg.Empty
     *
-    * @param sideEffect - code to be executed if optArg is empty
-    * @return the same optArg
-    * @example {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    * @param sideEffect
+    *   \- code to be executed if optArg is empty
+    * @return
+    *   the same optArg
+    * @example
+    *   {{{captionOptArg.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
     */
   inline def forEmpty(inline sideEffect: Unit): OptArg[A] = {
     if (isEmpty) {

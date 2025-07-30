@@ -18,9 +18,9 @@ case class Toplevel(middle: Opt[Middle], seal: Seal = Objekt)
 @transparent case class TransparentToplevel(toplevel: Toplevel)
 
 case class Wrappy(value: String) extends AnyVal
-//object Wrappy extends StringWrapperCompanion[Wrappy]
+object Wrappy extends StringWrapperCompanion[Wrappy]
 
-case class CodecRef[S, T](ref: GenRef[S, T])(implicit targetCodec: GenCodec[T])
+case class CodecRef[S, T](ref: GenRef[S, T])(using targetCodec: GenCodec[T])
 
 @flatten sealed trait GenericUnion[T] {
   def thing: T
@@ -58,7 +58,7 @@ class GenRefTest extends AnyFunSuite {
   }
 
   test("gen ref implicits test") {
-    import GenRef.Implicits.*
+    import GenRef.Implicits.given
 
     val codecRef = CodecRef((_: TransparentToplevel).toplevel.middle.get.bottom.mapa("str"))
     val obj = TransparentToplevel(Toplevel(Middle(Bottom(Map("str" -> 42), Wrappy("oof"))).opt))

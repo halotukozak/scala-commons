@@ -11,10 +11,8 @@ object Inner extends HasGenCodec[Inner]
 
 class Unwritable
 object Unwritable {
-  implicit val codec: GenCodec[Unwritable] = GenCodec.create(
-    _ => throw new ReadFailure("cannot"),
-    (_, _) => throw new WriteFailure("cannot")
-  )
+  given codec: GenCodec[Unwritable] =
+    GenCodec.create(_ => throw new ReadFailure("cannot"), (_, _) => throw new WriteFailure("cannot"))
 }
 
 sealed trait Base

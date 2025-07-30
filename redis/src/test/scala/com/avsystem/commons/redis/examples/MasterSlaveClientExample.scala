@@ -8,12 +8,11 @@ import com.avsystem.commons.redis._
 // think well if this is what you actually want.
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Basic example showing how to execute simple command on [[RedisMasterSlaveClient]].
+/** Basic example showing how to execute simple command on [[RedisMasterSlaveClient]].
   */
 object MasterSlaveClientExample extends App {
   // The driver is implemented using Pekko IO, so we need actor system
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  given actorSystem: ActorSystem = ActorSystem()
   // The client is the object that actually talks to Redis, but does not expose Redis API
   // Assuming Redis Sentinel is working locally on its default port, 26379
   val client = new RedisMasterSlaveClient("mymaster")

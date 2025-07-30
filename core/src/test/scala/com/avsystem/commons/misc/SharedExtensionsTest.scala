@@ -11,7 +11,10 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("groupToMap") {
-    List.range(0, 10).groupToMap(_ % 3, _.toString).shouldEqual(Map(0 -> List("0", "3", "6", "9"), 1 -> List("1", "4", "7"), 2 -> List("2", "5", "8")))
+    List
+      .range(0, 10)
+      .groupToMap(_ % 3, _.toString)
+      .shouldEqual(Map(0 -> List("0", "3", "6", "9"), 1 -> List("1", "4", "7"), 2 -> List("2", "5", "8")))
   }
 
   test("maxOpt") {
@@ -78,7 +81,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("Future.transformWith") {
-    import com.avsystem.commons.concurrent.RunNowEC.Implicits.*
+    import com.avsystem.commons.concurrent.RunNowEC.Implicits.{given, _}
     val ex = new Exception
     assert(Future.successful(42).transformWith(t => Future.successful(t.get - 1)).value.contains(Success(41)))
     assert(Future.successful(42).transformWith(_ => Future.failed(ex)).value.contains(Failure(ex)))
@@ -113,14 +116,14 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   }
 
   test("uncheckedMatch") {
-    val res = Option(42) uncheckedMatch {
-      case Some(int) => int
+    val res = Option(42) uncheckedMatch { case Some(int) =>
+      int
     }
     assert(res == 42)
 
     assertThrows[MatchError] {
-      Option.empty[Int] uncheckedMatch {
-        case Some(int) => int
+      Option.empty[Int] uncheckedMatch { case Some(int) =>
+        int
       }
     }
   }
@@ -163,11 +166,13 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
       val x = 5 + 2
     }.sourceCode
 
-    assert(src ==
-      """{
+    assert(
+      src ==
+        """{
         |  println(123)
         |  val x = 5 + 2
-        |}""".stripMargin)
+        |}""".stripMargin
+    )
   }
 
   test("withSourceCode") {
@@ -177,7 +182,7 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
   test("flatCollect") {
     val it = Iterator(69, 42)
     val fc = it.flatCollect { case i if i % 2 == 0 => Iterator(-i, i) }
-    assert(it.hasNext) //flatCollect should not consume eagerly
+    assert(it.hasNext) // flatCollect should not consume eagerly
     assert(fc.hasNext)
     assert(!it.hasNext)
     fc.toSeq.should(contain).theSameElementsInOrderAs(Seq(-42, 42))
@@ -198,10 +203,12 @@ class SharedExtensionsTest extends AnyFunSuite with Matchers {
         |    abc
         |   abc""".stripMargin
 
-    assert(str.stripCommonIndent ==
-      """abc
+    assert(
+      str.stripCommonIndent ==
+        """abc
         |  abc
-        | abc""".stripMargin)
+        | abc""".stripMargin
+    )
   }
 
   test("Try.tapFailure - Success case") {

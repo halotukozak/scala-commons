@@ -7,13 +7,12 @@ import com.avsystem.commons.serialization.{GenCodec, StreamInput, StreamOutput}
 import org.openjdk.jmh.annotations.{Benchmark, BenchmarkMode, Fork, Measurement, Mode, Scope, State, Warmup}
 import org.openjdk.jmh.infra.Blackhole
 
-
 case class Toplevel(int: Int, nested: Nested, str: String)
 case class Nested(list: List[Int], int: Int)
 
 object Toplevel {
-  implicit val nestedCodec: GenCodec[Nested] = GenCodec.materialize[Nested]
-  implicit val codec: GenCodec[Toplevel] = GenCodec.materialize[Toplevel]
+  given nestedCodec: GenCodec[Nested] = GenCodec.materialize[Nested]
+  given codec: GenCodec[Toplevel] = GenCodec.materialize[Toplevel]
 }
 
 @Warmup(iterations = 10)

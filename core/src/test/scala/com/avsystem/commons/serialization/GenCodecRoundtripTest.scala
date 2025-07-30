@@ -1,10 +1,13 @@
 package com.avsystem.commons
 package serialization
 
-import com.avsystem.commons.serialization.CodecTestData.{TransparentFlatSealedBase, _, given}
+import com.avsystem.commons.serialization.CodecTestData.{_, given}
 import com.avsystem.commons.serialization.JavaCodecs.{_, given}
 import GenCodec.given
 import GenCodec._
+import com.avsystem.commons.misc.TypedMap.{_, given}
+import com.avsystem.commons.misc.TypedMap
+import com.avsystem.commons.misc.TypedKey
 
 abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   given [T]: GenCodec[T] = ???
@@ -27,7 +30,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   }
 
   test("NoState") {
-    type NoState = Nothing {type Dummy = Nothing}
+    type NoState = Nothing { type Dummy = Nothing }
     assert(implicitly[GenCodec[NoState]] == GenCodec.NothingCodec)
   }
 
@@ -170,7 +173,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     testRoundtrip[Expr[String]](StringExpr("stringzor"))
     testRoundtrip[Expr[Int]](IntExpr(42))
     testRoundtrip[BaseExpr](StringExpr("stringzor"))
-    testRoundtrip[BaseExpr {type Value = String}](StringExpr("stringzor"))
+    testRoundtrip[BaseExpr { type Value = String }](StringExpr("stringzor"))
   }
 
   test("recursive GADT") {
@@ -210,7 +213,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
 
   test("typed map") {
     import SealedKey._
-    //    testRoundtrip(TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true))
+    testRoundtrip(TypedMap(StringKey -> "lol", IntKey -> 42, BooleanKey -> true))
   }
 
   test("customized flat sealed hierarchy") {
@@ -219,10 +222,12 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   }
 
   test("case class with more than 22 fields") {
+    // format: off
     val inst = ItsOverTwentyTwo(
       "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
       "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19", "v20",
       "v21", "v22", "v23")
+    // format: on
     testRoundtrip[ItsOverTwentyTwo](inst)
   }
 
@@ -231,7 +236,7 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   }
 
   test("refined sealed type with type member") {
-    testRoundtrip[SealedRefined {type X = Int}](SealedRefined.First(42))
+    testRoundtrip[SealedRefined { type X = Int }](SealedRefined.First(42))
   }
 
   test("recursive materialization of indirectly recursive type") {
@@ -241,10 +246,9 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
     }
     testWithCodec(using GenCodec.materializeRecursively)
     testWithCodec(using {
-      implicit val implCodec: GenCodec[StepOne] = GenCodec.materializeRecursively
+      given implCodec: GenCodec[StepOne] = GenCodec.materializeRecursively
       implCodec
-    }
-    )
+    })
   }
 
   test("auto materialized key codec") {
@@ -254,6 +258,8 @@ abstract class GenCodecRoundtripTest extends AbstractCodecTest {
   test("Java builder based codec") {
     testRoundtrip[BuildablePojo](BuildablePojo.builder().build())
     testRoundtrip[BuildablePojo](BuildablePojo.builder().setStr("foo").build())
-    testRoundtrip[BuildablePojo](BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build())
+    testRoundtrip[BuildablePojo](
+      BuildablePojo.builder().setStr("foo").setFlags(JList(true, false)).setCool(false).build()
+    )
   }
 }

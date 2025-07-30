@@ -19,18 +19,18 @@ object RawRef {
   case class Composite(left: RawRef, right: RawRef) extends RawRef
   case object Identity extends RawRef
 
-  implicit val codec: GenCodec[RawRef] = GenCodec.materialize[RawRef]
+  given codec: GenCodec[RawRef] = GenCodec.materialize[RawRef]
 
   def create[S]: Creator[S] = new Creator[S] {}
 
   trait Creator[S] {
-    def ref[T](fun: S => T): RawRef = 
-    ??? // macro macros.serialization.GenRefMacros.rawRef
+    def ref[T](fun: S => T): RawRef =
+      ??? // macro macros.serialization.GenRefMacros.rawRef
   }
 }
 
 object SimpleRawRef {
-  implicit val codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
+  given codec: GenCodec[SimpleRawRef] = GenCodec.materialize[SimpleRawRef]
 }
 
 case class GenRef[-S, +T](fun: S => T, rawRef: RawRef) {
@@ -50,13 +50,13 @@ object GenRef {
   trait Creator[S] {
     type Ref[T] = GenRef[S, T]
 
-    def ref[T](fun: S => T): GenRef[S, T] = 
-    ??? // macro macros.serialization.GenRefMacros.genRef
+    def ref[T](fun: S => T): GenRef[S, T] =
+      ??? // macro macros.serialization.GenRefMacros.genRef
   }
 
   trait Implicits {
-    implicit def fun2GenRef[S, T](fun: S => T): GenRef[S, T] = 
-    ??? // macro macros.serialization.GenRefMacros.genRef
+    given fun2GenRef[S, T]: Conversion[S => T, GenRef[S, T]] =
+      ??? // macro macros.serialization.GenRefMacros.genRef
   }
   object Implicits extends Implicits
 }

@@ -6,12 +6,11 @@ import org.apache.pekko.util.ByteString
 import com.avsystem.commons.redis._
 import com.avsystem.commons.serialization.GenCodec
 
-/**
-  * Example which shows how to customize your Redis API in order to use types different from the default ones used
-  * to represent keys, hash keys and values in Redis commands.
+/** Example which shows how to customize your Redis API in order to use types different from the default ones used to
+  * represent keys, hash keys and values in Redis commands.
   */
 object ApiCustomizationExample extends App {
-  implicit val actorSystem: ActorSystem = ActorSystem()
+  given actorSystem: ActorSystem = ActorSystem()
 
   val client = new RedisNodeClient
   // By default, the driver provides textual and binary API variants, e.g.
@@ -28,12 +27,9 @@ object ApiCustomizationExample extends App {
   // These types must be serializable to binary form (and de-serializable from it), which is expressed by
   // `RedisDataCodec` typeclass.
   // By default, `RedisDataCodec` is provided for many simple types and all types which have a `GenCodec` instance.
-  case class Person(
-    name: String,
-    birthYear: Int
-  )
+  case class Person(name: String, birthYear: Int)
   object Person {
-    implicit val codec: GenCodec[Person] = GenCodec.materialize[Person]
+    given codec: GenCodec[Person] = GenCodec.materialize[Person]
   }
 
   val personApi = RedisApi.Node.Async.StringTyped(client).valueType[Person]

@@ -3,6 +3,7 @@ package build
 import mill._
 import mill.scalajslib._
 import mill.scalalib._
+
 object Versions {
   val scala2 = "2.13.16"
   val scala3 = "3.7.1"
@@ -26,13 +27,10 @@ object Versions {
   val slf4j = "2.0.17"
 }
 
-
 //todo: remove os.up fiku-miku
 
 trait SharedModule extends ScalaModule {
   def scalaVersion = Versions.scala3
-
-  def mainClass = None
 
   override def scalacOptions = Seq(
     "-encoding",
@@ -46,52 +44,52 @@ trait SharedModule extends ScalaModule {
     "-language:dynamics",
     "-language:experimental.macros",
     "-language:higherKinds",
-    "-Xignore-scala2-macros"
+    "-Xignore-scala2-macros",
+    "-Wconf:msg=Scala 2 macro cannot be used in Dotty.*:silent",
+    // "-Werror",
+    // "-Ycheck:all",
+    // "-Ydebug-error",
+    // "-Ydebug-flags",
+    // "-Ydebug-missing-refs",
+    // "-Yprint-debug"
   )
 
-  override def mvnDeps = Seq(
-    mvn"org.scalatest::scalatest:${Versions.scalatest}",
-    mvn"org.scalacheck::scalacheck:${Versions.scalacheck}",
-    mvn"org.scalatestplus::scalacheck-1-16:${Versions.scalatestplusScalacheck}"
-  )
-
-  trait SharedTest extends ScalaTests with TestModule.ScalaTest{
+  trait SharedTest extends ScalaTests with TestModule.ScalaTest {
     def scalaTestVersion = "3.2.19"
+
+    override def mvnDeps = super.mvnDeps() ++ Seq(
+      mvn"org.scalatestplus::scalacheck-1-16:${Versions.scalatestplusScalacheck}",
+      mvn"org.scalacheck::scalacheck:${Versions.scalacheck}"
+    )
   }
 }
 
 trait JvmModule extends SharedModule {
 
- override def sources = Task.Sources(
-  moduleDir / os.up / "src" / "main" / "scala",
-  moduleDir / os.up / "jvm" / "src" / "main" / "scala",
- )
+  override def sources =
+    Task.Sources(moduleDir / os.up / "src" / "main" / "scala", moduleDir / os.up / "jvm" / "src" / "main" / "scala")
 
   trait TestModule extends SharedTest {
     override def sources = Task.Sources(
-    moduleDir / os.up / os.up / "src" / "test"/ "scala",
-    moduleDir / os.up / os.up / "jvm" / "src" / "test" / "scala",
-  )
+      moduleDir / os.up / os.up / "src" / "test" / "scala",
+      moduleDir / os.up / os.up / "jvm" / "src" / "test" / "scala"
+    )
   }
 }
-
 
 trait JsModule extends SharedModule with ScalaJSModule {
   def scalaJSVersion = "1.19.0"
 
-  override def sources = Task.Sources(
-  moduleDir / os.up / "src" / "main" / "scala",
-  moduleDir / os.up / "js" / "src" / "main" / "scala",
- )
-
+  override def sources =
+    Task.Sources(moduleDir / os.up / "src" / "main" / "scala", moduleDir / os.up / "js" / "src" / "main" / "scala")
 
   trait TestModule extends SharedTest with ScalaJSTests {
     override def sources = Task.Sources(
-    moduleDir / os.up / os.up / "src" / "test"/ "scala",
-    moduleDir / os.up / os.up / "js" / "src" / "test" / "scala",
-  )
+      moduleDir / os.up / os.up / "src" / "test" / "scala",
+      moduleDir / os.up / os.up / "js" / "src" / "test" / "scala"
+    )
   }
-} 
+}
 
 object macros extends Module {
   trait macrosModule extends SharedModule {

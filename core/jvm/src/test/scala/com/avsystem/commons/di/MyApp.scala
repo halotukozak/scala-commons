@@ -92,10 +92,10 @@ package componentsImplicits {
   }
 
   object MyApp extends Components {
-    implicit val db: Component[Database] =
+    given db: Component[Database] =
       component(new Database)
 
-    implicit val redis: Component[Redis] =
+    given redis: Component[Redis] =
       component(new Redis)
 
     val server: Component[Server] =

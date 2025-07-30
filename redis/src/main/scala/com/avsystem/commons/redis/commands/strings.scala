@@ -7,6 +7,7 @@ import com.avsystem.commons.redis._
 import com.avsystem.commons.redis.commands.ReplyDecoders._
 
 trait StringsApi extends ApiSubset {
+
   /** Executes [[http://redis.io/commands/append APPEND]] */
   def append(key: Key, value: Value): Result[Int] =
     execute(new Append(key, value))
@@ -95,8 +96,9 @@ trait StringsApi extends ApiSubset {
   def mget(key: Key, keys: Key*): Result[Seq[Opt[Value]]] =
     execute(new Mget(key +:: keys))
 
-  /** Executes [[http://redis.io/commands/mget MGET]]
-    * or simply returns empty `Seq` when `keys` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/mget MGET]] or simply returns empty `Seq` when `keys` is empty, without
+    * sending the command to Redis
+    */
   def mget(keys: Iterable[Key]): Result[Seq[Opt[Value]]] =
     execute(new Mget(keys))
 
@@ -104,8 +106,9 @@ trait StringsApi extends ApiSubset {
   def mset(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Unit] =
     execute(new Mset(keyValue +:: keyValues))
 
-  /** Executes [[http://redis.io/commands/mset MSET]]
-    * or does nothing when `keyValues` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/mset MSET]] or does nothing when `keyValues` is empty, without sending the
+    * command to Redis
+    */
   def mset(keyValues: Iterable[(Key, Value)]): Result[Unit] =
     execute(new Mset(keyValues))
 
@@ -113,8 +116,9 @@ trait StringsApi extends ApiSubset {
   def msetnx(keyValue: (Key, Value), keyValues: (Key, Value)*): Result[Boolean] =
     execute(new Msetnx(keyValue +:: keyValues))
 
-  /** Executes [[http://redis.io/commands/msetnx MSETNX]]
-    * or simply returns `true` when `keyValues` is empty, without sending the command to Redis */
+  /** Executes [[http://redis.io/commands/msetnx MSETNX]] or simply returns `true` when `keyValues` is empty, without
+    * sending the command to Redis
+    */
   def msetnx(keyValues: Iterable[(Key, Value)]): Result[Boolean] =
     execute(new Msetnx(keyValues))
 
@@ -169,7 +173,8 @@ trait StringsApi extends ApiSubset {
   }
 
   private final class Bitfield(key: Key, ops: Iterable[BitFieldOp])
-    extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerAsLong)) with NodeCommand {
+    extends RedisSeqCommand[Opt[Long]](nullBulkOr(integerAsLong))
+    with NodeCommand {
 
     val encoded: Encoded = {
       import BitFieldOp._
@@ -272,11 +277,21 @@ trait StringsApi extends ApiSubset {
   }
 
   private abstract class AbstractSet[T](decoder: ReplyDecoder[T])(
-    key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence], get: Boolean
-  ) extends AbstractRedisCommand[T](decoder) with NodeCommand {
+    key: Key,
+    value: Value,
+    expiration: Opt[SetExpiration],
+    existence: Opt[Existence],
+    get: Boolean
+  ) extends AbstractRedisCommand[T](decoder)
+    with NodeCommand {
 
-    val encoded: Encoded = encoder("SET").key(key).data(value).optAdd(expiration)
-      .optAdd(existence).addFlag("GET", get).result
+    val encoded: Encoded = encoder("SET")
+      .key(key)
+      .data(value)
+      .optAdd(expiration)
+      .optAdd(existence)
+      .addFlag("GET", get)
+      .result
   }
 
   private final class Set(key: Key, value: Value, expiration: Opt[SetExpiration], existence: Opt[Existence])
@@ -322,7 +337,7 @@ object BitField {
   def signed(width: Int): BitFieldType = BitFieldType(signed = true, width)
   def unsigned(width: Int): BitFieldType = BitFieldType(signed = false, width)
 
-  implicit val commandArg: CommandArg[BitField] = CommandArg {
+  given commandArg: CommandArg[BitField] = CommandArg {
     case (enc, BitField(BitFieldType(signed, width), offset, offsetInWidths)) =>
       enc.add((if (signed) "i" else "u") + width.toString).add((if (offsetInWidths) "#" else "") + offset.toString)
   }
@@ -375,7 +390,7 @@ object BitOp extends NamedEnumCompanion[BitOp] {
 
 case class SemiRange(start: Int, end: Opt[Int] = Opt.Empty)
 object SemiRange {
-  implicit val SemiRangeArg: CommandArg[SemiRange] =
+  given SemiRangeArg: CommandArg[SemiRange] =
     CommandArg((enc, sa) => enc.add(sa.start).optAdd(sa.end))
 }
 
@@ -384,7 +399,7 @@ object Existence {
   case object XX extends Existence
   case object NX extends Existence
 
-  implicit val ExistenceArg: CommandArg[Existence] =
+  given ExistenceArg: CommandArg[Existence] =
     CommandArg((ce, ex) => ce.add(ex.productPrefix))
 }
 
@@ -393,7 +408,7 @@ object Comparison {
   case object GT extends Comparison
   case object LT extends Comparison
 
-  implicit val ComparisonArg: CommandArg[Comparison] =
+  given ComparisonArg: CommandArg[Comparison] =
     CommandArg((ce, ex) => ce.add(ex.productPrefix))
 }
 
@@ -408,7 +423,7 @@ object Expiration {
   case object KeepTtl extends SetExpiration
   case object Persist extends GetExpiration
 
-  implicit val ExpirationArg: CommandArg[Expiration] = CommandArg {
+  given ExpirationArg: CommandArg[Expiration] = CommandArg {
     case (ce, Ex(seconds)) => ce.add("EX").add(seconds)
     case (ce, Px(milliseconds)) => ce.add("PX").add(milliseconds)
     case (ce, ExAt(timestmap)) => ce.add("EXAT").add(timestmap)

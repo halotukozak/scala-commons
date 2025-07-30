@@ -13,7 +13,7 @@ trait SerializationTestUtils {
 
   case class TestCC(i: Int, l: Long, intAsDouble: Double, b: Boolean, s: String, list: List[Char])
   object TestCC extends HasGenCodec[TestCC] {
-    implicit val arb: Arbitrary[TestCC] = Arbitrary(for {
+    given arb: Arbitrary[TestCC] = Arbitrary(for {
       i <- arbitrary[Int]
       l <- arbitrary[Long]
       b <- arbitrary[Boolean]
@@ -28,14 +28,17 @@ trait SerializationTestUtils {
   case class DeepNestedTestCC(n: TestCC, l: DeepNestedTestCC)
   object DeepNestedTestCC extends HasGenCodec[DeepNestedTestCC]
 
+  // format: off
   case class CompleteItem(
     unit: Unit, string: String, char: Char,
     boolean: Boolean, byte: Byte, short: Short, int: Int,
     long: Long, float: Float, double: Double, bigInt: BigInt, bigDecimal: BigDecimal,
     binary: Array[Byte], list: List[String], set: Set[String], obj: TestCC, map: Map[String, Int]
   )
+  // format: on
+
   object CompleteItem extends HasGenCodec[CompleteItem] {
-    implicit val arb: Arbitrary[CompleteItem] = Arbitrary(for {
+    given arb: Arbitrary[CompleteItem] = Arbitrary(for {
       u <- arbitrary[Unit]
       str <- arbitrary[String]
       c <- arbitrary[Char]

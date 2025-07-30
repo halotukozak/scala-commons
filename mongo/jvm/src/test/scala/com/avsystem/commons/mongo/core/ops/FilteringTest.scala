@@ -93,7 +93,7 @@ class FilteringTest extends AnyFunSuite {
 }
 
 object FilteringTest extends BsonRef.Creator[SomeEntity] {
-  implicit val codec: GenCodec[SomeEntity] = GenCodec.materialize
+  given codec: GenCodec[SomeEntity] = GenCodec.materialize
   val sRef: Ref[String] = ref(_.s)
   val aRef: Ref[List[String]] = ref(_.a)
 }

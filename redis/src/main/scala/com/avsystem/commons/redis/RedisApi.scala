@@ -57,11 +57,11 @@ import com.avsystem.commons.redis.config.ExecutionConfig
   * {{{
   *   case class Person(name: String, birthYear: Int)
   *   object Person {
-  *     implicit val codec: GenCodec[Person] = GenCodec.materialize[Person]
+  *     given codec: GenCodec[Person] = GenCodec.materialize[Person]
   *   }
   *
   *   import scala.concurrent.duration._
-  *   implicit val system: ActorSystem = ActorSystem()
+  *   given system: ActorSystem = ActorSystem()
   *
   *   val api = RedisApi.Keyed.Blocking.StringTyped(new RedisClusterClient)
   *

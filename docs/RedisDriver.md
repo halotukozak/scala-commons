@@ -76,7 +76,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util._
 
-implicit val actorSystem = ActorSystem()
+given actorSystem = ActorSystem()
 val client = new RedisNodeClient
 val api = RedisApi.Node.Async.StringTyped(client)
 

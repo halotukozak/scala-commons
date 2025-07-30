@@ -13,7 +13,11 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 import scala.collection.mutable.ListBuffer
 
-class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils with Matchers with ScalaCheckPropertyChecks {
+class JsonStringInputOutputTest
+  extends AnyFunSuite
+  with SerializationTestUtils
+  with Matchers
+  with ScalaCheckPropertyChecks {
 
   import JsonStringInput.read
   import JsonStringOutput.write
@@ -39,8 +43,14 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("raw json object test") {
-    val jsons = IListMap("a" -> "123", "b" -> "null", "c" -> "\"str\"", "d" -> "4.5", "e" -> "[1,2,3]",
-      "f" -> "{\"a\": 123, \"b\": 3.14}")
+    val jsons = IListMap(
+      "a" -> "123",
+      "b" -> "null",
+      "c" -> "\"str\"",
+      "d" -> "4.5",
+      "e" -> "[1,2,3]",
+      "f" -> "{\"a\": 123, \"b\": 3.14}"
+    )
     val sb = new JStringBuilder
     val output = new JsonStringOutput(sb)
     val oo = output.writeObject()
@@ -73,11 +83,21 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   roundtrip("longs")(Int.MaxValue.toLong + 1, Long.MinValue, -783868188, 0, 783868188, Long.MaxValue)
 
   roundtrip("floats")(
-    Float.MinPositiveValue, Float.MinValue, -1.75047014E9f, Float.MaxValue, Float.PositiveInfinity, Float.NegativeInfinity
+    Float.MinPositiveValue,
+    Float.MinValue,
+    -1.75047014e9f,
+    Float.MaxValue,
+    Float.PositiveInfinity,
+    Float.NegativeInfinity
   )
 
   roundtrip("doubles")(
-    Double.MinPositiveValue, Double.MinValue, -1.750470182E9, Double.MaxValue, Double.PositiveInfinity, Double.NegativeInfinity
+    Double.MinPositiveValue,
+    Double.MinValue,
+    -1.750470182e9,
+    Double.MaxValue,
+    Double.PositiveInfinity,
+    Double.NegativeInfinity
   )
 
   roundtrip("booleans")(false, true)
@@ -144,8 +164,9 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
     val options = JsonOptions.Pretty
     val map = Map("a" -> List(1, 2), "b" -> List(3, 4, 5))
     val prettyJson = write[Map[String, List[Int]]](map, options)
-    assert(prettyJson ==
-      """{
+    assert(
+      prettyJson ==
+        """{
         |  "a": [
         |    1,
         |    2
@@ -155,7 +176,8 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
         |    4,
         |    5
         |  ]
-        |}""".stripMargin)
+        |}""".stripMargin
+    )
     assert(read[Map[String, List[Int]]](prettyJson, options) == map)
   }
 
@@ -170,7 +192,7 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("scientific") {
-    val value = -1.750470182E9
+    val value = -1.750470182e9
     val test = value.toString
     val serialized = Seq("-1.750470182E+9", "-1.750470182E9", test)
     val deserialized = serialized.map(read[Double](_))
@@ -184,7 +206,7 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("serialize floats succinctly") {
-    val values = Seq(1.1999999f, 3.4E38f, 1.4E-45f)
+    val values = Seq(1.1999999f, 3.4e38f, 1.4e-45f)
     assert(values.map(write[Float](_)) == values.map(_.toString.replace('E', 'e')))
   }
 
@@ -307,14 +329,13 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
 
   test("work with skipping") {
     case class TwoItems(i1: CompleteItem, i2: CompleteItem)
-    implicit val skippingCodec: GenCodec[TwoItems] = new GenCodec[TwoItems] {
+    given skippingCodec: GenCodec[TwoItems] = new GenCodec[TwoItems] {
       override def read(input: Input): TwoItems = {
         val obj = input.readObject()
         obj.nextField().skip()
         val i2 = GenCodec.read[CompleteItem](obj.nextField())
         TwoItems(null, i2)
       }
-
 
       override def write(output: Output, value: TwoItems): Unit = {
         val obj = output.writeObject()
@@ -351,14 +372,15 @@ class JsonStringInputOutputTest extends AnyFunSuite with SerializationTestUtils 
   }
 
   test("serialize and deserialize huge case classes") {
-    implicit val arbTree: Arbitrary[DeepNestedTestCC] =
+    given arbTree: Arbitrary[DeepNestedTestCC] =
       Arbitrary {
         def sized(sz: Int): Gen[DeepNestedTestCC] =
           if (sz == 0) for (t <- arbitrary[TestCC]) yield DeepNestedTestCC(t, null)
-          else for {
-            t <- arbitrary[TestCC]
-            n <- sized(sz - 1)
-          } yield DeepNestedTestCC(t, n)
+          else
+            for {
+              t <- arbitrary[TestCC]
+              n <- sized(sz - 1)
+            } yield DeepNestedTestCC(t, n)
 
         Gen.sized(sz => sized(math.min(sz, 1)))
       }

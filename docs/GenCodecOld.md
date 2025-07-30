@@ -10,38 +10,41 @@ However, `GenCodec` is **not** a JSON library even though it has support for JSO
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 ## Table of Contents  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [`GenCodec` typeclass](#gencodec-typeclass)
-  - [Writing and reading simple (primitive) values](#writing-and-reading-simple-primitive-values)
-  - [Writing and reading *lists*](#writing-and-reading-lists)
-  - [Writing and reading *objects*](#writing-and-reading-objects)
-    - [More about object field order](#more-about-object-field-order)
-  - [Writing custom "native" types](#writing-custom-native-types)
-  - [Reading metadata from an `Input`](#reading-metadata-from-an-input)
-  - [Implementations of `Input` and `Output` available by default](#implementations-of-input-and-output-available-by-default)
-- [Codecs available by default](#codecs-available-by-default)
-- [`GenKeyCodec`](#genkeycodec)
-- [Serializing and deserializing examples](#serializing-and-deserializing-examples)
-- [Making your own types serializable](#making-your-own-types-serializable)
-- [Simple wrappers](#simple-wrappers)
-- [Case classes](#case-classes)
-    - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
-  - [Case class like types](#case-class-like-types)
-- [Singletons](#singletons)
-- [Sealed hierarchies](#sealed-hierarchies)
-  - [Nested format](#nested-format)
-  - [Flat format](#flat-format)
-  - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
-  - [Nested vs flat format](#nested-vs-flat-format)
-- [Third party classes](#third-party-classes)
-  - [Injecting additional implicits into `GenCodec` materialization](#injecting-additional-implicits-into-gencodec-materialization)
-- [`GenObjectCodec`](#genobjectcodec)
-- [Summary](#summary)
-  - [Codec dependencies](#codec-dependencies)
-  - [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
-  - [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
-  - [Customizing annotations](#customizing-annotations)
-  - [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
-- [Performance](#performance)
+- [`GenCodec`](#gencodec)
+  - [Table of Contents  *generated with DocToc*](#table-of-contents--generated-with-doctoc)
+  - [`GenCodec` typeclass](#gencodec-typeclass)
+    - [Writing and reading simple (primitive) values](#writing-and-reading-simple-primitive-values)
+    - [Writing and reading *lists*](#writing-and-reading-lists)
+    - [Writing and reading *objects*](#writing-and-reading-objects)
+      - [More about object field order](#more-about-object-field-order)
+    - [Writing custom "native" types](#writing-custom-native-types)
+    - [Reading metadata from an `Input`](#reading-metadata-from-an-input)
+    - [Implementations of `Input` and `Output` available by default](#implementations-of-input-and-output-available-by-default)
+  - [Codecs available by default](#codecs-available-by-default)
+  - [`GenKeyCodec`](#genkeycodec)
+  - [Serializing and deserializing examples](#serializing-and-deserializing-examples)
+  - [Making your own types serializable](#making-your-own-types-serializable)
+  - [Simple wrappers](#simple-wrappers)
+  - [Case classes](#case-classes)
+      - [Safe evolution and refactoring - summary](#safe-evolution-and-refactoring---summary)
+    - [Case class like types](#case-class-like-types)
+  - [Singletons](#singletons)
+  - [Sealed hierarchies](#sealed-hierarchies)
+    - [Nested format](#nested-format)
+    - [Flat format](#flat-format)
+      - [Transparent wrappers in flat sealed hierarchies](#transparent-wrappers-in-flat-sealed-hierarchies)
+    - [Customizing sealed hierarchy codecs](#customizing-sealed-hierarchy-codecs)
+    - [Nested vs flat format](#nested-vs-flat-format)
+  - [Third party classes](#third-party-classes)
+    - [Injecting additional implicits into `GenCodec` materialization](#injecting-additional-implicits-into-gencodec-materialization)
+  - [`GenObjectCodec`](#genobjectcodec)
+  - [Summary](#summary)
+    - [Codec dependencies](#codec-dependencies)
+    - [Types supported by automatic materialization](#types-supported-by-automatic-materialization)
+    - [Recursive types, generic types and GADTs (generalized algebraic data types)](#recursive-types-generic-types-and-gadts-generalized-algebraic-data-types)
+    - [Customizing annotations](#customizing-annotations)
+    - [Safely introducing changes to serialized classes (retaining backwards compatibility)](#safely-introducing-changes-to-serialized-classes-retaining-backwards-compatibility)
+  - [Performance](#performance)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -217,7 +220,7 @@ directly on `String` values, without intermediate JSON AST
 
 ## Codecs available by default
 
-In order to serialize/deserialize value of some type, there needs to be an implicit value of type `GenCodec[T]` available.
+In order to serialize/deserialize value of some type, there needs to be an given value of type `GenCodec[T]` available.
 The library by default provides codecs for common Scala and Java types:
 * `Unit`, `Null`, `String`, `Symbol`, `Char`, `Boolean`, `Byte`, `Short`, `Int`, `Long`, `Float`, `Double`,
   `java.util.Date`, `Array[Byte]`, `BigInt`, `BigDecimal` and all their Java boxed counterparts 
@@ -438,7 +441,7 @@ empty object is represented by empty `Map`.
 
 ```scala
 object SomeObject {
-  implicit val codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
+  given codec: GenCodec[SomeObject.type] = GenCodec.materialize[SomeObject.type]
 }
 ```
 
@@ -580,7 +583,7 @@ object JavaPersonFakeCompanion {
   def unapply(javaPerson: JavaPerson): Option[(String, Int)] =
     Some((javaPerson.getName, javaPerson.getBirthYear))
     
-  implicit val javaPersonCodec: GenCodec[JavaPerson] = 
+  given javaPersonCodec: GenCodec[JavaPerson] = 
     GenCodec.fromApplyUnapplyProvider[JavaPerson](JavaPersonFakeCompanion)
 }
 
@@ -600,7 +603,7 @@ Because of this, `GenCodec` comes with a handy base companion class, similar to 
 
 ```scala
 object MyAdditionalImplicits {
-  implicit val javaPersonCodec: GenCodec[JavaPerson] = ...
+  given javaPersonCodec: GenCodec[JavaPerson] = ...
   ...
 }
 
@@ -636,7 +639,7 @@ instances). For example, the following code will not compile:
 case class Address(city: String, zipcode: String)
 case class Person(name: String, address: Address)
 object Person {
-  implicit val codec: GenCodec[Person] = GenCodec.materialize[Person] // error!
+  given codec: GenCodec[Person] = GenCodec.materialize[Person] // error!
 }
 ```
 
@@ -649,7 +652,7 @@ by accident. However, there is an alternative macro which *does* descend into de
 case class Address(city: String, zipcode: String)
 case class Person(name: String, address: Address)
 object Person {
-  implicit val codec: GenCodec[Person] = GenCodec.materializeRecursively[Person]
+  given codec: GenCodec[Person] = GenCodec.materializeRecursively[Person]
 }
 ```
 

@@ -20,10 +20,8 @@ object GenericMeta extends RpcMetadataCompanion[GenericMeta] {
     def typeString: TypeString[?] = new TypeString(name)
   }
 
-  case class Param[T](
-    @reifyName name: String,
-    @infer @forTypeParams tpe: List[TypeString[?]] => TypeString[T]
-  ) extends TypedMetadata[T] {
+  case class Param[T](@reifyName name: String, @infer @forTypeParams tpe: List[TypeString[?]] => TypeString[T])
+    extends TypedMetadata[T] {
     def repr(targs: List[TypeString[?]]): String =
       s"$name: ${tpe(targs)}"
   }
@@ -50,15 +48,17 @@ trait GenericTrait[A, B] {
   def genericMethod[C](map: Map[A, C]): Map[B, C]
 }
 object GenericTrait {
-  implicit val meta: GenericMeta[GenericTrait[?, ?]] = GenericMeta.materialize
+  given meta: GenericMeta[GenericTrait[?, ?]] = GenericMeta.materialize
 }
 
 class GenericMetadataTest extends AnyFunSuite {
   test("generic metadata") {
-    assert(GenericTrait.meta.repr ==
-      """GenericTrait[A, B] {
+    assert(
+      GenericTrait.meta.repr ==
+        """GenericTrait[A, B] {
         |  method(a: A, int: Int): List[A]
         |  genericMethod[C](map: Map[A, C]): Map[B, C]
-        |}""".stripMargin)
+        |}""".stripMargin
+    )
   }
 }

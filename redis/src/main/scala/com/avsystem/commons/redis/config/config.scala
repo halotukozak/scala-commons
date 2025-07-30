@@ -129,7 +129,7 @@ case class NodeConfig(
   *
   * `initCommands` usage example:
   * {{{
-  *   implicit val actorSystem = ActorSystem()
+  *   given actorSystem = ActorSystem()
   *   import RedisApi.Batches.StringTyped._
   *   val nodeClient = new RedisNodeClient(
   *     config = NodeConfig(

@@ -17,7 +17,7 @@ trait Overloads {
   def two(i: Int, j: Int): String
 }
 object Overloads {
-  implicit val asRawReal: AsRawReal[MangleOverloadsRaw, Overloads] = MangleOverloadsRaw.materializeAsRawReal
+  given asRawReal: AsRawReal[MangleOverloadsRaw, Overloads] = MangleOverloadsRaw.materializeAsRawReal
 }
 
 class MangleOverloadsTest extends AnyFunSuite {

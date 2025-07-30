@@ -1,11 +1,11 @@
 package com.avsystem.commons.macros
 
-import scala.quoted.Quotes
+import scala.quoted._
 import scala.util.Try
 
-def symbolInfo(using quotes: Quotes)(
-    symbol: quotes.reflect.Symbol
-)(using quotes.reflect.Printer[quotes.reflect.TypeRepr]): String =
+def symbolInfo(using quotes: Quotes)(symbol: quotes.reflect.Symbol)(using
+  quotes.reflect.Printer[quotes.reflect.TypeRepr]
+): String =
   s"""
      |$symbol
      |maybeOwner: ${symbol.maybeOwner}
@@ -59,12 +59,8 @@ def symbolInfo(using quotes: Quotes)(
      |termRef: ${Try(symbol.termRef.show).getOrElse("no termRef")}
      |""".stripMargin
 
-def typeReprInfo(using
-    quotes: Quotes
-)(
-    tpe: quotes.reflect.TypeRepr
-)(using
-    quotes.reflect.Printer[quotes.reflect.TypeRepr]
+def typeReprInfo(using quotes: Quotes)(tpe: quotes.reflect.TypeRepr)(using
+  quotes.reflect.Printer[quotes.reflect.TypeRepr]
 ): String =
   s"""
      |type: ${tpe.show}
@@ -115,3 +111,9 @@ extension (using quotes: Quotes)(e: Any)
     quotes.reflect.report.errorAndAbort(e.toString)
     e
   }
+
+inline def dupa[T](t: T): Nothing = ${ dupaImpl[T]('{ t }) }
+def dupaImpl[T: Type](t: Expr[T])(using quotes: Quotes): Expr[Nothing] = {
+  import quotes.reflect._
+  symbolInfo(TypeRepr.of[T].typeSymbol).error
+}
