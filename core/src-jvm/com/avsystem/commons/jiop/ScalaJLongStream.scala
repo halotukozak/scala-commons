@@ -67,7 +67,7 @@ object ScalaJLongStream {
     inline def findFirst: Option[Long] =
       jStream.findFirst.asScala
 
-    inline def flatMap(inline mapper: Long => ScalaJLongStream): ScalaJLongStream =
+    inline def flatMap(mapper: Long => ScalaJLongStream): ScalaJLongStream =
       ScalaJLongStream(jStream.flatMap(d => mapper(d)))
 
     inline def forEach(inline action: Long => Any): Unit =

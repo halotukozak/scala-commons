@@ -64,7 +64,7 @@ object ScalaJDoubleStream {
     inline def findFirst: Option[Double] =
       jStream.findFirst.asScala
 
-    inline def flatMap(inline mapper: Double => ScalaJDoubleStream): ScalaJDoubleStream =
+    inline def flatMap(mapper: Double => ScalaJDoubleStream): ScalaJDoubleStream =
       ScalaJDoubleStream(jStream.flatMap(mapper(_)))
 
     inline def forEach(inline action: Double => Any): Unit =

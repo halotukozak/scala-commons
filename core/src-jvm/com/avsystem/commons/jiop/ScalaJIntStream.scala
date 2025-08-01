@@ -70,7 +70,7 @@ object ScalaJIntStream {
     inline def findFirst: Option[Int] =
       jStream.findFirst.asScala
 
-    inline def flatMap(inline mapper: Int => ScalaJIntStream): ScalaJIntStream =
+    inline def flatMap(mapper: Int => ScalaJIntStream): ScalaJIntStream =
       ScalaJIntStream(jStream.flatMap((d => mapper(d))))
 
     inline def forEach(inline action: Int => Any): Unit =

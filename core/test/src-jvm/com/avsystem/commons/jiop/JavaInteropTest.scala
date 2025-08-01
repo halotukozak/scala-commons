@@ -63,16 +63,14 @@ class JavaInteropTest extends AnyFunSuite {
 
     assertSame(
       longs.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaLongStream).asJava.boxed,
-      longs.flatMap(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToLong(identity)).boxed
+      longs.flatMap(i => JArrayList(i - 1, i, i + 1).stream.mapToLong(identity)).boxed
     )
 
     def doubles = DoubleStream.of(1, 2, 3, 4, 5, 6)
 
     assertSame(
       doubles.asScala.flatMap(i => JArrayList(i - 1, i, i + 1).scalaDoubleStream).asJava.boxed,
-      doubles.flatMap(i => JArrayList(i - 1, i, i + 1)
-        .stream.mapToDouble(identity)).boxed
+      doubles.flatMap(i => JArrayList(i - 1, i, i + 1).stream.mapToDouble(identity)).boxed
     )
   }
 
@@ -183,7 +181,7 @@ class JavaInteropTest extends AnyFunSuite {
       () => {
         listenerCalled = true
       },
-      MoreExecutors.directExecutor(),
+      MoreExecutors.directExecutor()
     )
     promise.success(123)
 

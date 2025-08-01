@@ -4,17 +4,17 @@ package jiop
 trait Java8CollectionUtils {
 
   extension [A](it: JIterator[A]) {
-    def forEachRemaining(code: A => Any): Unit =
+    inline def forEachRemaining(inline code: A => Any): Unit =
       it.forEachRemaining(code(_))
   }
 
   extension [A](it: JIterable[A]) {
-    def forEach(code: A => Any): Unit =
+    inline def forEach(inline code: A => Any): Unit =
       it.forEach(code(_))
   }
 
   extension [A](coll: JCollection[A]) {
-    def removeIf(pred: A => Boolean): Unit =
+    inline def removeIf(inline pred: A => Boolean): Unit =
       coll.removeIf(pred(_))
 
     def scalaStream: ScalaJStream[A] =
@@ -37,22 +37,22 @@ trait Java8CollectionUtils {
   }
 
   extension [K, V](map: JMap[K, V]) {
-    def compute(key: K, remappingFunction: (K, V) => V): V =
+    inline def compute(key: K, inline remappingFunction: (K, V) => V): V =
       map.compute(key, (remappingFunction(_, _)))
 
-    def computeIfAbsent(key: K)(mappingFunction: K => V): V =
+    inline def computeIfAbsent(key: K)(inline mappingFunction: K => V): V =
       map.computeIfAbsent(key, mappingFunction(_))
 
-    def computeIfPresent(key: K)(remappingFunction: (K, V) => V): V =
+    inline def computeIfPresent(key: K)(inline remappingFunction: (K, V) => V): V =
       map.computeIfPresent(key, remappingFunction(_, _))
 
-    def forEach(action: (K, V) => Any): Unit =
+    inline def forEach(inline action: (K, V) => Any): Unit =
       map.forEach(action(_, _))
 
-    def merge(key: K, value: V)(remappingFunction: (V, V) => V): V =
+    inline def merge(key: K, value: V)(inline remappingFunction: (V, V) => V): V =
       map.merge(key, value, (remappingFunction(_, _)))
 
-    def replaceAll(function: (K, V) => V): Unit =
+    inline def replaceAll(inline function: (K, V) => V): Unit =
       map.replaceAll(function(_, _))
   }
 }
