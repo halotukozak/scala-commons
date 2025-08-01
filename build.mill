@@ -45,7 +45,8 @@ trait SharedModule extends PlatformScalaModule {
     "-language:experimental.macros",
     "-language:higherKinds",
     "-Xignore-scala2-macros",
-    "-Wconf:msg=Scala 2 macro cannot be used in Dotty.*:silent"
+    "-Wconf:msg=Scala 2 macro cannot be used in Dotty.*:silent",
+    "-experimental",
     // "-Werror",
     // "-Ycheck:all",
     // "-Ydebug-error",

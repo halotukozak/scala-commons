@@ -6,7 +6,7 @@ import scala.quoted.Type
 import scala.quoted.Quotes
 import scala.quoted.Expr
 import scala.annotation.tailrec
-import com.avsystem.commons.macros.isPublic
+import com.avsystem.commons.macros._
 
 abstract class SamCompanion[T, F](using ValidSam[T, F]) {
   inline def apply(inline fun: F): T = Sam[T](fun)
@@ -31,8 +31,10 @@ object SamCompanion {
         m.flags.is(Flags.Deferred)
         && m.flags.is(Flags.Method)
         && !m.flags.is(Flags.FieldAccessor)
+        && !m.flags.is(Flags.AbsOverride)
         && m.isPublic
         && targetType.memberType(m).typeArgs.isEmpty
+        && m.allOverriddenSymbols.forall(_.flags.is(Flags.Deferred)) // Java Abstract Override
       }.toList match
         case m :: Nil =>
           def extractTypes(tpe: TypeRepr): (List[List[TypeRepr]], TypeRepr) =
@@ -48,11 +50,11 @@ object SamCompanion {
 
           val (argTypess, resultTpe) = extractTypes(targetType.memberType(m))
 
-          val byName = argTypess == List(Nil) && TypeRepr.of[F] <:< resultTpe
-
           val finalResultType =
             if (resultTpe =:= TypeRepr.of[Unit]) TypeRepr.of[Any]
             else resultTpe
+
+          val byName = argTypess == List(Nil) && TypeRepr.of[F] <:< finalResultType
 
           val requiredFunTpe = argTypess.foldRight(finalResultType) { (argTypes, resultType) =>
             val funSym = defn.FunctionClass(argTypes.size)
@@ -68,7 +70,8 @@ object SamCompanion {
             }
           }
           '{ new ValidSam[T, F] {} }
-        case _ =>
+        case methods =>
+          methods.map(symbolInfo).toString.info
           report.errorAndAbort(s"Target trait/class must have exactly one public, abstract, non-generic method")
     }
 
