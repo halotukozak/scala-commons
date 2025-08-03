@@ -3,8 +3,7 @@ package macros
 
 import scala.reflect.macros.{TypecheckException, blackbox}
 
-private[commons]
-class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
+private[commons] class OldTestMacros(val c: blackbox.Context) extends TypeClassDerivation {
 
   import c.universe.{_, given}
 
@@ -71,8 +70,9 @@ class TestMacros(val c: blackbox.Context) extends TypeClassDerivation {
     val ftpe = weakTypeOf[F]
 
     val au = applyUnapplyFor(ttpe)
-      .getOrElse(c.abort(c.enclosingPosition,
-        s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe"))
+      .getOrElse(
+        c.abort(c.enclosingPosition, s"Could not find unambiguous, matching pair of apply/unapply methods for $ttpe")
+      )
 
     val companion = au.unapply.owner.asClass.module
 

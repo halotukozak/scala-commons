@@ -9,10 +9,10 @@ object Opt {
   // because https://github.com/scala/bug/issues/7396
   private object EmptyMarker extends Serializable
 
-  inline def apply[A](value: A): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
-  def unapply[A](opt: Opt[A]): Opt[A] = opt //name-based extractor
+  def apply[A](value: A): Opt[A] = if (value != null) new Opt[A](value) else Opt.Empty
+  def unapply[A](opt: Opt[A]): Opt[A] = opt // name-based extractor
 
-  inline def some[A](value: A): Opt[A] =
+  def some[A](value: A): Opt[A] =
     if (value != null) new Opt[A](value)
     else throw new NullPointerException
 
@@ -24,7 +24,7 @@ object Opt {
 
   private val emptyMarkerFunc: Any => Any = _ => EmptyMarker
 
-  final class WithFilter[+A] @publicInBinary private[Opt](self: Opt[A], p: A => Boolean) {
+  final class WithFilter[+A] @publicInBinary private[Opt] (self: Opt[A], p: A => Boolean) {
     inline def map[B](inline f: A => B): Opt[B] = self.filter(p).map(f)
     inline def flatMap[B](inline f: A => Opt[B]): Opt[B] = self.filter(p).flatMap(f)
     inline def foreach[U](inline f: A => U): Unit = self.filter(p).foreach(f)
@@ -32,30 +32,29 @@ object Opt {
   }
 
   extension [A](opt: => Opt[A]) {
-    /** When a given condition is true, evaluates the `opt` argument and returns it.
-      * When the condition is false, `opt` is not evaluated and [[Opt.Empty]] is
-      * returned.
+
+    /** When a given condition is true, evaluates the `opt` argument and returns it. When the condition is false, `opt`
+      * is not evaluated and [[Opt.Empty]] is returned.
       */
     inline def when(inline cond: Boolean): Opt[A] = if (cond) opt else Opt.Empty
 
-    /** Unless a given condition is true, this will evaluate the `opt` argument and
-      * return it. Otherwise, `opt` is not evaluated and [[Opt.Empty]] is returned.
+    /** Unless a given condition is true, this will evaluate the `opt` argument and return it. Otherwise, `opt` is not
+      * evaluated and [[Opt.Empty]] is returned.
       */
     inline def unless(inline cond: Boolean): Opt[A] = when(!cond)
   }
 }
 
-/**
-  * Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value.
-  * Therefore, there is no equivalent for `Some(null)`.
+/** Like [[Option]] but implemented as value class (avoids boxing) and treats `null` as no value. Therefore, there is no
+  * equivalent for `Some(null)`.
   *
-  * If you need a value-class version of [[Option]] which differentiates between no value and `null` value,
-  * use [[NOpt]].
+  * If you need a value-class version of [[Option]] which differentiates between no value and `null` value, use
+  * [[NOpt]].
   *
-  * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking.
-  * Please be aware of that tradeoff.
+  * WARNING: Unfortunately, using `Opt` in pattern matches turns off the exhaustivity checking. Please be aware of that
+  * tradeoff.
   */
-final class Opt[+A] @publicInBinary private(private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
+final class Opt[+A] private (private val rawValue: Any) extends AnyVal with OptBase[A] with Serializable {
 
   import Opt.*
 
@@ -95,9 +94,7 @@ final class Opt[+A] @publicInBinary private(private val rawValue: Any) extends A
   inline def orNull[B >: A](using inline ev: Null <:< B): B =
     if (isEmpty) ev(null) else value
 
-  /**
-    * Analogous to `Option.map` except that when mapping function returns `null`,
-    * empty `Opt` is returned as a result.
+  /** Analogous to `Option.map` except that when mapping function returns `null`, empty `Opt` is returned as a result.
     */
   inline def map[B](inline f: A => B): Opt[B] =
     if (isEmpty) Opt.Empty else Opt(f(value))
@@ -105,8 +102,7 @@ final class Opt[+A] @publicInBinary private(private val rawValue: Any) extends A
   inline def fold[B](inline ifEmpty: B)(inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
 
-  /**
-    * The same as [[fold]] but takes arguments in a single parameter list for better type inference.
+  /** The same as [[fold]] but takes arguments in a single parameter list for better type inference.
     */
   inline def mapOr[B](inline ifEmpty: B, inline f: A => B): B =
     if (isEmpty) ifEmpty else f(value)
@@ -139,14 +135,12 @@ final class Opt[+A] @publicInBinary private(private val rawValue: Any) extends A
     if (!isEmpty) f(value)
   }
 
-  /**
-    * Analogous to `Option.collect` except that when the function returns `null`,
-    * empty `Opt` is returned as a result.
+  /** Analogous to `Option.collect` except that when the function returns `null`, empty `Opt` is returned as a result.
     */
   inline def collect[B](inline pf: PartialFunction[A, B]): Opt[B] =
     if (!isEmpty) {
       val res = pf.applyOrElse(value, Opt.emptyMarkerFunc)
-      new Opt(if (res == null) EmptyMarker else res)
+      Opt(res.asInstanceOf[B])
     } else Opt.Empty
 
   inline def orElse[B >: A](inline alternative: Opt[B]): Opt[B] =
@@ -164,15 +158,17 @@ final class Opt[+A] @publicInBinary private(private val rawValue: Any) extends A
   inline def toLeft[X](inline right: X): Either[A, X] =
     if (isEmpty) Right(right) else Left(value)
 
-  inline def zip[B](that: Opt[B]): Opt[(A, B)] =
+  def zip[B](that: Opt[B]): Opt[(A, B)] =
     if (isEmpty || that.isEmpty) Opt.Empty else Opt((this.get, that.get))
 
-  /**
-    * Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
+  /** Apply side effect only if Opt is empty. It's a bit like foreach for Opt.Empty
     *
-    * @param sideEffect - code to be executed if opt is empty
-    * @return the same opt
-    * @example {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
+    * @param sideEffect
+    *   \- code to be executed if opt is empty
+    * @return
+    *   the same opt
+    * @example
+    *   {{{captionOpt.forEmpty(logger.warn("caption is empty")).foreach(setCaption)}}}
     */
   inline def forEmpty(inline sideEffect: Unit): Opt[A] = {
     if (isEmpty) {

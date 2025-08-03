@@ -54,7 +54,7 @@ object Sam {
           else res
         }
 
-        val anonDef = ClassDef.newAnon[T](method.name :: Nil, defn :: Nil)
+        val anonDef = ClassDef.newAnon[T](Map(method.name -> defn))
 
         '{
           ValidSam.isValidSam[T, f]

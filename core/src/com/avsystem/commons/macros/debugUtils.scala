@@ -106,14 +106,4 @@ extension (using quotes: Quotes)(msg: String)
   def error: Nothing = quotes.reflect.report.errorAndAbort(msg)
   def info: Unit = quotes.reflect.report.info(msg)
 
-extension (using quotes: Quotes)(e: Any)
-  def dbg: e.type = {
-    quotes.reflect.report.errorAndAbort(e.toString)
-    e
-  }
-
-inline def dupa[T](t: T): Nothing = ${ dupaImpl[T]('{ t }) }
-def dupaImpl[T: Type](t: Expr[T])(using quotes: Quotes): Expr[Nothing] = {
-  import quotes.reflect._
-  symbolInfo(TypeRepr.of[T].typeSymbol).error
-}
+extension (using quotes: Quotes)(e: Any) def dbg: e.type & Nothing = quotes.reflect.report.errorAndAbort(e.toString)
